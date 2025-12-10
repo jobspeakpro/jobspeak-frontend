@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-offwhite text-navy;
+}
+
+.btn-primary {
+  @apply bg-teal text-white px-4 py-2 rounded-lg shadow-md hover:bg-teal-dark transition;
+}
+
+.glass-card {
+  @apply bg-white border border-slate-200 rounded-xl shadow-sm p-4;
+}
