@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import UpgradeToProButton from "./components/UpgradeToProButton";
+\import UpgradeToProButton from "./components/UpgradeToProButton";
+import React, { useState, useEffect } from "react";
 
 const API_BASE = "https://jobspeak-backend-production.up.railway.app";
 
@@ -18,12 +18,22 @@ export default function App() {
   const [resumeLoading, setResumeLoading] = useState(false);
   const [resumeError, setResumeError] = useState("");
 
-  // ---- MICRO DEMO HANDLER ----
+  // PAYMENT STATUS (Stripe redirect)
+  const [paymentStatus, setPaymentStatus] = useState(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("success") === "true") {
+      setPaymentStatus("success");
+    } else if (params.get("canceled") === "true") {
+      setPaymentStatus("canceled");
+    }
+  }, []);
+
   const handleMicroDemo = async () => {
     setLoading(true);
     setError("");
     setResult(null);
-
     try {
       const res = await fetch(`${API_BASE}/ai/micro-demo`, {
         method: "POST",
@@ -32,26 +42,23 @@ export default function App() {
       });
 
       if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText || "Request failed");
+        throw new Error("Request failed");
       }
 
       const data = await res.json();
       setResult(data);
     } catch (e) {
-      console.error("Micro-demo error:", e);
-      setError("Something went wrong. Please try again.");
+      console.error(e);
+      setError("Something went wrong. Check backend or API key.");
     } finally {
       setLoading(false);
     }
   };
 
-  // ---- RESUME DOCTOR HANDLER ----
   const handleResumeAnalyze = async () => {
     setResumeLoading(true);
     setResumeError("");
     setResumeResult(null);
-
     try {
       const res = await fetch(`${API_BASE}/resume/analyze`, {
         method: "POST",
@@ -60,15 +67,14 @@ export default function App() {
       });
 
       if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText || "Request failed");
+        throw new Error("Request failed");
       }
 
       const data = await res.json();
       setResumeResult(data);
     } catch (e) {
-      console.error("Resume analyze error:", e);
-      setResumeError("Could not analyze your resume. Please try again.");
+      console.error(e);
+      setResumeError("Could not analyze your resume. Check backend or API key.");
     } finally {
       setResumeLoading(false);
     }
@@ -76,6 +82,22 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-offwhite flex flex-col">
+      {/* PAYMENT STATUS BANNER */}
+      {paymentStatus === "success" && (
+        <div className="bg-emerald-50 border-b border-emerald-200">
+          <div className="max-w-5xl mx-auto px-4 py-2 text-sm text-emerald-800">
+            ✅ Your payment was successful. Thank you for supporting JobSpeak Pro!
+          </div>
+        </div>
+      )}
+      {paymentStatus === "canceled" && (
+        <div className="bg-amber-50 border-b border-amber-200">
+          <div className="max-w-5xl mx-auto px-4 py-2 text-sm text-amber-800">
+            ⚠️ Your payment was canceled. You can upgrade to PRO anytime when you feel ready.
+          </div>
+        </div>
+      )}
+
       {/* NAVBAR */}
       <header className="w-full border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -332,8 +354,8 @@ export default function App() {
 
                 {!resumeResult && !resumeError && (
                   <div className="text-[11px] text-slate-500 mt-2">
-                    Tip: Start with just your SUMMARY or one job. You don't need a
-                    full resume to see improvements.
+                    Tip: Start with just your SUMMARY or one job. You don't need a full
+                    resume to see improvements.
                   </div>
                 )}
               </div>
@@ -401,9 +423,8 @@ export default function App() {
                 Go PRO to unlock full interview coaching & resume rewrites.
               </h2>
               <p className="text-[12px] sm:text-sm text-slate-200 max-w-xl">
-                Unlimited speaking feedback, full answer rewrites, job readiness
-                scores, and complete resume upgrades — designed for global ESL job
-                seekers.
+                Unlimited speaking feedback, full answer rewrites, job readiness scores,
+                and complete resume upgrades — designed for global ESL job seekers.
               </p>
             </div>
             <div className="glass-card bg-white/5 border-white/10 text-[12px] sm:text-sm">
@@ -431,8 +452,7 @@ export default function App() {
       <footer className="border-t border-slate-200 bg-white/80">
         <div className="max-w-5xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="text-[11px] text-slate-500">
-            © {new Date().getFullYear()} JobSpeak Pro. Built for global ESL job
-            seekers.
+            © {new Date().getFullYear()} JobSpeak Pro. Built for global ESL job seekers.
           </div>
           <div className="flex gap-3 text-[11px] text-slate-500">
             <button className="hover:text-navy">Privacy</button>
