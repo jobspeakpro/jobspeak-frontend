@@ -1,4 +1,4 @@
-\import UpgradeToProButton from "./components/UpgradeToProButton";
+import UpgradeToProButton from "./components/UpgradeToProButton";
 import React, { useState, useEffect } from "react";
 
 const API_BASE = "https://jobspeak-backend-production.up.railway.app";
@@ -82,18 +82,25 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-offwhite flex flex-col">
-      {/* PAYMENT STATUS BANNER */}
+      {/* PAYMENT STATUS BANNER (BIG + OBVIOUS) */}
       {paymentStatus === "success" && (
-        <div className="bg-emerald-50 border-b border-emerald-200">
-          <div className="max-w-5xl mx-auto px-4 py-2 text-sm text-emerald-800">
-            ✅ Your payment was successful. Thank you for supporting JobSpeak Pro!
+        <div className="bg-emerald-100 border-b border-emerald-300">
+          <div className="max-w-5xl mx-auto px-4 py-4 text-sm sm:text-base text-emerald-900 font-semibold text-center">
+            ✅ Payment successful!  
+            <span className="font-normal block text-emerald-800">
+              Thank you for supporting JobSpeak Pro. Your PRO access is now active.
+            </span>
           </div>
         </div>
       )}
+
       {paymentStatus === "canceled" && (
-        <div className="bg-amber-50 border-b border-amber-200">
-          <div className="max-w-5xl mx-auto px-4 py-2 text-sm text-amber-800">
-            ⚠️ Your payment was canceled. You can upgrade to PRO anytime when you feel ready.
+        <div className="bg-amber-100 border-b border-amber-300">
+          <div className="max-w-5xl mx-auto px-4 py-4 text-sm sm:text-base text-amber-900 font-semibold text-center">
+            ⚠️ Payment canceled.  
+            <span className="font-normal block text-amber-800">
+              No charges were made. You can upgrade to PRO anytime when you feel ready.
+            </span>
           </div>
         </div>
       )}
