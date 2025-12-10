@@ -1,74 +1,53 @@
+// src/components/UpgradeToProButton.jsx
 import React, { useState } from "react";
+import { trackEvent } from "../analytics";
 
 const API_BASE = "https://jobspeak-backend-production.up.railway.app";
 
-const UpgradeToProButton = () => {
+export default function UpgradeToProButton() {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
-  const handleCheckout = async (plan) => {
+  const handleUpgradeClick = async () => {
     try {
       setLoading(true);
-      setError("");
+      trackEvent("stripe_upgrade_click", { source: "header_button" });
 
-      // ✅ CORRECT STRIPE ENDPOINT ON RAILWAY
-      const response = await fetch(
-        `${API_BASE}/stripe/create-checkout-session`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ plan }), // "monthly" or "annual"
-        }
-      );
+      const res = await fetch(`${API_BASE}/stripe/create-checkout-session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: "monthly" }),
+      });
 
-      const data = await response.json();
-
-      if (!response.ok || !data.url) {
-        throw new Error(data.error || "Payment failed");
+      if (!res.ok) {
+        console.error("Stripe session error", await res.text());
+        setLoading(false);
+        alert("Could not start checkout. Please try again.");
+        return;
       }
 
-      // ✅ Redirect to Stripe Checkout
-      window.location.href = data.url;
+      const data = await res.json();
+
+      if (data?.url) {
+        // Optional extra event before redirect
+        trackEvent("stripe_checkout_redirect", { source: "header_button" });
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL returned from backend");
+      }
     } catch (err) {
-      console.error("Stripe checkout error:", err);
-      setError("Payment failed. Please try again.");
-    } finally {
+      console.error("Upgrade error:", err);
       setLoading(false);
+      alert("Something went wrong. Please try again.");
     }
   };
 
   return (
-    <div className="space-y-2">
-      {error && <p className="text-sm text-red-500">{error}</p>}
-
-      <div className="flex flex-col sm:flex-row gap-2">
-        <button
-          type="button"
-          onClick={() => handleCheckout("monthly")}
-          disabled={loading}
-          className="w-full sm:w-auto rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-700 disabled:opacity-60"
-        >
-          {loading ? "Redirecting..." : "Go PRO Monthly – $9.99"}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleCheckout("annual")}
-          disabled={loading}
-          className="w-full sm:w-auto rounded-lg border border-indigo-600 px-4 py-2 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 disabled:opacity-60"
-        >
-          Save 33% – Annual $79.99
-        </button>
-      </div>
-
-      <p className="text-xs text-slate-500">
-        Secure payments powered by Stripe. You’ll be redirected back to JobSpeak
-        Pro after checkout.
-      </p>
-    </div>
+    <button
+      onClick={handleUpgradeClick}
+      disabled={loading}
+      className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+    >
+      {loading ? "Opening Stripe..." : "Upgrade to Pro"}
+    </button>
   );
-};
-
-export default UpgradeToProButton;
+}
