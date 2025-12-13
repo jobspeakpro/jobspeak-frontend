@@ -50,9 +50,6 @@ export default function App({ defaultTab = "interview" }) {
   // Stripe banner
   const [banner, setBanner] = useState(null); // 'success' | 'canceled' | null
 
-  // Check API base configuration on mount
-  const [apiBaseMissing, setApiBaseMissing] = useState(!isApiBaseConfigured());
-
   // Handle Stripe redirect params (query params or path)
   useEffect(() => {
     try {
@@ -592,24 +589,8 @@ export default function App({ defaultTab = "interview" }) {
           </div>
         )}
 
-        {/* API base missing - blocking banner */}
-        {apiBaseMissing && (
-          <div className="bg-red-600 border-b border-red-700 sticky top-0 z-50">
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-white text-lg">⚠️</span>
-                  <p className="text-sm font-semibold text-white">
-                    Configuration Error: VITE_API_BASE environment variable is missing. API calls are disabled.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Server unavailable banner */}
-        {serverUnavailable && !apiBaseMissing && (
+        {serverUnavailable && (
           <div className="bg-red-50 border-b border-red-200">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2 flex items-center justify-between gap-3">
               <p className="text-xs text-red-800">

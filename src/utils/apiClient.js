@@ -1,13 +1,14 @@
 // src/utils/apiClient.js
 
-const API_BASE = import.meta.env.VITE_API_BASE;
+// Default to empty string for relative paths when VITE_API_BASE is not set
+const API_BASE = import.meta.env.VITE_API_BASE ?? '';
 
 /**
  * Check if API base URL is configured
- * @returns {boolean} True if API_BASE is configured
+ * @returns {boolean} True if API_BASE is configured (including empty string for relative paths)
  */
 export function isApiBaseConfigured() {
-  return !!API_BASE;
+  return API_BASE !== undefined && API_BASE !== null;
 }
 
 /**
@@ -32,15 +33,6 @@ export class ApiError extends Error {
  * @throws {ApiError} Standardized error object
  */
 export async function apiClient(endpoint, options = {}) {
-  // Block API calls if VITE_API_BASE is missing (but allow empty string for relative paths)
-  if (API_BASE === undefined || API_BASE === null) {
-    throw new ApiError(
-      "API base URL is not configured. Please set VITE_API_BASE environment variable.",
-      null,
-      { code: "MISSING_API_BASE" }
-    );
-  }
-
   const { parseJson = true, ...fetchOptions } = options;
   
   // Build full URL - use relative path if API_BASE is empty string (for Netlify proxy)
