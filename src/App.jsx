@@ -15,7 +15,7 @@ import { trackEvent } from "./analytics";
 import { getUserKey } from "./utils/userKey.js";
 import { usePro } from "./contexts/ProContext.jsx";
 import { isNetworkError } from "./utils/networkError.js";
-import { apiClient, ApiError, isApiBaseConfigured } from "./utils/apiClient.js";
+import { apiClient, ApiError } from "./utils/apiClient.js";
 
 export default function App({ defaultTab = "interview" }) {
   const { isPro, refreshProStatus } = usePro();

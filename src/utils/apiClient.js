@@ -1,14 +1,16 @@
 // src/utils/apiClient.js
 
 // Default to empty string for relative paths when VITE_API_BASE is not set
+// Empty string means use relative paths, which work with Netlify proxy
 const API_BASE = import.meta.env.VITE_API_BASE ?? '';
 
 /**
  * Check if API base URL is configured
- * @returns {boolean} True if API_BASE is configured (including empty string for relative paths)
+ * @returns {boolean} Always returns true - empty string is valid for relative paths
  */
 export function isApiBaseConfigured() {
-  return API_BASE !== undefined && API_BASE !== null;
+  // Empty string is valid - it means we use relative paths with proxy
+  return true;
 }
 
 /**
