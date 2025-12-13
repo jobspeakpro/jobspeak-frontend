@@ -32,8 +32,8 @@ export class ApiError extends Error {
  * @throws {ApiError} Standardized error object
  */
 export async function apiClient(endpoint, options = {}) {
-  // Block API calls if VITE_API_BASE is missing
-  if (!API_BASE) {
+  // Block API calls if VITE_API_BASE is missing (but allow empty string for relative paths)
+  if (API_BASE === undefined || API_BASE === null) {
     throw new ApiError(
       "API base URL is not configured. Please set VITE_API_BASE environment variable.",
       null,
@@ -43,8 +43,12 @@ export async function apiClient(endpoint, options = {}) {
 
   const { parseJson = true, ...fetchOptions } = options;
   
-  // Build full URL
-  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
+  // Build full URL - use relative path if API_BASE is empty string (for Netlify proxy)
+  const url = endpoint.startsWith('http') 
+    ? endpoint 
+    : API_BASE === '' 
+      ? endpoint 
+      : `${API_BASE}${endpoint}`;
   
   // Default headers for JSON requests (unless body is FormData)
   const defaultHeaders = {};
