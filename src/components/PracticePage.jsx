@@ -84,7 +84,7 @@ export default function PracticePage() {
       return;
     }
 
-    if (!text.trim()) {
+    if (typeof text !== "string" || !text.trim()) {
       setError("Type or record your answer to begin.");
       setLoading(false);
       return;
@@ -270,7 +270,7 @@ export default function PracticePage() {
               <div className="flex flex-wrap gap-2 items-center">
                 <button
                   type="submit"
-                  disabled={loading || isTranscribing || !text.trim()}
+                  disabled={loading || isTranscribing || (typeof text !== "string" || !text.trim())}
                   className="inline-flex items-center px-4 py-2 rounded-full bg-rose-500 hover:bg-rose-600 text-white text-sm font-semibold shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition"
                 >
                   {isTranscribing 

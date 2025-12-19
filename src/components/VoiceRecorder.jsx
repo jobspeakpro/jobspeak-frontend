@@ -8,6 +8,7 @@ import { apiClient, ApiError } from "../utils/apiClient.js";
 export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNeeded }) {
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
+  const mimeTypeRef = useRef(null);
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
   const [error, setError] = useState("");
@@ -27,7 +28,22 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      
+      // Choose mimeType in priority order
+      let mimeType = null;
+      if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+        mimeType = "audio/webm;codecs=opus";
+      } else if (MediaRecorder.isTypeSupported("audio/webm")) {
+        mimeType = "audio/webm";
+      } else if (MediaRecorder.isTypeSupported("audio/ogg;codecs=opus")) {
+        mimeType = "audio/ogg;codecs=opus";
+      } else if (MediaRecorder.isTypeSupported("audio/ogg")) {
+        mimeType = "audio/ogg";
+      }
+      // Otherwise fallback with no mimeType (mimeType remains null)
+      
+      mimeTypeRef.current = mimeType;
+      const mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {
@@ -37,13 +53,26 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
       mediaRecorder.onstop = async () => {
         try {
           setTranscribing(true);
+          const mimeType = mimeTypeRef.current || mediaRecorder.mimeType || "audio/webm";
           const audioBlob = new Blob(chunksRef.current, {
-            type: mediaRecorder.mimeType,
+            type: mimeType,
           });
+
+          // Determine file extension based on mimeType
+          let fileName = "audio.webm"; // default fallback
+          if (mimeType && mimeType.includes("webm")) {
+            fileName = "audio.webm";
+          } else if (mimeType && mimeType.includes("ogg")) {
+            fileName = "audio.ogg";
+          }
+
+          const audioFile = new File([audioBlob], fileName, { type: mimeType });
+
+          console.log({ mimeType, fileName, fileType: audioFile.type, fileSize: audioFile.size });
 
           const userKey = getUserKey();
           const formData = new FormData();
-          formData.append("audio", audioBlob, "audio.webm");
+          formData.append("audio", audioFile);
           formData.append("userKey", userKey);
 
           try {
@@ -51,8 +80,21 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
               method: "POST",
               body: formData,
             });
-            trackEvent("stt_success", { textLength: data.text?.length || 0 });
-            onTranscript(data.text);
+
+            const transcript =
+              typeof data?.transcript === "string"
+                ? data.transcript.trim()
+                : typeof data?.text === "string"
+                ? data.text.trim()
+                : "";
+
+            if (!transcript) {
+              setError("No speech detected. Please try again.");
+              return;
+            }
+
+            trackEvent("stt_success", { textLength: transcript.length });
+            onTranscript(transcript);
           } catch (err) {
             if (err instanceof ApiError && err.status === 402 && err.data?.upgrade === true && onUpgradeNeeded) {
               onUpgradeNeeded();

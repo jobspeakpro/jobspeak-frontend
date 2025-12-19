@@ -11,7 +11,7 @@ export default function ListenToAnswerButton({ improvedText, onUpgradeNeeded }) 
   const audioRef = useRef(null);
 
   const handleClick = async () => {
-    if (!improvedText || !improvedText.trim()) {
+    if (!improvedText || typeof improvedText !== "string" || !improvedText.trim()) {
       setError("Improve your answer first, then you can listen to it.");
       return;
     }
