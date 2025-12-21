@@ -4,8 +4,50 @@ import { trackEvent } from "../analytics";
 import { getUserKey } from "../utils/userKey.js";
 import { isNetworkError } from "../utils/networkError.js";
 import { apiClient, ApiError } from "../utils/apiClient.js";
+import { usePro } from "../contexts/ProContext.jsx";
+
+const FREE_DAILY_SPEAKING_LIMIT = 3;
+
+function getTodayKey() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}_${mm}_${dd}`;
+}
+
+function getSpeakingAttemptsKey(userKey) {
+  const day = getTodayKey();
+  return `speaking_attempts_${day}_${userKey || "anon"}`;
+}
+
+function getDailyAttempts(userKey) {
+  try {
+    const k = getSpeakingAttemptsKey(userKey);
+    const raw = localStorage.getItem(k);
+    const n = Number(raw);
+    // Clamp to 0-3 range
+    if (!Number.isFinite(n) || n < 0) return 0;
+    return Math.min(n, 3);
+  } catch {
+    return 0;
+  }
+}
+
+function incrementDailyAttempts(userKey) {
+  try {
+    const k = getSpeakingAttemptsKey(userKey);
+    const current = getDailyAttempts(userKey);
+    const next = Math.min(current + 1, 3);
+    localStorage.setItem(k, String(next));
+    return next;
+  } catch {
+    return null;
+  }
+}
 
 export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNeeded }) {
+  const { isPro } = usePro();
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
   const mimeTypeRef = useRef(null);
@@ -13,6 +55,15 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
   const [transcribing, setTranscribing] = useState(false);
   const [error, setError] = useState("");
   const [permissionDenied, setPermissionDenied] = useState(false);
+  const [attemptsToday, setAttemptsToday] = useState(0);
+  const hasIncrementedRef = useRef(false); // Prevent double increment per recording
+
+  // Load attempts on mount and when userKey changes
+  useEffect(() => {
+    const userKey = getUserKey();
+    const attempts = getDailyAttempts(userKey);
+    setAttemptsToday(attempts);
+  }, []);
 
   // Notify parent of state changes
   useEffect(() => {
@@ -25,6 +76,23 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
     setError("");
     setPermissionDenied(false);
     chunksRef.current = [];
+    hasIncrementedRef.current = false; // Reset increment flag for new recording
+
+    // Check daily limit BEFORE starting recording (only for non-Pro users)
+    if (!isPro) {
+      const userKey = getUserKey();
+      const attempts = getDailyAttempts(userKey);
+      setAttemptsToday(attempts);
+      
+      // Block if attemptsToday >= 3 (this is attempt #4)
+      if (attempts >= 3) {
+        setError("You've used your 3 free attempts today. Upgrade to Pro for unlimited practice.");
+        if (onUpgradeNeeded) {
+          onUpgradeNeeded();
+        }
+        return;
+      }
+    }
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -76,21 +144,60 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
           formData.append("userKey", userKey);
 
           try {
-            const data = await apiClient("/api/stt", {
+            // Call Railway backend directly
+            const response = await apiClient("https://jobspeak-backend-production.up.railway.app/api/stt", {
               method: "POST",
               body: formData,
+              parseJson: false, // Get raw response to safely handle non-JSON responses
             });
 
-            const transcript =
-              typeof data?.transcript === "string"
-                ? data.transcript.trim()
-                : typeof data?.text === "string"
-                ? data.text.trim()
-                : "";
+            // Check response status first
+            const status = response.status;
 
+            // Safely parse response - don't assume it's always JSON
+            let data = null;
+            const contentType = response.headers.get("content-type") || "";
+            
+            if (contentType.includes("application/json")) {
+              try {
+                data = await response.json();
+              } catch (parseErr) {
+                console.error("[STT] Failed to parse JSON response:", parseErr);
+                setError("Invalid response from server. Please try again.");
+                return;
+              }
+            } else {
+              // If not JSON, try to parse as text or handle gracefully
+              const text = await response.text().catch(() => "");
+              console.warn("[STT] Non-JSON response received:", text);
+              setError("Unexpected response format. Please try again.");
+              return;
+            }
+
+            // Safely extract transcript - never call .trim() on undefined
+            let transcript = "";
+            if (data && typeof data === "object") {
+              if (typeof data.transcript === "string" && data.transcript.length > 0) {
+                transcript = data.transcript.trim();
+              } else if (typeof data.text === "string" && data.text.length > 0) {
+                transcript = data.text.trim();
+              }
+            }
+
+            // Return empty string if transcript is missing or empty (don't crash)
             if (!transcript) {
               setError("No speech detected. Please try again.");
               return;
+            }
+
+            // Only increment attempts when STT returns 200 AND transcript exists (non-empty string)
+            // Also prevent double increment per single recording
+            if (!isPro && status === 200 && transcript && !hasIncrementedRef.current) {
+              const userKey = getUserKey();
+              const nextAttempts = incrementDailyAttempts(userKey);
+              setAttemptsToday(nextAttempts || 0);
+              hasIncrementedRef.current = true; // Mark as incremented to prevent double increment
+              console.log(`[STT] free daily speaking attempts: ${nextAttempts}/${FREE_DAILY_SPEAKING_LIMIT}`);
             }
 
             trackEvent("stt_success", { textLength: transcript.length });
@@ -178,6 +285,17 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
       {transcribing && (
         <p className="text-[10px] text-slate-600 font-medium">Transcribing...</p>
       )}
+      
+      {/* Free attempts label - only show for non-Pro users */}
+      {!isPro && (
+        <div className="bg-rose-50 border border-rose-100 rounded-lg px-3 py-2">
+          <p className="text-[10px] text-slate-700">
+            <span className="font-semibold">Free attempts today:</span>{" "}
+            <span className="text-rose-600 font-bold">{attemptsToday}/3</span>
+          </p>
+        </div>
+      )}
+      
       {error && (
         <div className="max-w-[140px] text-center">
           <p className="text-[10px] text-rose-600 font-medium mb-1">{error}</p>
