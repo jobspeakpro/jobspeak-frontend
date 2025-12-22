@@ -144,8 +144,10 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
           formData.append("userKey", userKey);
 
           try {
-            // Call Railway backend directly
-            const response = await apiClient("https://jobspeak-backend-production.up.railway.app/api/stt", {
+            const endpoint = "/api/stt";
+            console.log("STT endpoint:", endpoint);
+            // Use relative path - Vercel proxy handles routing
+            const response = await apiClient(endpoint, {
               method: "POST",
               body: formData,
               parseJson: false, // Get raw response to safely handle non-JSON responses

@@ -1,17 +1,9 @@
 // src/utils/apiClient.js
 
-// Default to empty string for relative paths when VITE_API_BASE is not set
-// Empty string means use relative paths, which work with Netlify proxy
-const API_BASE = import.meta.env.VITE_API_BASE ?? '';
-
-/**
- * Check if API base URL is configured
- * @returns {boolean} Always returns true - empty string is valid for relative paths
- */
-export function isApiBaseConfigured() {
-  // Empty string is valid - it means we use relative paths with proxy
-  return true;
-}
+// ALWAYS use relative paths - Vercel proxy handles routing to Railway backend
+// This ensures production NEVER calls Railway directly (avoids CORS)
+// Production must ALWAYS use relative paths (e.g., /api/stt, /voice/generate, /ai/micro-demo)
+// No environment variables, no fallback URLs, no absolute URLs allowed
 
 /**
  * Standardized API error
@@ -37,12 +29,20 @@ export class ApiError extends Error {
 export async function apiClient(endpoint, options = {}) {
   const { parseJson = true, ...fetchOptions } = options;
   
-  // Build full URL - use relative path if API_BASE is empty string (for Netlify proxy)
-  const url = endpoint.startsWith('http') 
-    ? endpoint 
-    : API_BASE === '' 
-      ? endpoint 
-      : `${API_BASE}${endpoint}`;
+  // PRODUCTION ENFORCEMENT: Force relative paths only
+  // Block ALL absolute URLs - no exceptions
+  // ALL requests must use relative paths (e.g., /api/stt, /voice/generate, /ai/micro-demo)
+  // Vercel rewrites handle routing to the Railway backend
+  if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
+    throw new Error(
+      `Absolute URL blocked: ${endpoint}. ` +
+      `Use relative paths only (e.g., /api/stt, /voice/generate, /ai/micro-demo). ` +
+      `Vercel rewrites handle routing to the backend.`
+    );
+  }
+  
+  // Ensure endpoint starts with / for relative paths
+  const url = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   
   // Default headers for JSON requests (unless body is FormData)
   const defaultHeaders = {};

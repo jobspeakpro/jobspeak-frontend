@@ -1,5 +1,5 @@
 // src/components/PracticePage.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import VoiceRecorder from "./VoiceRecorder.jsx";
 import ListenToAnswerButton from "./ListenToAnswerButton.jsx";
@@ -23,9 +23,45 @@ export default function PracticePage() {
   const [isRecording, setIsRecording] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [serverUnavailable, setServerUnavailable] = useState(false);
+  const [freeImproveUsage, setFreeImproveUsage] = useState({ count: 0, limit: 3 });
+
+  // Clean up ALL legacy free usage keys on mount
+  // Only allow: jobspeak_free_improve_usage_YYYY-MM-DD_<userKey>
+  useEffect(() => {
+    try {
+      const userKey = getUserKey();
+      const d = new Date();
+      const today = d.toISOString().slice(0, 10); // YYYY-MM-DD
+      const validKey = `jobspeak_free_improve_usage_${today}_${userKey}`;
+      
+      // Delete any key that doesn't match the valid format
+      const keysToDelete = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("jobspeak_free_improve_usage")) {
+          // Only keep the valid key for today
+          if (key !== validKey) {
+            keysToDelete.push(key);
+          }
+        }
+      }
+      
+      keysToDelete.forEach(key => {
+        localStorage.removeItem(key);
+        console.log("[Cleanup] Removed legacy free usage key:", key);
+      });
+    } catch (err) {
+      console.error("Error cleaning up legacy keys:", err);
+    }
+  }, []);
+
+  // Load free improve usage count on mount
+  useEffect(() => {
+    setFreeImproveUsage(getFreeImproveUsageCount());
+  }, []);
 
   // Free limit helpers (same as App.jsx)
-  const FREE_IMPROVE_LIMIT_PER_DAY = 1;
+  const FREE_IMPROVE_LIMIT_PER_DAY = 3;
 
   const getTodayKey = () => {
     const d = new Date();
@@ -34,34 +70,47 @@ export default function PracticePage() {
 
   const hasFreeImproveLeft = () => {
     if (isPro) return true;
-    const key = "jobspeak_free_improve_usage";
+    const userKey = getUserKey();
     const today = getTodayKey();
+    const key = `jobspeak_free_improve_usage_${today}_${userKey}`;
     const raw = localStorage.getItem(key);
     if (!raw) return true;
     try {
-      const data = JSON.parse(raw);
-      if (data.date !== today) return true;
-      return data.count < FREE_IMPROVE_LIMIT_PER_DAY;
+      const count = parseInt(raw, 10) || 0;
+      // Block when count >= 3 (allow 0, 1, 2, block at 3+)
+      return count < FREE_IMPROVE_LIMIT_PER_DAY;
     } catch {
       return true;
     }
   };
 
   const incrementFreeImproveUsage = () => {
-    const key = "jobspeak_free_improve_usage";
+    const userKey = getUserKey();
     const today = getTodayKey();
+    const key = `jobspeak_free_improve_usage_${today}_${userKey}`;
     const raw = localStorage.getItem(key);
-    let data;
+    let count = 0;
     try {
-      data = raw ? JSON.parse(raw) : { date: today, count: 0 };
+      count = raw ? parseInt(raw, 10) || 0 : 0;
     } catch {
-      data = { date: today, count: 0 };
+      count = 0;
     }
-    if (data.date !== today) {
-      data = { date: today, count: 0 };
+    count += 1;
+    localStorage.setItem(key, String(count));
+  };
+
+  const getFreeImproveUsageCount = () => {
+    if (isPro) return { count: 0, limit: FREE_IMPROVE_LIMIT_PER_DAY };
+    const userKey = getUserKey();
+    const today = getTodayKey();
+    const key = `jobspeak_free_improve_usage_${today}_${userKey}`;
+    const raw = localStorage.getItem(key);
+    try {
+      const count = raw ? parseInt(raw, 10) || 0 : 0;
+      return { count, limit: FREE_IMPROVE_LIMIT_PER_DAY };
+    } catch {
+      return { count: 0, limit: FREE_IMPROVE_LIMIT_PER_DAY };
     }
-    data.count += 1;
-    localStorage.setItem(key, JSON.stringify(data));
   };
 
   function getImprovedAnswerText() {
@@ -77,7 +126,7 @@ export default function PracticePage() {
     // Free limit gating
     if (!hasFreeImproveLeft()) {
       setError(
-        "You've used your free answer today. Upgrade to Pro for unlimited practice."
+        "You've used your 3 free attempts today. Upgrade to Pro for unlimited practice."
       );
       setLoading(false);
       trackEvent("micro_demo_limit_hit", { source: "practice_page" });
@@ -103,6 +152,8 @@ export default function PracticePage() {
         trackEvent("interview_submit_success", { textLength: text.length });
         if (!isPro) {
           incrementFreeImproveUsage();
+          // Update free improve usage count after increment
+          setFreeImproveUsage(getFreeImproveUsageCount());
         }
 
         // Save session to backend
@@ -199,6 +250,17 @@ export default function PracticePage() {
       )}
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5">
+        {/* Free improve attempts counter */}
+        {!isPro && (
+          <div className="bg-rose-50 border border-rose-100 rounded-xl px-4 py-2 text-xs mb-4">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-600">Free attempts today:</span>
+              <span className="font-semibold text-slate-900">
+                {freeImproveUsage.count} / {freeImproveUsage.limit}
+              </span>
+            </div>
+          </div>
+        )}
         {/* Question header */}
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
