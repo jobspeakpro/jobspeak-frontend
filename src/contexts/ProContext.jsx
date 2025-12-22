@@ -1,6 +1,5 @@
 // src/contexts/ProContext.jsx
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { getUserKey } from "../utils/userKey.js";
 import { apiClient } from "../utils/apiClient.js";
 
 const ProContext = createContext({
@@ -15,8 +14,7 @@ export function ProProvider({ children }) {
 
   const checkBillingStatus = async () => {
     try {
-      const userKey = getUserKey();
-      const data = await apiClient(`/api/billing/status?userKey=${encodeURIComponent(userKey)}`);
+      const data = await apiClient(`/api/billing/status`);
       setIsPro(data.isPro || false);
     } catch (err) {
       console.error("Error checking billing status:", err);

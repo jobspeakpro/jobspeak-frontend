@@ -1,7 +1,6 @@
 // src/components/ProgressPage.jsx
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import SessionDetail from "./SessionDetail.jsx";
-import { getUserKey } from "../utils/userKey.js";
 import { isNetworkError } from "../utils/networkError.js";
 import { apiClient } from "../utils/apiClient.js";
 
@@ -15,8 +14,7 @@ export default function ProgressPage({ onNavigateToInterview }) {
     try {
       setLoading(true);
       setError(null);
-      const userKey = getUserKey();
-      const data = await apiClient(`/api/sessions?userKey=${encodeURIComponent(userKey)}&limit=10`);
+      const data = await apiClient(`/api/sessions?limit=10`);
       // Ensure data is an array
       const sessionsArray = Array.isArray(data) ? data : [];
       setSessions(sessionsArray);

@@ -1,6 +1,5 @@
 // src/components/SessionDetail.jsx
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { getUserKey } from "../utils/userKey.js";
 import { isNetworkError } from "../utils/networkError.js";
 import { apiClient } from "../utils/apiClient.js";
 
@@ -16,8 +15,7 @@ export default function SessionDetail({ session, onClose, sessionId }) {
     try {
       setLoading(true);
       setError(null);
-      const userKey = getUserKey();
-      const data = await apiClient(`/api/sessions/${sessionId}?userKey=${encodeURIComponent(userKey)}`);
+      const data = await apiClient(`/api/sessions/${sessionId}`);
       setSessionData(data);
     } catch (err) {
       console.error("Error loading session:", err);

@@ -4,90 +4,43 @@ import React, { useState, useRef, useEffect } from "react";
 import { getUserKey } from "../utils/userKey.js";
 import { apiClient, ApiError } from "../utils/apiClient.js";
 import { isNetworkError } from "../utils/networkError.js";
+import { usePro } from "../contexts/ProContext.jsx";
 
-function getTodayKey() {
-  const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
-
-// Best-effort "pro" detection without touching other files.
-// If any of these flags exist, we treat user as Pro and skip the daily limit.
-function isProbablyPro() {
+// Fetch usage from backend API
+async function fetchUsage() {
   try {
-    const plan =
-      (localStorage.getItem("plan") || "").toLowerCase().trim() ||
-      (localStorage.getItem("jobspeak_plan") || "").toLowerCase().trim();
-
-    const proFlags = [
-      localStorage.getItem("isPro"),
-      localStorage.getItem("jobspeak_is_pro"),
-      localStorage.getItem("pro"),
-      localStorage.getItem("jobspeak_pro"),
-      localStorage.getItem("paid"),
-      localStorage.getItem("jobspeak_paid"),
-    ]
-      .map((v) => (typeof v === "string" ? v.toLowerCase().trim() : ""))
-      .filter(Boolean);
-
-    if (plan === "pro" || plan === "annual" || plan === "premium") return true;
-    if (proFlags.includes("true") || proFlags.includes("1") || proFlags.includes("yes")) return true;
-
-    return false;
-  } catch {
-    return false;
+    const data = await apiClient(`/api/usage/today`);
+    // Backend returns standardized format: { usage: { used, limit, remaining, blocked } }
+    if (data.usage) {
+      return {
+        used: data.usage.used || 0,
+        limit: data.usage.limit === -1 ? Infinity : data.usage.limit || 3,
+        remaining: data.usage.remaining === -1 ? Infinity : data.usage.remaining || 0,
+        blocked: data.usage.blocked || false,
+      };
+    }
+    // Fallback for backward compatibility
+    return { used: 0, limit: 3, remaining: 3, blocked: false };
+  } catch (err) {
+    console.error("Error fetching usage:", err);
+    return { used: 0, limit: 3, remaining: 3, blocked: false };
   }
 }
-
-function getSpeakingAttemptsKey(userKey) {
-  const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `speaking_attempts_${yyyy}_${mm}_${dd}_${userKey || "anon"}`;
-}
-
-function getDailySpeakingAttempts(userKey) {
-  try {
-    const k = getSpeakingAttemptsKey(userKey);
-    const raw = localStorage.getItem(k);
-    const n = Number(raw);
-    return Number.isFinite(n) ? n : 0;
-  } catch {
-    return 0;
-  }
-}
-
-function incrementDailySpeakingAttempts(userKey) {
-  try {
-    const k = getSpeakingAttemptsKey(userKey);
-    const current = getDailySpeakingAttempts(userKey);
-    localStorage.setItem(k, String(current + 1));
-    return current + 1;
-  } catch {
-    return null;
-  }
-}
-
-// Export increment function to be called after successful STT response
-// Should be called when: HTTP 200 and transcript string length > 0
-export { incrementDailySpeakingAttempts, getDailySpeakingAttempts };
 
 export default function ListenToAnswerButton({ improvedText, onUpgradeNeeded }) {
+  const { isPro } = usePro();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [attemptsToday, setAttemptsToday] = useState(0);
+  const [usage, setUsage] = useState({ used: 0, limit: 3, remaining: 3, blocked: false });
   const audioRef = useRef(null);
   const audioUrlRef = useRef(null);
 
-  // Load attempts on mount and when userKey might change
+  // Load usage from backend on mount
   useEffect(() => {
-    const userKey = getUserKey();
-    const attempts = getDailySpeakingAttempts(userKey);
-    setAttemptsToday(attempts);
-  }, []);
+    if (!isPro) {
+      fetchUsage().then(setUsage);
+    }
+  }, [isPro]);
 
   // Clean up object URLs on unmount
   useEffect(() => {
@@ -117,22 +70,26 @@ export default function ListenToAnswerButton({ improvedText, onUpgradeNeeded }) 
       audioUrlRef.current = null;
     }
 
-    const userKey = getUserKey();
-    const pro = isProbablyPro();
-
-    // Check speaking limit BEFORE starting request (only for non-Pro users)
-    if (!pro) {
-      const attempts = getDailySpeakingAttempts(userKey);
-      setAttemptsToday(attempts);
+    // Free limit blocks new value creation, not consumption of earned value
+    // If transcript already exists (improvedText), allow TTS playback even at limit
+    // Only block TTS if trying to generate audio without an existing transcript
+    if (!isPro) {
+      // Refresh usage from backend
+      const currentUsage = await fetchUsage();
+      setUsage(currentUsage);
       
-      // Block if attemptsToday >= 3 (this is attempt #4)
-      if (attempts >= 3) {
-        setError("You've used today's free practice (3/3). Upgrade to Pro for unlimited practice.");
+      // Allow TTS if transcript exists (user earned this value, can consume it)
+      const hasExistingTranscript = improvedText && improvedText.trim().length > 0;
+      
+      if (!hasExistingTranscript && (currentUsage.blocked || currentUsage.used >= currentUsage.limit)) {
+        // Block only if no transcript exists AND limit reached
+        setError("You've used today's free practice. Upgrade to Pro for unlimited practice.");
         if (typeof onUpgradeNeeded === "function") {
           onUpgradeNeeded();
         }
         return;
       }
+      // If transcript exists, allow TTS playback regardless of attempt count
     }
 
     setIsLoading(true);
@@ -150,7 +107,6 @@ export default function ListenToAnswerButton({ improvedText, onUpgradeNeeded }) 
         },
         body: {
           text: textToSpeak,
-          userKey,
         },
         parseJson: false, // Get raw response to check content type
       });
@@ -275,10 +231,6 @@ export default function ListenToAnswerButton({ improvedText, onUpgradeNeeded }) 
     }
   };
 
-  const userKey = getUserKey();
-  const pro = isProbablyPro();
-  const attempts = pro ? 0 : attemptsToday;
-
   return (
     <div className="mt-3 flex flex-col items-start gap-2">
       <button
@@ -306,9 +258,9 @@ export default function ListenToAnswerButton({ improvedText, onUpgradeNeeded }) 
         )}
       </button>
 
-      {!pro && (
+      {!isPro && (
         <p className="text-xs text-gray-600">
-          Free attempts today: {attempts}/3
+          Free attempts today: {usage.used}/{usage.limit === Infinity ? "∞" : usage.limit}
         </p>
       )}
 

@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import SessionDetail from "./SessionDetail.jsx";
 import { isNetworkError } from "../utils/networkError.js";
-import { getUserKey } from "../utils/userKey.js";
 import { apiClient } from "../utils/apiClient.js";
 
 export default function RecentSessions({ refreshTrigger }) {
@@ -14,8 +13,7 @@ export default function RecentSessions({ refreshTrigger }) {
   const loadSessions = useCallback(async () => {
     try {
       setLoading(true);
-      const userKey = getUserKey();
-      const data = await apiClient(`/api/sessions?userKey=${encodeURIComponent(userKey)}&limit=5`);
+      const data = await apiClient(`/api/sessions?limit=5`);
       setSessions(data);
       setServerError(false);
     } catch (err) {

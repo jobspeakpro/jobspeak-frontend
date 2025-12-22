@@ -1,69 +1,54 @@
 // src/components/VoiceRecorder.jsx
 import React, { useRef, useState, useEffect } from "react";
 import { trackEvent } from "../analytics";
-import { getUserKey } from "../utils/userKey.js";
 import { isNetworkError } from "../utils/networkError.js";
 import { apiClient, ApiError } from "../utils/apiClient.js";
 import { usePro } from "../contexts/ProContext.jsx";
+import { getUserKey } from "../utils/userKey.js";
 
-const FREE_DAILY_SPEAKING_LIMIT = 3;
-
-function getTodayKey() {
-  const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}_${mm}_${dd}`;
-}
-
-function getSpeakingAttemptsKey(userKey) {
-  const day = getTodayKey();
-  return `speaking_attempts_${day}_${userKey || "anon"}`;
-}
-
-function getDailyAttempts(userKey) {
+// Fetch usage from backend API
+async function fetchUsage() {
   try {
-    const k = getSpeakingAttemptsKey(userKey);
-    const raw = localStorage.getItem(k);
-    const n = Number(raw);
-    // Clamp to 0-3 range
-    if (!Number.isFinite(n) || n < 0) return 0;
-    return Math.min(n, 3);
-  } catch {
-    return 0;
+    const data = await apiClient(`/api/usage/today`);
+    // Backend returns standardized format: { usage: { used, limit, remaining, blocked } }
+    if (data.usage) {
+      return {
+        used: data.usage.used || 0,
+        limit: data.usage.limit === -1 ? Infinity : data.usage.limit || 3,
+        remaining: data.usage.remaining === -1 ? Infinity : data.usage.remaining || 0,
+        blocked: data.usage.blocked || false,
+      };
+    }
+    // Fallback for backward compatibility
+    return { used: 0, limit: 3, remaining: 3, blocked: false };
+  } catch (err) {
+    console.error("Error fetching usage:", err);
+    return { used: 0, limit: 3, remaining: 3, blocked: false };
   }
 }
 
-function incrementDailyAttempts(userKey) {
-  try {
-    const k = getSpeakingAttemptsKey(userKey);
-    const current = getDailyAttempts(userKey);
-    const next = Math.min(current + 1, 3);
-    localStorage.setItem(k, String(next));
-    return next;
-  } catch {
-    return null;
-  }
-}
-
-export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNeeded }) {
+export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNeeded, onAttemptsRefresh }) {
   const { isPro } = usePro();
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
   const mimeTypeRef = useRef(null);
+  const attemptIdRef = useRef(null); // Store attemptId for the current recording
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
   const [error, setError] = useState("");
   const [permissionDenied, setPermissionDenied] = useState(false);
-  const [attemptsToday, setAttemptsToday] = useState(0);
-  const hasIncrementedRef = useRef(false); // Prevent double increment per recording
+  const [usage, setUsage] = useState({ used: 0, limit: 3, remaining: 3, blocked: false });
 
-  // Load attempts on mount and when userKey changes
+  // Load usage from backend on mount
   useEffect(() => {
-    const userKey = getUserKey();
-    const attempts = getDailyAttempts(userKey);
-    setAttemptsToday(attempts);
-  }, []);
+    const loadUsage = async () => {
+      const currentUsage = await fetchUsage();
+      setUsage(currentUsage);
+    };
+    if (!isPro) {
+      loadUsage();
+    }
+  }, [isPro]);
 
   // Notify parent of state changes
   useEffect(() => {
@@ -76,17 +61,20 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
     setError("");
     setPermissionDenied(false);
     chunksRef.current = [];
-    hasIncrementedRef.current = false; // Reset increment flag for new recording
+    
+    // Generate attemptId on mic click (STT ONLY)
+    attemptIdRef.current = crypto.randomUUID();
+    console.log("[STT] Generated attemptId:", attemptIdRef.current);
 
     // Check daily limit BEFORE starting recording (only for non-Pro users)
     if (!isPro) {
-      const userKey = getUserKey();
-      const attempts = getDailyAttempts(userKey);
-      setAttemptsToday(attempts);
+      // Fetch latest from backend to ensure accuracy
+      const currentUsage = await fetchUsage();
+      setUsage(currentUsage);
       
-      // Block if attemptsToday >= 3 (this is attempt #4)
-      if (attempts >= 3) {
-        setError("You've used your 3 free attempts today. Upgrade to Pro for unlimited practice.");
+      // Block if blocked or count >= limit
+      if (currentUsage.blocked || currentUsage.used >= currentUsage.limit) {
+        setError("You've used your free attempts today. Upgrade to Pro for unlimited practice.");
         if (onUpgradeNeeded) {
           onUpgradeNeeded();
         }
@@ -138,18 +126,30 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
 
           console.log({ mimeType, fileName, fileType: audioFile.type, fileSize: audioFile.size });
 
-          const userKey = getUserKey();
           const formData = new FormData();
           formData.append("audio", audioFile);
+          
+          // Add userKey to FormData for compatibility (apiClient already sends it in header)
+          const userKey = getUserKey();
           formData.append("userKey", userKey);
+          
+          // Add attemptId to FormData (STT ONLY)
+          if (attemptIdRef.current) {
+            formData.append("attemptId", attemptIdRef.current);
+          }
 
           try {
             const endpoint = "/api/stt";
             console.log("STT endpoint:", endpoint);
+            console.log("STT attemptId:", attemptIdRef.current);
             // Use relative path - Vercel proxy handles routing
             const response = await apiClient(endpoint, {
               method: "POST",
               body: formData,
+              headers: {
+                // Send x-attempt-id header (STT ONLY)
+                ...(attemptIdRef.current ? { 'x-attempt-id': attemptIdRef.current } : {}),
+              },
               parseJson: false, // Get raw response to safely handle non-JSON responses
             });
 
@@ -189,26 +189,60 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
             // Return empty string if transcript is missing or empty (don't crash)
             if (!transcript) {
               setError("No speech detected. Please try again.");
+              // Refresh usage after failed STT
+              if (!isPro) {
+                const currentUsage = await fetchUsage();
+                setUsage(currentUsage);
+                if (onAttemptsRefresh) {
+                  onAttemptsRefresh();
+                }
+              }
               return;
             }
 
-            // Only increment attempts when STT returns 200 AND transcript exists (non-empty string)
-            // Also prevent double increment per single recording
-            if (!isPro && status === 200 && transcript && !hasIncrementedRef.current) {
-              const userKey = getUserKey();
-              const nextAttempts = incrementDailyAttempts(userKey);
-              setAttemptsToday(nextAttempts || 0);
-              hasIncrementedRef.current = true; // Mark as incremented to prevent double increment
-              console.log(`[STT] free daily speaking attempts: ${nextAttempts}/${FREE_DAILY_SPEAKING_LIMIT}`);
+            // Refresh usage from backend after successful STT
+            // Backend increments the count, so we fetch latest
+            if (!isPro) {
+              const currentUsage = await fetchUsage();
+              setUsage(currentUsage);
+              console.log(`[STT] usage: ${currentUsage.used}/${currentUsage.limit === Infinity ? "∞" : currentUsage.limit}`);
+              // Notify parent to refresh its counter if callback provided
+              if (onAttemptsRefresh) {
+                onAttemptsRefresh();
+              }
             }
 
             trackEvent("stt_success", { textLength: transcript.length });
             onTranscript(transcript);
           } catch (err) {
-            if (err instanceof ApiError && err.status === 402 && err.data?.upgrade === true && onUpgradeNeeded) {
-              onUpgradeNeeded();
-              return;
+            // Refresh usage from backend after failed STT (success OR 429)
+            if (!isPro) {
+              const currentUsage = await fetchUsage();
+              setUsage(currentUsage);
+              // Notify parent to refresh its counter if callback provided
+              if (onAttemptsRefresh) {
+                onAttemptsRefresh();
+              }
             }
+            
+            // Handle 429 (rate limit) - show paywall, stop flow, refresh usage
+            if (err instanceof ApiError && err.status === 429) {
+              setError("You've reached your daily limit. Upgrade to Pro for unlimited practice.");
+              if (onUpgradeNeeded) {
+                onUpgradeNeeded();
+              }
+              trackEvent("stt_fail", { error: "rate_limit_429", status: 429 });
+              return; // Stop the flow - don't proceed to transcript-dependent steps
+            }
+            
+            // Handle 402 (upgrade needed)
+            if (err instanceof ApiError && err.status === 402 && err.data?.upgrade === true && onUpgradeNeeded) {
+              setError("You've reached your daily limit. Upgrade to Pro for unlimited practice.");
+              onUpgradeNeeded();
+              trackEvent("stt_fail", { error: "upgrade_needed_402", status: 402 });
+              return; // Stop the flow
+            }
+            
             trackEvent("stt_fail", { error: err.data?.error || err.message || "Transcription failed" });
             throw new Error(err.data?.error || err.message || "Transcription failed");
           }
@@ -293,7 +327,7 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
         <div className="bg-rose-50 border border-rose-100 rounded-lg px-3 py-2">
           <p className="text-[10px] text-slate-700">
             <span className="font-semibold">Free attempts today:</span>{" "}
-            <span className="text-rose-600 font-bold">{attemptsToday}/3</span>
+            <span className="text-rose-600 font-bold">{usage.used}/{usage.limit === Infinity ? "∞" : usage.limit}</span>
           </p>
         </div>
       )}

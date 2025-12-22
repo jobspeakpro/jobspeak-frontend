@@ -5,6 +5,8 @@
 // Production must ALWAYS use relative paths (e.g., /api/stt, /voice/generate, /ai/micro-demo)
 // No environment variables, no fallback URLs, no absolute URLs allowed
 
+import { getUserKey } from "./userKey.js";
+
 /**
  * Standardized API error
  */
@@ -44,8 +46,13 @@ export async function apiClient(endpoint, options = {}) {
   // Ensure endpoint starts with / for relative paths
   const url = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   
+  // Get persistent userKey for anonymous tracking
+  const userKey = getUserKey();
+  
   // Default headers for JSON requests (unless body is FormData)
-  const defaultHeaders = {};
+  const defaultHeaders = {
+    'x-user-key': userKey, // Always include userKey header for all requests
+  };
   if (fetchOptions.body && !(fetchOptions.body instanceof FormData)) {
     if (!fetchOptions.headers?.['Content-Type']) {
       defaultHeaders['Content-Type'] = 'application/json';
@@ -56,7 +63,7 @@ export async function apiClient(endpoint, options = {}) {
     }
   }
   
-  // Merge headers
+  // Merge headers (user-provided headers take precedence)
   const headers = {
     ...defaultHeaders,
     ...fetchOptions.headers,

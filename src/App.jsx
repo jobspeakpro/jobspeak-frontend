@@ -12,10 +12,10 @@ import ProGuard from "./components/ProGuard.jsx";
 import Navigation from "./components/Navigation.jsx";
 import InlineError from "./components/InlineError.jsx";
 import { trackEvent } from "./analytics";
-import { getUserKey } from "./utils/userKey.js";
 import { usePro } from "./contexts/ProContext.jsx";
 import { isNetworkError } from "./utils/networkError.js";
 import { apiClient, ApiError } from "./utils/apiClient.js";
+import { getUserKey } from "./utils/userKey.js";
 
 export default function App({ defaultTab = "interview" }) {
   const { isPro, refreshProStatus } = usePro();
@@ -121,13 +121,46 @@ export default function App({ defaultTab = "interview" }) {
   // Fetch usage when interview tab is active
   const fetchUsage = async () => {
     try {
-      const userKey = getUserKey();
-      const data = await apiClient(`/api/usage/today?userKey=${encodeURIComponent(userKey)}`);
-      setUsage({
-        used: data.used || 0,
-        limit: data.limit === -1 ? Infinity : data.limit || 2,
-        remaining: data.remaining === -1 ? Infinity : data.remaining || 0,
-      });
+      const data = await apiClient(`/api/usage/today`);
+      // Backend returns standardized format: { usage: { used, limit, remaining, blocked } }
+      if (data.usage) {
+        setUsage({
+          used: data.usage.used || 0,
+          limit: data.usage.limit === -1 ? Infinity : data.usage.limit || 2,
+          remaining: data.usage.remaining === -1 ? Infinity : data.usage.remaining || 0,
+        });
+        // Update free attempts from backend using same usage object
+        setFreeImproveUsage({
+          count: data.usage.used || 0,
+          limit: data.usage.limit === -1 ? Infinity : data.usage.limit || 3,
+        });
+      } else {
+        // Fallback for backward compatibility
+        setUsage({
+          used: data.used || 0,
+          limit: data.limit === -1 ? Infinity : data.limit || 2,
+          remaining: data.remaining === -1 ? Infinity : data.remaining || 0,
+        });
+        // Update free attempts from backend (removes localStorage drift)
+        if (data.freeAttempts !== undefined) {
+          setFreeImproveUsage({
+            count: data.freeAttempts.count || 0,
+            limit: data.freeAttempts.limit || 3,
+          });
+        } else if (data.sttAttempts !== undefined) {
+          // Alternative field name
+          setFreeImproveUsage({
+            count: data.sttAttempts.count || 0,
+            limit: data.sttAttempts.limit || 3,
+          });
+        } else if (data.freeAttemptsUsed !== undefined && data.freeAttemptsLimit !== undefined) {
+          // Flat structure alternative
+          setFreeImproveUsage({
+            count: data.freeAttemptsUsed || 0,
+            limit: data.freeAttemptsLimit || 3,
+          });
+        }
+      }
       setServerUnavailable(false);
     } catch (err) {
       console.error("Error fetching usage:", err);
@@ -137,24 +170,19 @@ export default function App({ defaultTab = "interview" }) {
     }
   };
 
-  // Clean up ALL legacy free usage keys on mount
-  // Only allow: jobspeak_free_improve_usage_YYYY-MM-DD_<userKey>
+  // Clean up ALL legacy free usage keys on mount - remove all localStorage tracking
+  // Backend is now the source of truth
   useEffect(() => {
     try {
-      const userKey = getUserKey();
-      const d = new Date();
-      const today = d.toISOString().slice(0, 10); // YYYY-MM-DD
-      const validKey = `jobspeak_free_improve_usage_${today}_${userKey}`;
-      
-      // Delete any key that doesn't match the valid format
+      // Remove all localStorage keys related to free usage tracking
       const keysToDelete = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && key.startsWith("jobspeak_free_improve_usage")) {
-          // Only keep the valid key for today
-          if (key !== validKey) {
-            keysToDelete.push(key);
-          }
+        if (key && (
+          key.startsWith("jobspeak_free_improve_usage") ||
+          key.startsWith("speaking_attempts_")
+        )) {
+          keysToDelete.push(key);
         }
       }
       
@@ -169,9 +197,7 @@ export default function App({ defaultTab = "interview" }) {
 
   useEffect(() => {
     if (activeTab === "interview") {
-      fetchUsage();
-      // Update free improve usage count
-      setFreeImproveUsage(getFreeImproveUsageCount());
+      fetchUsage(); // This now also fetches free attempts from backend
     }
   }, [activeTab]);
 
@@ -226,55 +252,12 @@ export default function App({ defaultTab = "interview" }) {
     }
   };
 
-  // Helpers for simple free usage tracking (front-end only)
-  const getTodayKey = () => {
-    const d = new Date();
-    return d.toISOString().slice(0, 10); // YYYY-MM-DD
-  };
-
-  const incrementFreeImproveUsage = () => {
-    const userKey = getUserKey();
-    const today = getTodayKey();
-    const key = `jobspeak_free_improve_usage_${today}_${userKey}`;
-    const raw = localStorage.getItem(key);
-    let count = 0;
-    try {
-      count = raw ? parseInt(raw, 10) || 0 : 0;
-    } catch {
-      count = 0;
-    }
-    count += 1;
-    localStorage.setItem(key, String(count));
-  };
-
+  // Free usage tracking helpers - now use backend state only
+  // No localStorage - backend is source of truth
   const hasFreeImproveLeft = () => {
     if (isPro) return true;
-    const userKey = getUserKey();
-    const today = getTodayKey();
-    const key = `jobspeak_free_improve_usage_${today}_${userKey}`;
-    const raw = localStorage.getItem(key);
-    if (!raw) return true;
-    try {
-      const count = parseInt(raw, 10) || 0;
-      // Block when count >= 3 (allow 0, 1, 2, block at 3+)
-      return count < FREE_IMPROVE_LIMIT_PER_DAY;
-    } catch {
-      return true;
-    }
-  };
-
-  const getFreeImproveUsageCount = () => {
-    if (isPro) return { count: 0, limit: FREE_IMPROVE_LIMIT_PER_DAY };
-    const userKey = getUserKey();
-    const today = getTodayKey();
-    const key = `jobspeak_free_improve_usage_${today}_${userKey}`;
-    const raw = localStorage.getItem(key);
-    try {
-      const count = raw ? parseInt(raw, 10) || 0 : 0;
-      return { count, limit: FREE_IMPROVE_LIMIT_PER_DAY };
-    } catch {
-      return { count: 0, limit: FREE_IMPROVE_LIMIT_PER_DAY };
-    }
+    // Use backend state - if count >= limit, block
+    return freeImproveUsage.count < freeImproveUsage.limit;
   };
 
   const incrementFreeResumeUsage = () => {
@@ -348,25 +331,20 @@ export default function App({ defaultTab = "interview" }) {
       trackEvent("interview_submit", { textLength: text.length, source: "interview_tab" });
       trackEvent("micro_demo_used", { source: "interview_tab" });
 
-      const userKey = getUserKey();
       try {
         const data = await apiClient("/ai/micro-demo", {
           method: "POST",
-          body: { text, userKey },
+          body: { text },
         });
         setResult(data);
         trackEvent("interview_submit_success", { textLength: text.length });
-        if (!isPro) {
-          incrementFreeImproveUsage();
-          // Update free improve usage count after increment
-          setFreeImproveUsage(getFreeImproveUsageCount());
-        }
-
-        // Refresh usage after successful submission
+        
+        // Refresh usage after successful submission (includes free attempts)
         fetchUsage();
 
         // Save session to backend
         try {
+          const userKey = getUserKey();
           const aiResponse = JSON.stringify(data);
           await apiClient("/api/sessions", {
             method: "POST",
@@ -383,8 +361,9 @@ export default function App({ defaultTab = "interview" }) {
           fetchUsage();
         } catch (saveErr) {
           if (saveErr instanceof ApiError && saveErr.status === 402 && saveErr.data?.upgrade === true) {
-            setShowUpgradeModal(true);
-            fetchUsage();
+            // Update UI to reflect limit reached, but don't open modal
+            // Session save is non-critical - user should complete their current attempt
+            fetchUsage(); // Refresh to get latest from backend
             trackEvent("free_limit_reached", { source: "session_save" });
           } else {
             console.error("Failed to save session:", saveErr);
@@ -394,8 +373,10 @@ export default function App({ defaultTab = "interview" }) {
       } catch (err) {
         if (err instanceof ApiError && err.status === 402 && err.data?.upgrade === true) {
           setError("");
+          // Immediately update UI to 3/3 when limit reached
+          setFreeImproveUsage({ count: 3, limit: 3 });
           setShowUpgradeModal(true);
-          fetchUsage();
+          fetchUsage(); // Refresh to get latest from backend
           trackEvent("free_limit_reached", { source: "interview_tab" });
           trackEvent("interview_submit_fail", { reason: "free_limit", status: err.status });
           setLoading(false);
@@ -449,10 +430,9 @@ export default function App({ defaultTab = "interview" }) {
 
       trackEvent("resume_doctor_used", { source: "resume_tab" });
 
-      const userKey = getUserKey();
       const data = await apiClient("/resume/analyze", {
         method: "POST",
-        body: { text: resumeText, userKey },
+        body: { text: resumeText },
       });
       setResumeResult(data);
       if (!isPro) {
@@ -777,6 +757,11 @@ export default function App({ defaultTab = "interview" }) {
                       {freeImproveUsage.count} / {freeImproveUsage.limit}
                     </span>
                   </div>
+                  {freeImproveUsage.count >= freeImproveUsage.limit && (
+                    <div className="mt-2 text-[11px] text-amber-700">
+                      You've used all free attempts. Upgrade to continue.
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -827,6 +812,7 @@ export default function App({ defaultTab = "interview" }) {
                       if (transcribing) setError("");
                     }}
                     onUpgradeNeeded={() => setShowUpgradeModal(true)}
+                    onAttemptsRefresh={() => fetchUsage()}
                   />
                   <div className="flex-1 text-[11px] text-slate-600">
                     <div className="font-semibold text-slate-800 mb-1">
