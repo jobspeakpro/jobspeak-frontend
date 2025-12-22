@@ -1,28 +1,9 @@
 {
-  "framework": "vite",
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
   "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "https://jobspeak-backend-production.up.railway.app/api/$1"
-    },
-    {
-      "source": "/ai/(.*)",
-      "destination": "https://jobspeak-backend-production.up.railway.app/ai/$1"
-    },
-    {
-      "source": "/voice/(.*)",
-      "destination": "https://jobspeak-backend-production.up.railway.app/voice/$1"
-    },
-    {
-      "source": "/resume/(.*)",
-      "destination": "https://jobspeak-backend-production.up.railway.app/resume/$1"
-    },
-    {
-      "source": "/health",
-      "destination": "https://jobspeak-backend-production.up.railway.app/health"
-    }
+    { "source": "/api/:path*", "destination": "https://jobspeak-backend-production.up.railway.app/api/:path*" },
+    { "source": "/ai/:path*", "destination": "https://jobspeak-backend-production.up.railway.app/ai/:path*" },
+    { "source": "/voice/:path*", "destination": "https://jobspeak-backend-production.up.railway.app/voice/:path*" },
+    { "source": "/resume/:path*", "destination": "https://jobspeak-backend-production.up.railway.app/resume/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
-
