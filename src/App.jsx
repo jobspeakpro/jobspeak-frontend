@@ -37,6 +37,7 @@ export default function App({ defaultTab = "interview" }) {
   const [error, setError] = useState("");
   const [sessionRefreshTrigger, setSessionRefreshTrigger] = useState(0);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [paywallSource, setPaywallSource] = useState(null); // "mic" | "fix_answer" | "listen" | null
   const [usage, setUsage] = useState({ used: 0, limit: 2, remaining: 2, blocked: false });
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -116,6 +117,7 @@ export default function App({ defaultTab = "interview" }) {
   useEffect(() => {
     if (isPro && showUpgradeModal) {
       setShowUpgradeModal(false);
+      setPaywallSource(null);
     }
   }, [isPro, showUpgradeModal]);
 
@@ -257,11 +259,8 @@ export default function App({ defaultTab = "interview" }) {
 
   // Free usage tracking helpers - now use backend state only
   // No localStorage - backend is source of truth
-  const hasFreeImproveLeft = () => {
-    if (isPro) return true;
-    // Use backend state - if count >= limit, block
-    return freeImproveUsage.count < freeImproveUsage.limit;
-  };
+  const isPaywalled =
+    !isPro && isBlocked(usage);
 
   const incrementFreeResumeUsage = () => {
     const key = "jobspeak_free_resume_usage";
@@ -308,47 +307,18 @@ export default function App({ defaultTab = "interview" }) {
   }
 
   const handleImproveAnswer = async () => {
+    // Gate at handler level using backend usage as source of truth
+    if (isPaywalled) {
+      setError("");
+      setPaywallSource("fix_answer");
+      setShowUpgradeModal(true);
+      trackEvent("micro_demo_limit_hit", { source: "interview_tab" });
+      return; // Return early - do NOT make API call when paywalled
+    }
+
     setError("");
     setResult(null);
     setLoading(true);
-
-    // Check usage from backend before proceeding (only for non-Pro users)
-    if (!isPro) {
-      try {
-        const data = await apiClient(`/api/usage/today`);
-        let currentUsage = { used: 0, limit: 3, remaining: 3, blocked: false };
-        
-        if (data.usage) {
-          currentUsage = {
-            used: data.usage.used || 0,
-            limit: data.usage.limit === -1 ? Infinity : data.usage.limit || 3,
-            remaining: data.usage.remaining === -1 ? Infinity : data.usage.remaining || 0,
-            blocked: data.usage.blocked || false,
-          };
-        }
-        
-        if (isBlocked(currentUsage)) {
-          setShowUpgradeModal(true);
-          setLoading(false);
-          trackEvent("micro_demo_limit_hit", { source: "interview_tab" });
-          return;
-        }
-      } catch (err) {
-        console.error("Error checking usage:", err);
-        // Continue if usage check fails (don't block user)
-      }
-    }
-
-    // Free limit gating for interview coach (fallback check)
-    if (!hasFreeImproveLeft()) {
-      setError(
-        "You've used your 3 free attempts today. Upgrade to Pro for unlimited practice."
-      );
-      setShowPaywall(true);
-      setLoading(false);
-      trackEvent("micro_demo_limit_hit", { source: "interview_tab" });
-      return;
-    }
 
     if (typeof text !== "string" || !text.trim()) {
       setError("Type your answer to begin.");
@@ -405,6 +375,7 @@ export default function App({ defaultTab = "interview" }) {
           setError("");
           // Immediately update UI to 3/3 when limit reached
           setFreeImproveUsage({ count: 3, limit: 3 });
+          setPaywallSource("fix_answer");
           setShowUpgradeModal(true);
           fetchUsage(); // Refresh to get latest from backend
           trackEvent("free_limit_reached", { source: "interview_tab" });
@@ -787,9 +758,9 @@ export default function App({ defaultTab = "interview" }) {
                       {freeImproveUsage.count} / {freeImproveUsage.limit}
                     </span>
                   </div>
-                  {freeImproveUsage.count >= freeImproveUsage.limit && (
+                  {isPaywalled && (
                     <div className="mt-2 text-[11px] text-amber-700">
-                      You've used all free attempts. Upgrade to continue.
+                      Free limit reached — upgrade to continue practicing.
                     </div>
                   )}
                 </div>
@@ -831,19 +802,23 @@ export default function App({ defaultTab = "interview" }) {
                 className="flex flex-col gap-3 flex-1"
               >
                 <div className="flex items-start gap-3">
-                  <VoiceRecorder 
-                    onTranscript={(transcript) => {
-                      setText(transcript);
-                      setError("");
-                    }} 
-                    onStateChange={({ recording, transcribing }) => {
-                      setIsRecording(recording);
-                      setIsTranscribing(transcribing);
-                      if (transcribing) setError("");
-                    }}
-                    onUpgradeNeeded={() => setShowUpgradeModal(true)}
-                    onAttemptsRefresh={() => fetchUsage()}
-                  />
+                    <VoiceRecorder 
+                      onTranscript={(transcript) => {
+                        setText(transcript);
+                        setError("");
+                      }} 
+                      onStateChange={({ recording, transcribing }) => {
+                        setIsRecording(recording);
+                        setIsTranscribing(transcribing);
+                        if (transcribing) setError("");
+                      }}
+                      onUpgradeNeeded={(source) => {
+                        // Mic always opens paywall when blocked
+                        setPaywallSource(source || "mic");
+                        setShowUpgradeModal(true);
+                      }}
+                      onAttemptsRefresh={() => fetchUsage()}
+                    />
                   <div className="flex-1 text-[11px] text-slate-600">
                     <div className="font-semibold text-slate-800 mb-1">
                       {isRecording ? "Recording..." : isTranscribing ? "Transcribing..." : "Speak your answer"}
@@ -890,9 +865,9 @@ export default function App({ defaultTab = "interview" }) {
                     <div className="flex flex-wrap gap-2 items-center">
                       <button
                         type="submit"
-                        disabled={loading || isTranscribing || (typeof text !== "string" || !text.trim()) || (!isPro && isBlocked(usage))}
+                        // Do NOT disable based on free limit; gate inside handler instead
+                        disabled={loading || isTranscribing || (typeof text !== "string" || !text.trim())}
                         className="inline-flex items-center px-4 py-2 rounded-full bg-rose-500 hover:bg-rose-600 text-white text-sm font-semibold shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition"
-                        title={!isPro && isBlocked(usage) ? "You've used your 3 free attempts today. Upgrade to continue." : undefined}
                       >
                         {isTranscribing 
                           ? "Transcribing..." 
@@ -951,7 +926,10 @@ export default function App({ defaultTab = "interview" }) {
                         {improvedAnswerText && (
                           <ListenToAnswerButton
                             improvedText={improvedAnswerText}
-                            onUpgradeNeeded={() => setShowUpgradeModal(true)}
+                            onUpgradeNeeded={(source) => {
+                              setPaywallSource(source || "listen");
+                              setShowUpgradeModal(true);
+                            }}
                           />
                         )}
                         {result.message && (
@@ -1245,7 +1223,13 @@ export default function App({ defaultTab = "interview" }) {
 
       {/* Upgrade Modal */}
       {showUpgradeModal && (
-        <UpgradeModal onClose={() => setShowUpgradeModal(false)} />
+        <UpgradeModal
+          onClose={() => {
+            setShowUpgradeModal(false);
+            setPaywallSource(null);
+          }}
+          source={paywallSource}
+        />
       )}
     </div>
   );

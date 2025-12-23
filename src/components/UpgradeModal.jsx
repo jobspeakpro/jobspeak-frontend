@@ -2,7 +2,12 @@
 import React, { useEffect } from "react";
 import UpgradeToProButton from "./UpgradeToProButton.jsx";
 
-export default function UpgradeModal({ onClose, isPro = false }) {
+// source can be:
+// - "fix_answer" → Unlock unlimited answer rewrites
+// - "mic"        → Practice speaking without limits
+// - "listen"     → Hear every answer spoken naturally
+// - anything else / undefined → generic copy
+export default function UpgradeModal({ onClose, isPro = false, source }) {
   // Auto-close modal if user becomes Pro
   useEffect(() => {
     if (isPro) {
@@ -10,12 +15,38 @@ export default function UpgradeModal({ onClose, isPro = false }) {
     }
   }, [isPro, onClose]);
 
+  const getHeadline = () => {
+    if (source === "fix_answer") {
+      return "Unlock unlimited answer rewrites";
+    }
+    if (source === "mic") {
+      return "Practice speaking without limits";
+    }
+    if (source === "listen") {
+      return "Hear every answer spoken naturally";
+    }
+    return "Free Limit Reached";
+  };
+
+  const getSubcopy = () => {
+    if (source === "fix_answer") {
+      return "You've used your free answer improvements. Upgrade to keep getting instant rewrites for every interview question.";
+    }
+    if (source === "mic") {
+      return "You've used your free speaking attempts. Upgrade to keep practicing out loud as much as you want.";
+    }
+    if (source === "listen") {
+      return "You've used your free listening attempts. Upgrade to hear every answer spoken in natural, clear English.";
+    }
+    return "You've used your 3 free attempts today. Upgrade to continue practicing.";
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-lg max-w-md w-full p-6">
         <div className="flex items-start justify-between mb-4">
           <h2 className="text-lg font-semibold text-slate-900">
-            Free Limit Reached
+            {getHeadline()}
           </h2>
           <button
             type="button"
@@ -28,7 +59,7 @@ export default function UpgradeModal({ onClose, isPro = false }) {
 
         <div className="space-y-4">
           <p className="text-sm text-slate-700">
-            You've used your 3 free attempts today. Upgrade to continue.
+            {getSubcopy()}
           </p>
 
           <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">

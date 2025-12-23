@@ -56,6 +56,22 @@ export default function ListenToAnswerButton({ improvedText, onUpgradeNeeded }) 
   const handleClick = async () => {
     console.log("[TTS] CLICKED");
     
+    // Check usage FIRST - if blocked, open paywall modal and return early (do NOT make API call)
+    if (!isPro) {
+      // Refresh usage from backend
+      const currentUsage = await fetchUsage();
+      setUsage(currentUsage);
+      
+      // Block if usage is blocked or remaining <= 0
+      if (isBlocked(currentUsage)) {
+        if (typeof onUpgradeNeeded === "function") {
+          // Gate at handler level: always open paywall when limit reached
+          onUpgradeNeeded("listen");
+        }
+        return; // Return early - do NOT make API call
+      }
+    }
+
     // Determine the text to speak
     const textToSpeak = improvedText || "";
 
@@ -75,21 +91,6 @@ export default function ListenToAnswerButton({ improvedText, onUpgradeNeeded }) 
     if (audioUrlRef.current) {
       URL.revokeObjectURL(audioUrlRef.current);
       audioUrlRef.current = null;
-    }
-
-    // Check usage from backend before proceeding (only for non-Pro users)
-    if (!isPro) {
-      // Refresh usage from backend
-      const currentUsage = await fetchUsage();
-      setUsage(currentUsage);
-      
-      // Block if usage is blocked or remaining <= 0
-      if (isBlocked(currentUsage)) {
-        if (typeof onUpgradeNeeded === "function") {
-          onUpgradeNeeded();
-        }
-        return;
-      }
     }
 
     setIsLoading(true);
@@ -214,7 +215,7 @@ export default function ListenToAnswerButton({ improvedText, onUpgradeNeeded }) 
         err.data?.upgrade === true &&
         typeof onUpgradeNeeded === "function"
       ) {
-        onUpgradeNeeded();
+        onUpgradeNeeded("listen");
         return;
       }
 
@@ -235,20 +236,17 @@ export default function ListenToAnswerButton({ improvedText, onUpgradeNeeded }) 
     }
   };
 
-  const isUsageBlocked = !isPro && isBlocked(usage);
-
   return (
     <div className="mt-3 flex flex-col items-start gap-2">
       <button
         type="button"
         onClick={handleClick}
-        disabled={isLoading || isUsageBlocked}
+        disabled={isLoading}
         className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium shadow-sm ${
-          isLoading || isUsageBlocked
+          isLoading
             ? "bg-gray-300 text-gray-700 cursor-not-allowed"
             : "bg-emerald-600 text-white hover:bg-emerald-700"
         }`}
-        title={isUsageBlocked ? "You've used your 3 free attempts today. Upgrade to continue." : undefined}
       >
         {isLoading ? (
           <>

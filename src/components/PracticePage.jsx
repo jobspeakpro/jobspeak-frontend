@@ -23,9 +23,13 @@ export default function PracticePage() {
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [paywallSource, setPaywallSource] = useState(null); // "mic" | "fix_answer" | "listen" | null
   const [serverUnavailable, setServerUnavailable] = useState(false);
   const [freeImproveUsage, setFreeImproveUsage] = useState({ count: 0, limit: 3 });
   const [usage, setUsage] = useState({ used: 0, limit: 3, remaining: 3, blocked: false });
+
+  const isPaywalled =
+    !isPro && isBlocked(usage);
 
   // Fetch free attempts from backend API
   const fetchFreeAttempts = async () => {
@@ -105,59 +109,24 @@ export default function PracticePage() {
     fetchFreeAttempts();
   }, [isPro]);
 
-  // Free limit helpers - now use backend state only
-  const hasFreeImproveLeft = () => {
-    if (isPro) return true;
-    // Use backend state - if count >= limit, block
-    return freeImproveUsage.count < freeImproveUsage.limit;
-  };
-
   function getImprovedAnswerText() {
     if (!result) return "";
     return result.improved || "";
   }
 
   const handleImproveAnswer = async () => {
+    // Gate at handler level using backend usage as source of truth
+    if (isPaywalled) {
+      setError("");
+      setPaywallSource("fix_answer");
+      setShowUpgradeModal(true);
+      trackEvent("micro_demo_limit_hit", { source: "practice_page" });
+      return; // Return early - do NOT make API call when paywalled
+    }
+
     setError("");
     setResult(null);
     setLoading(true);
-
-    // Check usage from backend before proceeding (only for non-Pro users)
-    if (!isPro) {
-      try {
-        const data = await apiClient(`/api/usage/today`);
-        let currentUsage = { used: 0, limit: 3, remaining: 3, blocked: false };
-        
-        if (data.usage) {
-          currentUsage = {
-            used: data.usage.used || 0,
-            limit: data.usage.limit === -1 ? Infinity : data.usage.limit || 3,
-            remaining: data.usage.remaining === -1 ? Infinity : data.usage.remaining || 0,
-            blocked: data.usage.blocked || false,
-          };
-        }
-        
-        if (isBlocked(currentUsage)) {
-          setShowUpgradeModal(true);
-          setLoading(false);
-          trackEvent("micro_demo_limit_hit", { source: "practice_page" });
-          return;
-        }
-      } catch (err) {
-        console.error("Error checking usage:", err);
-        // Continue if usage check fails (don't block user)
-      }
-    }
-
-    // Free limit gating (fallback check)
-    if (!hasFreeImproveLeft()) {
-      setError(
-        "You've used your 3 free attempts today. Upgrade to Pro for unlimited practice."
-      );
-      setLoading(false);
-      trackEvent("micro_demo_limit_hit", { source: "practice_page" });
-      return;
-    }
 
     if (typeof text !== "string" || !text.trim()) {
       setError("Type or record your answer to begin.");
@@ -210,6 +179,7 @@ export default function PracticePage() {
           setError("");
           // Immediately update UI to 3/3 when limit reached
           setFreeImproveUsage({ count: 3, limit: 3 });
+          setPaywallSource("fix_answer");
           setShowUpgradeModal(true);
           trackEvent("free_limit_reached", { source: "practice_page" });
           trackEvent("interview_submit_fail", { reason: "free_limit", status: err.status });
@@ -290,9 +260,9 @@ export default function PracticePage() {
                 {freeImproveUsage.count} / {freeImproveUsage.limit}
               </span>
             </div>
-            {freeImproveUsage.count >= freeImproveUsage.limit && (
+            {isPaywalled && (
               <div className="mt-2 text-[11px] text-amber-700">
-                You've used all free attempts. Upgrade to continue.
+                Free limit reached — upgrade to continue practicing.
               </div>
             )}
           </div>
@@ -337,7 +307,10 @@ export default function PracticePage() {
                     setIsTranscribing(transcribing);
                     if (transcribing) setError("");
                   }}
-                  onUpgradeNeeded={() => setShowUpgradeModal(true)}
+                  onUpgradeNeeded={(source) => {
+                    setPaywallSource(source || "mic");
+                    setShowUpgradeModal(true);
+                  }}
                   onAttemptsRefresh={() => fetchFreeAttempts()}
                 />
                 <div className="flex-1 text-[11px] text-slate-600">
@@ -369,9 +342,8 @@ export default function PracticePage() {
               <div className="flex flex-wrap gap-2 items-center">
                 <button
                   type="submit"
-                  disabled={loading || isTranscribing || (typeof text !== "string" || !text.trim()) || (!isPro && isBlocked(usage))}
+                  disabled={loading || isTranscribing || (typeof text !== "string" || !text.trim())}
                   className="inline-flex items-center px-4 py-2 rounded-full bg-rose-500 hover:bg-rose-600 text-white text-sm font-semibold shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition"
-                  title={!isPro && isBlocked(usage) ? "You've used your 3 free attempts today. Upgrade to continue." : undefined}
                 >
                   {isTranscribing 
                     ? "Transcribing..." 
@@ -431,7 +403,10 @@ export default function PracticePage() {
                   {improvedAnswerText && (
                     <ListenToAnswerButton
                       improvedText={improvedAnswerText}
-                      onUpgradeNeeded={() => setShowUpgradeModal(true)}
+                      onUpgradeNeeded={(source) => {
+                        setPaywallSource(source || "listen");
+                        setShowUpgradeModal(true);
+                      }}
                     />
                   )}
                   {result.message && (
@@ -461,7 +436,13 @@ export default function PracticePage() {
 
       {/* Upgrade Modal */}
       {showUpgradeModal && (
-        <UpgradeModal onClose={() => setShowUpgradeModal(false)} />
+        <UpgradeModal
+          onClose={() => {
+            setShowUpgradeModal(false);
+            setPaywallSource(null);
+          }}
+          source={paywallSource}
+        />
       )}
     </div>
   );

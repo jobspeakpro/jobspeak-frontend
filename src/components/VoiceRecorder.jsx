@@ -59,15 +59,7 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
   }, [recording, transcribing, onStateChange]);
 
   const startRecording = async () => {
-    setError("");
-    setPermissionDenied(false);
-    chunksRef.current = [];
-    
-    // Generate attemptId on mic click (STT ONLY)
-    attemptIdRef.current = crypto.randomUUID();
-    console.log("[STT] Generated attemptId:", attemptIdRef.current);
-
-    // Check daily limit BEFORE starting recording (only for non-Pro users)
+    // Check usage FIRST - if blocked, open paywall modal and return early (do NOT start recording or make API call)
     if (!isPro) {
       // Fetch latest from backend to ensure accuracy
       const currentUsage = await fetchUsage();
@@ -76,11 +68,20 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
       // Block if blocked or remaining <= 0
       if (isBlocked(currentUsage)) {
         if (onUpgradeNeeded) {
-          onUpgradeNeeded();
+          // Gate at handler level: always open paywall when limit reached
+          onUpgradeNeeded("mic");
         }
-        return;
+        return; // Return early - do NOT start recording or make API call
       }
     }
+
+    setError("");
+    setPermissionDenied(false);
+    chunksRef.current = [];
+    
+    // Generate attemptId on mic click (STT ONLY)
+    attemptIdRef.current = crypto.randomUUID();
+    console.log("[STT] Generated attemptId:", attemptIdRef.current);
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -229,7 +230,7 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
             if (err instanceof ApiError && err.status === 429) {
               setError("You've reached your daily limit. Upgrade to Pro for unlimited practice.");
               if (onUpgradeNeeded) {
-                onUpgradeNeeded();
+                onUpgradeNeeded("mic");
               }
               trackEvent("stt_fail", { error: "rate_limit_429", status: 429 });
               return; // Stop the flow - don't proceed to transcript-dependent steps
@@ -238,7 +239,7 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
             // Handle 402 (upgrade needed)
             if (err instanceof ApiError && err.status === 402 && err.data?.upgrade === true && onUpgradeNeeded) {
               setError("You've reached your daily limit. Upgrade to Pro for unlimited practice.");
-              onUpgradeNeeded();
+              onUpgradeNeeded("mic");
               trackEvent("stt_fail", { error: "upgrade_needed_402", status: 402 });
               return; // Stop the flow
             }
@@ -283,8 +284,6 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
     }
   };
 
-  const isUsageBlocked = !isPro && isBlocked(usage);
-
   return (
     <div className="flex flex-col items-center gap-2">
       <div className="flex items-center gap-2">
@@ -292,9 +291,9 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
           <button
             type="button"
             onClick={startRecording}
-            disabled={transcribing || isUsageBlocked}
+            disabled={transcribing}
             className="flex items-center justify-center h-12 w-12 rounded-full shadow-sm border bg-white border-rose-200 text-rose-500 hover:bg-rose-50 disabled:opacity-60 disabled:cursor-not-allowed transition"
-            title={isUsageBlocked ? "You've used your 3 free attempts today. Upgrade to continue." : "Start recording"}
+            title="Start recording"
           >
             <span className="material-icons-outlined text-xl">mic</span>
           </button>
