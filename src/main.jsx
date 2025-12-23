@@ -18,16 +18,6 @@ Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
 });
 
-// TEMP test trigger (remove after verification)
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get("sentry_test") === "true") {
-  console.error("SENTRY TEST TRIGGERED");
-  Sentry.captureException(new Error("Sentry test error (fresh install)"));
-  setTimeout(() => {
-    throw new Error("Sentry test error (fresh install throw)");
-  }, 0);
-}
-
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <ErrorBoundary>
