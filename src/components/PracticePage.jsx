@@ -5,7 +5,7 @@ import VoiceRecorder from "./VoiceRecorder.jsx";
 import ListenToAnswerButton from "./ListenToAnswerButton.jsx";
 import InlineError from "./InlineError.jsx";
 import UpgradeModal from "./UpgradeModal.jsx";
-import { trackEvent } from "../analytics";
+import { trackEvent } from "../utils/analytics";
 import { isNetworkError } from "../utils/networkError.js";
 import { apiClient, ApiError } from "../utils/apiClient.js";
 import { usePro } from "../contexts/ProContext.jsx";
@@ -134,6 +134,9 @@ export default function PracticePage() {
       return;
     }
 
+    // Track practice start
+    trackEvent("practice_start", { source: "ui" });
+
     try {
       trackEvent("interview_submit", { textLength: text.length, source: "practice_page" });
 
@@ -161,6 +164,8 @@ export default function PracticePage() {
               score: null,
             },
           });
+          // Track practice complete when session is successfully saved
+          trackEvent("practice_complete", { source: "ui" });
         } catch (saveErr) {
           if (saveErr instanceof ApiError && saveErr.status === 402 && saveErr.data?.upgrade === true) {
             // Update UI to reflect limit reached, but don't open modal
@@ -250,10 +255,10 @@ export default function PracticePage() {
         </div>
       )}
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         {/* Free improve attempts counter */}
         {!isPro && (
-          <div className="bg-rose-50 border border-rose-100 rounded-xl px-4 py-2 text-xs mb-4">
+          <div className="bg-rose-50 border border-rose-100 rounded-xl px-4 py-2 text-xs mb-6">
             <div className="flex items-center justify-between">
               <span className="text-slate-600">Free attempts today:</span>
               <span className="font-semibold text-slate-900">
@@ -267,26 +272,26 @@ export default function PracticePage() {
             )}
           </div>
         )}
-        {/* Question header */}
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div>
-            <h2 className="text-base md:text-lg font-semibold text-slate-900 mb-1">
+        {/* Question card - centered */}
+        <div className="max-w-3xl mx-auto mb-8">
+          <div className="bg-white border border-rose-100 rounded-2xl p-6 shadow-sm">
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-2 leading-tight">
               Tell me about a time you faced a challenge at work.
             </h2>
-            <p className="text-xs text-slate-600">
+            <p className="text-sm text-slate-600 leading-relaxed">
               Focus on the STAR method: Situation, Task, Action, Result.
             </p>
           </div>
         </div>
 
         {/* Two-column layout */}
-        <div className="grid gap-4 md:grid-cols-2 mt-2">
+        <div className="grid gap-6 md:grid-cols-2">
           {/* LEFT: User answer with VoiceRecorder */}
-          <div className="bg-white border border-rose-100 rounded-2xl p-4 shadow-sm flex flex-col h-full">
-            <p className="text-[11px] font-semibold text-rose-500 mb-1">
+          <div className="bg-white border border-rose-100 rounded-2xl p-6 shadow-md flex flex-col h-full">
+            <p className="text-sm font-bold text-rose-500 mb-1 uppercase tracking-wide">
               Your Answer
             </p>
-            <p className="text-[11px] text-slate-500 mb-3">
+            <p className="text-xs text-slate-500 mb-4 leading-relaxed">
               Record your answer or type it below. Aim for 45–90 seconds when spoken.
             </p>
             <form
@@ -294,9 +299,9 @@ export default function PracticePage() {
                 e.preventDefault();
                 handleImproveAnswer();
               }}
-              className="flex flex-col gap-3 flex-1"
+              className="flex flex-col gap-4 flex-1"
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-4">
                 <VoiceRecorder 
                   onTranscript={(transcript) => {
                     setText(transcript);
@@ -313,7 +318,7 @@ export default function PracticePage() {
                   }}
                   onAttemptsRefresh={() => fetchFreeAttempts()}
                 />
-                <div className="flex-1 text-[11px] text-slate-600">
+                <div className="flex-1 text-xs text-slate-600">
                   <div className="font-semibold text-slate-800 mb-1">
                     {isRecording ? "Recording..." : isTranscribing ? "Transcribing..." : "Speak your answer"}
                   </div>
@@ -336,14 +341,14 @@ export default function PracticePage() {
                 }}
                 placeholder="Your transcript will appear here after recording, or type your answer directly..."
                 disabled={isTranscribing}
-                className="w-full flex-1 min-h-[140px] border border-rose-100 bg-rose-50 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-rose-400 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full flex-1 min-h-[160px] border-2 border-rose-100 bg-rose-50 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-rose-400 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
               />
               
               <div className="flex flex-wrap gap-2 items-center">
                 <button
                   type="submit"
                   disabled={loading || isTranscribing || (typeof text !== "string" || !text.trim())}
-                  className="inline-flex items-center px-4 py-2 rounded-full bg-rose-500 hover:bg-rose-600 text-white text-sm font-semibold shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition"
+                  className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-rose-500 hover:bg-rose-600 text-white text-sm font-bold shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02]"
                 >
                   {isTranscribing 
                     ? "Transcribing..." 
@@ -371,11 +376,11 @@ export default function PracticePage() {
           </div>
 
           {/* RIGHT: Improved answer */}
-          <div className="bg-white border border-rose-100 rounded-2xl p-4 shadow-sm flex flex-col h-full">
-            <p className="text-[11px] font-semibold text-emerald-600 mb-1">
+          <div className="bg-white border border-rose-100 rounded-2xl p-6 shadow-md flex flex-col h-full">
+            <p className="text-sm font-bold text-emerald-600 mb-1 uppercase tracking-wide">
               Better way to say it
             </p>
-            <p className="text-[11px] text-slate-500 mb-3">
+            <p className="text-xs text-slate-500 mb-4 leading-relaxed">
               Optimized for speaking naturally. Use it as a guide and adapt it to your story.
             </p>
 
@@ -391,8 +396,8 @@ export default function PracticePage() {
                   message={result.error}
                 />
               ) : (
-                <div className="flex flex-col gap-3 flex-1">
-                  <div className="bg-rose-50 border border-rose-100 rounded-lg px-3 py-2 text-sm text-slate-900 whitespace-pre-wrap break-words">
+                <div className="flex flex-col gap-4 flex-1">
+                  <div className="bg-rose-50 border-2 border-rose-100 rounded-xl px-4 py-3 text-sm text-slate-900 whitespace-pre-wrap break-words leading-relaxed">
                     {improvedAnswerText || (
                       <span className="text-slate-400">
                         Your improved answer will appear here after you

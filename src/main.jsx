@@ -1,5 +1,4 @@
 // src/main.jsx
-window.__BUILD_MARKER__ = 'ga-debug-1';
 import * as Sentry from "@sentry/react";
 import React, { useEffect } from "react";
 import ReactDOM from "react-dom/client";
@@ -15,15 +14,13 @@ import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { initGA, trackPageView } from "./lib/analytics";
 import "./styles/globals.css";
 
+// Initialize GA4
+initGA();
+
 // --- Sentry setup ---
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
 });
-
-// --- GA4 initialization ---
-console.log('[GA] measurement id present?', !!import.meta.env.VITE_GA_MEASUREMENT_ID);
-console.log('[GA] measurement id value:', import.meta.env.VITE_GA_MEASUREMENT_ID);
-initGA();
 
 // Component to track page views on route changes
 function PageViewTracker() {

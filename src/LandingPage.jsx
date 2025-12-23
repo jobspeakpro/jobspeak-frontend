@@ -1,12 +1,14 @@
 // src/LandingPage.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { trackEvent } from "./lib/analytics";
 
 export default function LandingPage() {
   const [showDemoModal, setShowDemoModal] = useState(false);
   const navigate = useNavigate();
 
   const handlePracticeNow = () => {
+    trackEvent("start_practice_click", { location: "landing_hero" });
     navigate("/practice");
   };
 
@@ -59,93 +61,38 @@ export default function LandingPage() {
         </header>
 
         {/* HERO SECTION */}
-        <div className="relative w-full overflow-hidden px-6 py-12 lg:px-40 lg:py-24 bg-background-light dark:bg-background-dark">
-
-          <div className="max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
-            {/* Left column */}
-            <div className="lg:col-span-7 flex flex-col gap-6 items-start text-left">
-              <h1 className="text-[#181111] dark:text-white text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.1] tracking-tight">
-                Speak confidently in job interviews, even if English isn't your first language.
+        <div className="relative w-full overflow-hidden px-6 py-16 lg:px-40 lg:py-32 bg-background-light dark:bg-background-dark">
+          <div className="max-w-[1280px] mx-auto flex flex-col items-center text-center relative z-10">
+            {/* Centered Hero */}
+            <div className="flex flex-col gap-6 items-center max-w-4xl">
+              <h1 className="text-[#181111] dark:text-white text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.05] tracking-[-0.02em]">
+                Speak confidently in job interviews,<br />
+                <span className="text-primary">even if English isn't your first language.</span>
               </h1>
 
-              <h2 className="text-xl sm:text-2xl text-[#5c4a4a] dark:text-gray-300 font-medium leading-relaxed max-w-2xl">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl text-[#5c4a4a] dark:text-gray-300 font-normal leading-relaxed max-w-3xl">
                 Get instant AI feedback on your answers. Practice until you sound natural and professional—no accent coaching needed.
               </h2>
 
-              <ul className="text-base sm:text-lg text-[#181111] dark:text-gray-200 space-y-3 max-w-2xl">
-                <li className="flex items-start gap-3">
-                  <span className="text-emerald-600 font-bold mt-0.5 text-xl">✓</span>
-                  <span>Fix your English instantly with AI rewrites</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-emerald-600 font-bold mt-0.5 text-xl">✓</span>
-                  <span>Practice with natural voice playback</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-emerald-600 font-bold mt-0.5 text-xl">✓</span>
-                  <span>Build confidence in minutes</span>
-                </li>
-              </ul>
-
-              <div className="flex flex-col sm:flex-row gap-3 w-full pt-2">
+              <div className="flex flex-col sm:flex-row gap-4 items-center justify-center pt-4">
                 <button 
                   onClick={handlePracticeNow}
-                  className="flex min-w-[240px] cursor-pointer items-center justify-center rounded-full h-14 px-8 bg-primary text-white text-base font-bold shadow-lg hover:bg-red-600 transition-colors"
+                  className="flex min-w-[260px] cursor-pointer items-center justify-center rounded-full h-16 px-10 bg-primary text-white text-lg font-bold shadow-xl shadow-primary/30 hover:bg-red-600 hover:shadow-2xl hover:shadow-primary/40 transition-all transform hover:scale-[1.02]"
                 >
-                  <span className="material-symbols-outlined mr-2">mic</span>
-                  Start practicing (free)
+                  <span className="material-symbols-outlined mr-2" style={{ fontSize: 24 }}>mic</span>
+                  Start Speaking (Free)
                 </button>
                 <button 
-                  onClick={handleWatchDemo}
-                  className="flex min-w-[180px] cursor-pointer items-center justify-center rounded-full h-14 px-8 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-[#181111] dark:text-white text-base font-bold hover:bg-gray-50 dark:hover:bg-white/10 transition-colors"
-                >
-                  <span className="material-symbols-outlined mr-2">
-                    play_circle
-                  </span>
-                  Try the demo
-                </button>
-              </div>
-
-              <div className="flex items-center gap-2 text-sm text-[#886364] dark:text-gray-400 font-medium mt-2">
-                <span className="text-green-500">✓</span>
-                <span>No credit card required</span>
-                <span className="mx-2">•</span>
-                <span className="text-green-500">✓</span>
-                <span>5-minute daily practice</span>
-              </div>
-            </div>
-
-            {/* Right hero card */}
-            <div className="lg:col-span-5 relative mt-8 lg:mt-0 flex justify-center lg:justify-end">
-              <div className="relative w-full aspect-[4/5] max-w-[500px] rounded-3xl overflow-hidden shadow-2xl bg-white dark:bg-[#2a1a1a] p-3 border border-gray-100 dark:border-gray-800">
-                <div
-                  className="w-full h-full rounded-2xl bg-cover bg-center relative"
-                  style={{
-                    backgroundImage:
-                      'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBG6lR6rD7OWFkzWxxqozcUavUNIV1PXkLcoomKh1UVOMqje5Q5N3B-Fy48vOVI9sVaO8-2jdbHNjvKKJD_i3UuDm3_vIYbwJq6VXD4D3IVEAPmgVDsn1XVOSpynlb2CPDQgAzBpUyR-F8n3HXkcceoIUfCgTATKgLSYGWgZInM7RIeZmIGhK-NDHsUiBOYneqMSV5QDuseaDVztOOLQBUsRehZGl8_5rKaalJmBp797NY2MUeJg5FoZcRKuMvW984MU0z6sgZGjIMO")',
+                  onClick={() => {
+                    const element = document.getElementById('methodology');
+                    if (element) {
+                      element.scrollIntoView({ behavior: 'smooth' });
+                    }
                   }}
+                  className="flex min-w-[200px] cursor-pointer items-center justify-center rounded-full h-16 px-10 bg-white dark:bg-white/5 border-2 border-gray-200 dark:border-white/10 text-[#181111] dark:text-white text-lg font-bold hover:bg-gray-50 dark:hover:bg-white/10 hover:border-gray-300 dark:hover:border-white/20 transition-all"
                 >
-                  <div className="absolute bottom-6 left-6 right-6 bg-white/95 dark:bg-[#1a1a1a]/95 backdrop-blur-md rounded-xl p-5 shadow-lg border border-gray-100 dark:border-gray-800">
-                    <div className="flex items-start gap-4">
-                      <div className="size-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 shrink-0">
-                        <span className="material-symbols-outlined">
-                          graphic_eq
-                        </span>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-xs text-gray-500 uppercase font-bold mb-1">
-                          Real-time Feedback
-                        </p>
-                        <p className="text-base font-bold text-[#181111] dark:text-white leading-tight">
-                          "Great intonation on that answer!"
-                        </p>
-                        <div className="mt-3 w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
-                          <div className="bg-primary h-full rounded-full w-[92%]" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  How it works
+                </button>
               </div>
             </div>
           </div>
@@ -174,18 +121,34 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* TESTIMONIALS */}
-        <section className="w-full bg-background-light dark:bg-background-dark py-16 px-6 lg:px-40 border-b border-[#e5dcdc] dark:border-[#333] relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="max-w-[1280px] mx-auto flex flex-col gap-10 relative z-10">
-            <div className="flex flex-col md:flex-row justify-between items-end gap-6">
-              <h3 className="text-[#181111] dark:text-white text-2xl lg:text-3xl font-bold leading-tight max-w-xl">
+        {/* FEATURE CALLOUT SECTION */}
+        <section className="w-full bg-background-light dark:bg-background-dark py-20 px-6 lg:px-40 border-b border-[#e5dcdc] dark:border-[#333] relative overflow-hidden">
+          <div className="max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
+            {/* Left text */}
+            <div className="flex flex-col gap-6 items-start text-left">
+              <h2 className="text-[#181111] dark:text-white text-3xl lg:text-4xl font-black leading-tight tracking-[-0.02em]">
                 Used by learners from{" "}
                 <span className="text-primary">20+ countries</span> to land
                 their dream jobs
-              </h3>
-              <div className="flex items-center gap-2">
+              </h2>
+              <p className="text-lg text-[#5c4a4a] dark:text-gray-300 font-normal leading-relaxed">
+                Get instant AI feedback on your answers. Practice until you sound natural and professional—no accent coaching needed.
+              </p>
+              <ul className="text-lg text-[#181111] dark:text-gray-200 space-y-4">
+                <li className="flex items-start gap-4">
+                  <span className="text-emerald-600 font-bold mt-0.5 text-2xl">✓</span>
+                  <span>Fix your English instantly with AI rewrites</span>
+                </li>
+                <li className="flex items-start gap-4">
+                  <span className="text-emerald-600 font-bold mt-0.5 text-2xl">✓</span>
+                  <span>Practice with natural voice playback</span>
+                </li>
+                <li className="flex items-start gap-4">
+                  <span className="text-emerald-600 font-bold mt-0.5 text-2xl">✓</span>
+                  <span>Build confidence in minutes</span>
+                </li>
+              </ul>
+              <div className="flex items-center gap-2 pt-4">
                 <span className="text-yellow-500 font-bold text-xl">
                   4.9/5
                 </span>
@@ -206,95 +169,35 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Card 1 */}
-              <div className="bg-white dark:bg-[#2a1a1a] p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col gap-4 hover:shadow-md transition-shadow">
-                <div className="flex text-yellow-500 gap-0.5">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <span
-                      key={i}
-                      className="material-symbols-outlined text-[20px]"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                    >
-                      star
-                    </span>
-                  ))}
-                </div>
-                <p className="text-[#181111] dark:text-gray-200 font-medium leading-relaxed">
-                  "Helped me get 3 job interviews in 2 weeks. The simulated
-                  practice is exactly what I needed to stop freezing up."
-                </p>
-                <div className="flex items-center gap-3 mt-auto pt-2">
-                  <div className="size-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">
-                    MC
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-[#181111] dark:text-white">
-                      Maria C.
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Software Engineer, Brazil
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 2 */}
-              <div className="bg-white dark:bg-[#2a1a1a] p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col gap-4 hover:shadow-md transition-shadow">
-                <div className="flex text-yellow-500 gap-0.5">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <span
-                      key={i}
-                      className="material-symbols-outlined text-[20px]"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                    >
-                      star
-                    </span>
-                  ))}
-                </div>
-                <p className="text-[#181111] dark:text-gray-200 font-medium leading-relaxed">
-                  "I used to get nervous about my accent. JobSpeak Pro helped me
-                  focus on clarity. I got the offer!"
-                </p>
-                <div className="flex items-center gap-3 mt-auto pt-2">
-                  <div className="size-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold text-sm">
-                    AK
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-[#181111] dark:text-white">
-                      Ahmed K.
-                    </p>
-                    <p className="text-xs text-gray-500">Data Analyst, Dubai</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 3 */}
-              <div className="bg-white dark:bg-[#2a1a1a] p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col gap-4 hover:shadow-md transition-shadow">
-                <div className="flex text-yellow-500 gap-0.5">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <span
-                      key={i}
-                      className="material-symbols-outlined text-[20px]"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                    >
-                      star
-                    </span>
-                  ))}
-                </div>
-                <p className="text-[#181111] dark:text-gray-200 font-medium leading-relaxed">
-                  "The best investment for my career. It's like having a
-                  personal coach available 24/7."
-                </p>
-                <div className="flex items-center gap-3 mt-auto pt-2">
-                  <div className="size-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-sm">
-                    YL
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-[#181111] dark:text-white">
-                      Yuki L.
-                    </p>
-                    <p className="text-xs text-gray-500">Designer, Japan</p>
+            {/* Right image/card */}
+            <div className="relative flex justify-center lg:justify-end">
+              <div className="relative w-full aspect-[4/5] max-w-[500px] rounded-3xl overflow-hidden shadow-2xl bg-white dark:bg-[#2a1a1a] p-3 border border-gray-100 dark:border-gray-800">
+                <div
+                  className="w-full h-full rounded-2xl bg-cover bg-center relative"
+                  style={{
+                    backgroundImage:
+                      'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBG6lR6rD7OWFkzWxxqozcUavUNIV1PXkLcoomKh1UVOMqje5Q5N3B-Fy48vOVI9sVaO8-2jdbHNjvKKJD_i3UuDm3_vIYbwJq6VXD4D3IVEAPmgVDsn1XVOSpynlb2CPDQgAzBpUyR-F8n3HXkcceoIUfCgTATKgLSYGWgZInM7RIeZmIGhK-NDHsUiBOYneqMSV5QDuseaDVztOOLQBUsRehZGl8_5rKaalJmBp797NY2MUeJg5FoZcRKuMvW984MU0z6sgZGjIMO")',
+                  }}
+                >
+                  <div className="absolute bottom-6 left-6 right-6 bg-white/95 dark:bg-[#1a1a1a]/95 backdrop-blur-md rounded-xl p-5 shadow-lg border border-gray-100 dark:border-gray-800">
+                    <div className="flex items-start gap-4">
+                      <div className="size-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 shrink-0">
+                        <span className="material-symbols-outlined">
+                          graphic_eq
+                        </span>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-gray-500 uppercase font-bold mb-1">
+                          Real-time Feedback
+                        </p>
+                        <p className="text-base font-bold text-[#181111] dark:text-white leading-tight">
+                          "Great intonation on that answer!"
+                        </p>
+                        <div className="mt-3 w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                          <div className="bg-primary h-full rounded-full w-[92%]" />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -355,80 +258,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* SUCCESS STORY GRID */}
-        <section className="w-full bg-background-light dark:bg-background-dark py-20 px-6 lg:px-40">
-          <div className="flex flex-col max-w-[1024px] mx-auto gap-10">
-            <div className="flex justify-between items-end">
-              <h2 className="text-[#181111] dark:text-white text-3xl lg:text-4xl font-black leading-tight tracking-[-0.02em] max-w-[500px]">
-                Join thousands of ESL professionals getting hired.
-              </h2>
-              <button className="hidden md:flex text-primary font-bold items-center hover:underline">
-                Read success stories{" "}
-                <span className="material-symbols-outlined ml-1 text-sm">
-                  arrow_forward
-                </span>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-4 h-auto md:h-[400px]">
-              {/* Big image */}
-              <div className="relative w-full h-64 md:h-full rounded-xl overflow-hidden group">
-                <div
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-                  style={{
-                    backgroundImage:
-                      'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBDnkN3MSPvKWp_4VePP-5dQ6LVpsLYUpKmpCyZEvudOJPzk9JprJnboxCzBdyqfkTBvkYqyAd9xUe44ClOF_JZLe3WffoLkXPi8s8RDx83nN09M6vaTm6mWiBV7nxPS3gEkfVTKVQ0wYmTh-2qNQYhHnAtSLgfaiA71x6VxYa-m5aG9NdPMBxScLZIR1-oE6HAdzmR_tQgf38iESi0dyEib1dAdMWQBdQIsXdNj37O3NVmcYNSw9W37r4-ATWozgxVLTpq91T3RzLO")',
-                  }}
-                />
-                <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-6">
-                  <p className="text-white font-bold text-lg">
-                    "Landed my dream job at Amazon!"
-                  </p>
-                  <p className="text-white/80 text-sm">
-                    Sarah L. • Software Engineer
-                  </p>
-                </div>
-              </div>
-
-              {/* Two stacked images */}
-              <div className="flex flex-col gap-4 h-full">
-                <div className="relative w-full flex-1 rounded-xl overflow-hidden group">
-                  <div
-                    className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-                    style={{
-                      backgroundImage:
-                        'url("https://lh3.googleusercontent.com/aida-public/AB6AXuAkEcxAKJn_JgRVI_6UqJ34k8ytc6O0ktsmM5PD1t8At6oN1fiuDUBZLbn_gtyj_i2sOIJ6QVtcghlXv3n8W8q3r32EZQbItRe9NPTSRthOX7T16tNhxfqau8EpR1jCw0UVbr4iwtVEOouTEBWm2bOEnVSWbCaTntxnb7BhXx8wZG9P8KpdVZDj3r3iWXWtOPqu8ciE7EMETuC6DIdMtDjlZ00DxZRG7QDq36ysLBRXehetIZSV4arUr-Srhk6pT7_TDFPmsEB-ZRT2")',
-                    }}
-                  />
-                </div>
-                <div className="relative w-full flex-1 rounded-xl overflow-hidden group">
-                  <div
-                    className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-                    style={{
-                      backgroundImage:
-                        'url("https://lh3.googleusercontent.com/aida-public/AB6AXuD6UmgDlAxPsiAP5G8feP8My9q58CGBP99TBaBgRQ3rlpjY2Y9CNbZwJgv18wVAxoAadN9n4ry1ch664TeRccj0eg72-Z-kIpMl6rzwOt6ZYsGXHVkokdW98R6qahj4jIRKHAFJxVn6XTA82PPWFHd2L4Pn1m6BXyXfTWzeOMFRdidHTN4lSq9GF_zfufMWQeHg4yqlG9enssQgOPlXGV5jtpCB0yHUAR49iatjA-LVITIv0yZHt_eBJLNELYgZyj0h8A4MP7H2zMxN")',
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* 10k+ block */}
-              <div className="relative w-full h-64 md:h-full rounded-xl overflow-hidden group bg-primary/5 flex items-center justify-center border border-primary/10">
-                <div className="text-center p-6">
-                  <div className="text-5xl font-black text-primary mb-2">
-                    10k+
-                  </div>
-                  <div className="text-lg font-bold text-[#181111] dark:text-white">
-                    Interviews Aced
-                  </div>
-                  <div className="text-sm text-[#886364] mt-2">
-                    Start your journey today
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* CTA / PRICING TEASER */}
         <section
@@ -557,8 +386,8 @@ export default function LandingPage() {
         </section>
 
         {/* FOOTER */}
-        <footer className="w-full bg-background-light dark:bg-[#150a0a] border-t border-[#e5dcdc] dark:border-[#333] py-12 px-6 lg:px-40">
-          <div className="max-w-[1024px] mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+        <footer className="w-full bg-background-light dark:bg-[#150a0a] border-t border-[#e5dcdc] dark:border-[#333] py-16 px-6 lg:px-40">
+          <div className="max-w-[1280px] mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-3">
               <div className="size-6 flex items-center justify-center rounded-full bg-primary/10 text-primary">
                 <span

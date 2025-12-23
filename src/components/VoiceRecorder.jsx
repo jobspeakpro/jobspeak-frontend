@@ -1,6 +1,6 @@
 // src/components/VoiceRecorder.jsx
 import React, { useRef, useState, useEffect } from "react";
-import { trackEvent } from "../analytics";
+import { trackEvent } from "../utils/analytics";
 import { isNetworkError } from "../utils/networkError.js";
 import { apiClient, ApiError } from "../utils/apiClient.js";
 import { usePro } from "../contexts/ProContext.jsx";
@@ -285,36 +285,40 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
   };
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-col items-center gap-3">
+      <div className="flex items-center gap-3">
         {!recording ? (
           <button
             type="button"
             onClick={startRecording}
             disabled={transcribing}
-            className="flex items-center justify-center h-12 w-12 rounded-full shadow-sm border bg-white border-rose-200 text-rose-500 hover:bg-rose-50 disabled:opacity-60 disabled:cursor-not-allowed transition"
+            className="flex items-center justify-center h-16 w-16 rounded-full shadow-lg border-2 bg-white border-rose-300 text-rose-500 hover:bg-rose-50 hover:border-rose-400 hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed transition-all transform hover:scale-105"
             title="Start recording"
           >
-            <span className="material-icons-outlined text-xl">mic</span>
+            <span className="material-icons-outlined" style={{ fontSize: 28 }}>mic</span>
           </button>
         ) : (
           <button
             type="button"
             onClick={stopRecording}
             disabled={transcribing}
-            className="flex items-center justify-center h-12 w-12 rounded-full shadow-sm border bg-rose-500 border-rose-500 text-white animate-pulse disabled:opacity-60 disabled:cursor-not-allowed transition"
+            className="flex items-center justify-center h-16 w-16 rounded-full shadow-xl border-2 bg-rose-500 border-rose-500 text-white disabled:opacity-60 disabled:cursor-not-allowed transition-all relative"
             title="Stop recording"
             aria-label="Stop recording"
+            style={{
+              boxShadow: '0 0 0 0 rgba(244, 63, 94, 0.7), 0 0 20px 8px rgba(244, 63, 94, 0.3)',
+              animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+            }}
           >
-            <span className="material-icons-outlined text-xl">stop</span>
+            <span className="material-icons-outlined" style={{ fontSize: 28 }}>stop</span>
           </button>
         )}
         
         {/* Recording indicator - always visible when recording */}
         {recording && (
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-rose-100 border border-rose-200">
-            <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse"></span>
-            <span className="text-[10px] text-rose-700 font-semibold">Recording…</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-100 border border-rose-200 shadow-sm">
+            <span className="h-2.5 w-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+            <span className="text-xs text-rose-700 font-bold">Recording…</span>
           </div>
         )}
       </div>

@@ -11,7 +11,7 @@ import PricingPage from "./components/PricingPage.jsx";
 import ProGuard from "./components/ProGuard.jsx";
 import Navigation from "./components/Navigation.jsx";
 import InlineError from "./components/InlineError.jsx";
-import { trackEvent } from "./analytics";
+import { trackEvent } from "./utils/analytics";
 import { usePro } from "./contexts/ProContext.jsx";
 import { isNetworkError } from "./utils/networkError.js";
 import { apiClient, ApiError } from "./utils/apiClient.js";
@@ -326,6 +326,9 @@ export default function App({ defaultTab = "interview" }) {
       return;
     }
 
+    // Track practice start
+    trackEvent("practice_start", { source: "ui" });
+
     try {
 
       trackEvent("interview_submit", { textLength: text.length, source: "interview_tab" });
@@ -359,6 +362,8 @@ export default function App({ defaultTab = "interview" }) {
           setSessionRefreshTrigger((prev) => prev + 1);
           // Refresh usage after successful save
           fetchUsage();
+          // Track practice complete when session is successfully saved
+          trackEvent("practice_complete", { source: "ui" });
         } catch (saveErr) {
           if (saveErr instanceof ApiError && saveErr.status === 402 && saveErr.data?.upgrade === true) {
             // Update UI to reflect limit reached, but don't open modal
