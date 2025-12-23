@@ -65,8 +65,12 @@ export default function LandingPage() {
             {/* Left column */}
             <div className="lg:col-span-7 flex flex-col gap-6 items-start text-left">
               <h1 className="text-[#181111] dark:text-white text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.1] tracking-tight">
-                Stop losing job offers because of your English.
+                Speak confidently in job interviews, even if English isn't your first language.
               </h1>
+
+              <h2 className="text-xl sm:text-2xl text-[#5c4a4a] dark:text-gray-300 font-medium leading-relaxed max-w-2xl">
+                Get instant AI feedback on your answers. Practice until you sound natural and professional—no accent coaching needed.
+              </h2>
 
               <ul className="text-base sm:text-lg text-[#181111] dark:text-gray-200 space-y-3 max-w-2xl">
                 <li className="flex items-start gap-3">
@@ -98,7 +102,7 @@ export default function LandingPage() {
                   <span className="material-symbols-outlined mr-2">
                     play_circle
                   </span>
-                  Watch Demo
+                  Try the demo
                 </button>
               </div>
 
@@ -152,10 +156,10 @@ export default function LandingPage() {
           <div className="flex justify-center px-6 lg:px-40">
             <div className="flex flex-col items-center gap-6 max-w-[960px] w-full">
               <h4 className="text-[#886364] dark:text-gray-400 text-sm font-bold leading-normal tracking-[0.015em] text-center uppercase">
-                Trusted by professionals hired at top companies
+                As seen in
               </h4>
               <div className="flex flex-wrap justify-center gap-8 md:gap-16 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-                {["Google", "Microsoft", "Amazon", "Spotify", "Uber"].map(
+                {["TechCrunch", "Product Hunt", "Hacker News", "Indie Hackers"].map(
                   (name) => (
                     <span
                       key={name}
@@ -311,34 +315,40 @@ export default function LandingPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
               {/* Step 1 */}
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary mb-3">1</div>
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                  <div className="text-3xl font-bold text-primary">1</div>
+                </div>
                 <h3 className="text-lg font-semibold text-[#181111] dark:text-white mb-2">
                   Record Your Answer
                 </h3>
-                <p className="text-sm text-[#5c4a4a] dark:text-gray-400">
-                  Practice answering interview questions using voice or text.
+                <p className="text-sm text-[#5c4a4a] dark:text-gray-400 leading-relaxed">
+                  Speak or type your interview answer. Our AI transcribes and processes your response instantly.
                 </p>
               </div>
 
               {/* Step 2 */}
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary mb-3">2</div>
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                  <div className="text-3xl font-bold text-primary">2</div>
+                </div>
                 <h3 className="text-lg font-semibold text-[#181111] dark:text-white mb-2">
                   Get AI Feedback
                 </h3>
-                <p className="text-sm text-[#5c4a4a] dark:text-gray-400">
-                  Receive instant improvements and suggestions.
+                <p className="text-sm text-[#5c4a4a] dark:text-gray-400 leading-relaxed">
+                  Receive a rewritten version that's clearer, more professional, and easier to say out loud.
                 </p>
               </div>
 
               {/* Step 3 */}
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary mb-3">3</div>
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                  <div className="text-3xl font-bold text-primary">3</div>
+                </div>
                 <h3 className="text-lg font-semibold text-[#181111] dark:text-white mb-2">
                   Practice & Improve
                 </h3>
-                <p className="text-sm text-[#5c4a4a] dark:text-gray-400">
-                  Repeat and track your progress over time.
+                <p className="text-sm text-[#5c4a4a] dark:text-gray-400 leading-relaxed">
+                  Listen to the improved answer, practice speaking it, and track your progress over time.
                 </p>
               </div>
             </div>
@@ -461,31 +471,88 @@ export default function LandingPage() {
               Frequently Asked Questions
             </h2>
             <div className="space-y-6">
-              <div>
+              <div className="bg-white dark:bg-[#2a1a1a] p-5 rounded-xl border border-gray-100 dark:border-gray-800">
                 <h3 className="text-lg font-semibold text-[#181111] dark:text-white mb-2">
                   How does it work?
                 </h3>
-                <p className="text-sm text-[#5c4a4a] dark:text-gray-400">
-                  Record or type your answer. Get instant AI feedback and improvements. Practice with voice playback and track your progress.
+                <p className="text-sm text-[#5c4a4a] dark:text-gray-400 leading-relaxed">
+                  Record or type your interview answer. Get instant AI feedback and improvements. Practice with voice playback and track your progress.
                 </p>
               </div>
-              <div>
+              <div className="bg-white dark:bg-[#2a1a1a] p-5 rounded-xl border border-gray-100 dark:border-gray-800">
                 <h3 className="text-lg font-semibold text-[#181111] dark:text-white mb-2">
                   Is there a free trial?
                 </h3>
-                <p className="text-sm text-[#5c4a4a] dark:text-gray-400">
-                  Yes! Try our free practice tools first. No credit card needed.
+                <p className="text-sm text-[#5c4a4a] dark:text-gray-400 leading-relaxed">
+                  Yes! Try our free practice tools first. No credit card needed. Free users get 3 practice attempts per day.
                 </p>
               </div>
-              <div>
+              <div className="bg-white dark:bg-[#2a1a1a] p-5 rounded-xl border border-gray-100 dark:border-gray-800">
                 <h3 className="text-lg font-semibold text-[#181111] dark:text-white mb-2">
                   Can I cancel anytime?
                 </h3>
-                <p className="text-sm text-[#5c4a4a] dark:text-gray-400">
-                  Absolutely. Cancel anytime and keep access until your billing period ends.
+                <p className="text-sm text-[#5c4a4a] dark:text-gray-400 leading-relaxed">
+                  Absolutely. Cancel anytime and keep access until your billing period ends. No questions asked.
+                </p>
+              </div>
+              <div className="bg-white dark:bg-[#2a1a1a] p-5 rounded-xl border border-gray-100 dark:border-gray-800">
+                <h3 className="text-lg font-semibold text-[#181111] dark:text-white mb-2">
+                  Is my audio data secure?
+                </h3>
+                <p className="text-sm text-[#5c4a4a] dark:text-gray-400 leading-relaxed">
+                  Yes. Your audio is processed securely and is not stored permanently. We use industry-standard encryption and comply with data privacy regulations.
+                </p>
+              </div>
+              <div className="bg-white dark:bg-[#2a1a1a] p-5 rounded-xl border border-gray-100 dark:border-gray-800">
+                <h3 className="text-lg font-semibold text-[#181111] dark:text-white mb-2">
+                  What payment methods do you accept?
+                </h3>
+                <p className="text-sm text-[#5c4a4a] dark:text-gray-400 leading-relaxed">
+                  We accept all major credit cards via Stripe's secure payment processing. Your payment information is never stored on our servers.
+                </p>
+              </div>
+              <div className="bg-white dark:bg-[#2a1a1a] p-5 rounded-xl border border-gray-100 dark:border-gray-800">
+                <h3 className="text-lg font-semibold text-[#181111] dark:text-white mb-2">
+                  Do you offer refunds?
+                </h3>
+                <p className="text-sm text-[#5c4a4a] dark:text-gray-400 leading-relaxed">
+                  Yes. We offer a 30-day money-back guarantee. If you're not satisfied, contact us within 30 days for a full refund.
+                </p>
+              </div>
+              <div className="bg-white dark:bg-[#2a1a1a] p-5 rounded-xl border border-gray-100 dark:border-gray-800">
+                <h3 className="text-lg font-semibold text-[#181111] dark:text-white mb-2">
+                  What's the difference between free and Pro?
+                </h3>
+                <p className="text-sm text-[#5c4a4a] dark:text-gray-400 leading-relaxed">
+                  Free users get 3 practice attempts per day. Pro users get unlimited practice, full resume analysis, voice playback, and progress tracking.
+                </p>
+              </div>
+              <div className="bg-white dark:bg-[#2a1a1a] p-5 rounded-xl border border-gray-100 dark:border-gray-800">
+                <h3 className="text-lg font-semibold text-[#181111] dark:text-white mb-2">
+                  Can I use this on mobile?
+                </h3>
+                <p className="text-sm text-[#5c4a4a] dark:text-gray-400 leading-relaxed">
+                  Yes! JobSpeak Pro works on any device with a web browser. Practice on your phone, tablet, or computer.
                 </p>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* TRUST & SAFETY MICROCOPY */}
+        <section className="w-full bg-gray-50 dark:bg-[#1a1a1a] py-12 px-6 lg:px-40 border-t border-[#e5dcdc] dark:border-[#333]">
+          <div className="max-w-3xl mx-auto text-center">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <h3 className="text-sm font-semibold text-[#181111] dark:text-white">
+                Secure & Private
+              </h3>
+            </div>
+            <p className="text-xs text-[#5c4a4a] dark:text-gray-400 leading-relaxed max-w-2xl mx-auto">
+              Your audio is processed securely using industry-standard encryption. We don't store your recordings permanently, and your data is never shared with third parties. All payments are processed securely through Stripe.
+            </p>
           </div>
         </section>
 

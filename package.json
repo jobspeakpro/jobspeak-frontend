@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@sentry/nextjs": "^10.32.1",
     "@sentry/react": "^10.29.0",
     "axios": "^1.6.2",
     "react": "^18.2.0",

@@ -26,15 +26,35 @@ export default function PricingPage() {
   const faqs = [
     {
       question: "Can I cancel anytime?",
-      answer: "Yes. Cancel anytime and keep access until your billing period ends.",
+      answer: "Yes. Cancel anytime and keep access until your billing period ends. No questions asked.",
     },
     {
       question: "What payment methods do you accept?",
-      answer: "All major credit cards via Stripe's secure payment processing.",
+      answer: "We accept all major credit cards via Stripe's secure payment processing. Your payment information is never stored on our servers.",
     },
     {
       question: "Is there a free trial?",
-      answer: "Yes! Try our free practice tools first. No credit card needed.",
+      answer: "Yes! Try our free practice tools first. No credit card needed. Free users get 3 practice attempts per day.",
+    },
+    {
+      question: "Is my audio data secure?",
+      answer: "Yes. Your audio is processed securely using industry-standard encryption. We don't store your recordings permanently, and your data is never shared with third parties.",
+    },
+    {
+      question: "Do you offer refunds?",
+      answer: "Yes. We offer a 30-day money-back guarantee. If you're not satisfied, contact us within 30 days for a full refund.",
+    },
+    {
+      question: "What's the difference between free and Pro?",
+      answer: "Free users get 3 practice attempts per day. Pro users get unlimited practice, full resume analysis, voice playback, and progress tracking.",
+    },
+    {
+      question: "Can I use this on mobile?",
+      answer: "Yes! JobSpeak Pro works on any device with a web browser. Practice on your phone, tablet, or computer.",
+    },
+    {
+      question: "Will my subscription auto-renew?",
+      answer: "Yes, subscriptions automatically renew at the end of each billing period. You can cancel anytime from your account settings or billing portal.",
     },
   ];
 
@@ -231,19 +251,19 @@ export default function PricingPage() {
 
       {/* FAQ Section */}
       <div className="max-w-3xl mx-auto mt-12">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4 text-center">
+        <h3 className="text-xl font-bold text-slate-900 mb-6 text-center">
           Frequently Asked Questions
         </h3>
         <div className="space-y-4">
           {faqs.map((faq, idx) => (
             <div
               key={idx}
-              className="bg-white border border-rose-100 rounded-lg p-4"
+              className="bg-white border border-rose-100 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow"
             >
-              <h4 className="text-sm font-semibold text-slate-900 mb-1.5">
+              <h4 className="text-base font-semibold text-slate-900 mb-2">
                 {faq.question}
               </h4>
-              <p className="text-xs text-slate-600">{faq.answer}</p>
+              <p className="text-sm text-slate-600 leading-relaxed">{faq.answer}</p>
             </div>
           ))}
         </div>
@@ -288,15 +308,28 @@ export default function PricingPage() {
         </div>
       </div>
 
-      {/* Trust Badge */}
-      <div className="text-center pt-6">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg">
-          <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          <p className="text-xs text-slate-600 font-medium">
-            Secure payments by Stripe • Cancel anytime
+      {/* Trust & Safety Section */}
+      <div className="max-w-3xl mx-auto mt-12 pt-8 border-t border-rose-100">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6 text-center">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <h3 className="text-sm font-semibold text-emerald-900">
+              Secure & Private
+            </h3>
+          </div>
+          <p className="text-xs text-emerald-700 leading-relaxed max-w-2xl mx-auto mb-4">
+            Your audio is processed securely using industry-standard encryption. We don't store your recordings permanently, and your data is never shared with third parties. All payments are processed securely through Stripe.
           </p>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-emerald-200 rounded-lg">
+            <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <p className="text-xs text-emerald-700 font-medium">
+              Secure payments by Stripe • Cancel anytime
+            </p>
+          </div>
         </div>
       </div>
     </section>
