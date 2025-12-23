@@ -1,6 +1,7 @@
 // src/utils/upgrade.js
 import { trackEvent } from "../analytics";
 import { apiClient } from "./apiClient.js";
+import { getUserKey } from "./userKey.js";
 
 // Global loading state to prevent double clicks across all upgrade buttons
 let isUpgrading = false;
@@ -32,9 +33,11 @@ export async function initiateUpgrade({
     trackEvent("upgrade_click", { source, priceType });
     trackEvent("stripe_upgrade_click", { source, priceType });
 
+    // Get userKey and include in both header (via apiClient) and body (for redundancy/compatibility)
+    const userKey = getUserKey();
     const data = await apiClient("/api/billing/create-checkout-session", {
       method: "POST",
-      body: { priceType },
+      body: { userKey, priceType },
     });
 
     if (data?.url) {

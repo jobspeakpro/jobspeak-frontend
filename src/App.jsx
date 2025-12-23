@@ -16,6 +16,7 @@ import { usePro } from "./contexts/ProContext.jsx";
 import { isNetworkError } from "./utils/networkError.js";
 import { apiClient, ApiError } from "./utils/apiClient.js";
 import { getUserKey } from "./utils/userKey.js";
+import { isBlocked } from "./utils/usage.js";
 
 export default function App({ defaultTab = "interview" }) {
   const { isPro, refreshProStatus } = usePro();
@@ -36,7 +37,7 @@ export default function App({ defaultTab = "interview" }) {
   const [error, setError] = useState("");
   const [sessionRefreshTrigger, setSessionRefreshTrigger] = useState(0);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [usage, setUsage] = useState({ used: 0, limit: 2, remaining: 2 });
+  const [usage, setUsage] = useState({ used: 0, limit: 2, remaining: 2, blocked: false });
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [serverUnavailable, setServerUnavailable] = useState(false);
@@ -128,6 +129,7 @@ export default function App({ defaultTab = "interview" }) {
           used: data.usage.used || 0,
           limit: data.usage.limit === -1 ? Infinity : data.usage.limit || 2,
           remaining: data.usage.remaining === -1 ? Infinity : data.usage.remaining || 0,
+          blocked: data.usage.blocked || false,
         });
         // Update free attempts from backend using same usage object
         setFreeImproveUsage({
@@ -140,6 +142,7 @@ export default function App({ defaultTab = "interview" }) {
           used: data.used || 0,
           limit: data.limit === -1 ? Infinity : data.limit || 2,
           remaining: data.remaining === -1 ? Infinity : data.remaining || 0,
+          blocked: data.blocked || false,
         });
         // Update free attempts from backend (removes localStorage drift)
         if (data.freeAttempts !== undefined) {
@@ -309,7 +312,34 @@ export default function App({ defaultTab = "interview" }) {
     setResult(null);
     setLoading(true);
 
-    // Free limit gating for interview coach
+    // Check usage from backend before proceeding (only for non-Pro users)
+    if (!isPro) {
+      try {
+        const data = await apiClient(`/api/usage/today`);
+        let currentUsage = { used: 0, limit: 3, remaining: 3, blocked: false };
+        
+        if (data.usage) {
+          currentUsage = {
+            used: data.usage.used || 0,
+            limit: data.usage.limit === -1 ? Infinity : data.usage.limit || 3,
+            remaining: data.usage.remaining === -1 ? Infinity : data.usage.remaining || 0,
+            blocked: data.usage.blocked || false,
+          };
+        }
+        
+        if (isBlocked(currentUsage)) {
+          setShowUpgradeModal(true);
+          setLoading(false);
+          trackEvent("micro_demo_limit_hit", { source: "interview_tab" });
+          return;
+        }
+      } catch (err) {
+        console.error("Error checking usage:", err);
+        // Continue if usage check fails (don't block user)
+      }
+    }
+
+    // Free limit gating for interview coach (fallback check)
     if (!hasFreeImproveLeft()) {
       setError(
         "You've used your 3 free attempts today. Upgrade to Pro for unlimited practice."
@@ -860,8 +890,9 @@ export default function App({ defaultTab = "interview" }) {
                     <div className="flex flex-wrap gap-2 items-center">
                       <button
                         type="submit"
-                        disabled={loading || isTranscribing || (typeof text !== "string" || !text.trim())}
+                        disabled={loading || isTranscribing || (typeof text !== "string" || !text.trim()) || (!isPro && isBlocked(usage))}
                         className="inline-flex items-center px-4 py-2 rounded-full bg-rose-500 hover:bg-rose-600 text-white text-sm font-semibold shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition"
+                        title={!isPro && isBlocked(usage) ? "You've used your 3 free attempts today. Upgrade to continue." : undefined}
                       >
                         {isTranscribing 
                           ? "Transcribing..." 

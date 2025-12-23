@@ -28,14 +28,8 @@ export default function UpgradeModal({ onClose, isPro = false }) {
 
         <div className="space-y-4">
           <p className="text-sm text-slate-700">
-            You used your free limit today. Upgrade to Pro for unlimited practice.
+            You've used your 3 free attempts today. Upgrade to continue.
           </p>
-
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-            <p className="text-xs text-amber-800 text-center">
-              Try again tomorrow
-            </p>
-          </div>
 
           <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
             <h3 className="text-sm font-semibold text-emerald-900 mb-2">
@@ -56,7 +50,7 @@ export default function UpgradeModal({ onClose, isPro = false }) {
               onClick={onClose}
               className="px-4 py-2 rounded-full border border-slate-300 text-slate-700 text-sm font-semibold hover:bg-slate-50"
             >
-              Close
+              Come back tomorrow
             </button>
           </div>
         </div>

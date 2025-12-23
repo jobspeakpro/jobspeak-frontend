@@ -5,6 +5,7 @@ import { isNetworkError } from "../utils/networkError.js";
 import { apiClient, ApiError } from "../utils/apiClient.js";
 import { usePro } from "../contexts/ProContext.jsx";
 import { getUserKey } from "../utils/userKey.js";
+import { isBlocked } from "../utils/usage.js";
 
 // Fetch usage from backend API
 async function fetchUsage() {
@@ -72,9 +73,8 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
       const currentUsage = await fetchUsage();
       setUsage(currentUsage);
       
-      // Block if blocked or count >= limit
-      if (currentUsage.blocked || currentUsage.used >= currentUsage.limit) {
-        setError("You've used your free attempts today. Upgrade to Pro for unlimited practice.");
+      // Block if blocked or remaining <= 0
+      if (isBlocked(currentUsage)) {
         if (onUpgradeNeeded) {
           onUpgradeNeeded();
         }
@@ -283,6 +283,8 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
     }
   };
 
+  const isUsageBlocked = !isPro && isBlocked(usage);
+
   return (
     <div className="flex flex-col items-center gap-2">
       <div className="flex items-center gap-2">
@@ -290,9 +292,9 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
           <button
             type="button"
             onClick={startRecording}
-            disabled={transcribing}
+            disabled={transcribing || isUsageBlocked}
             className="flex items-center justify-center h-12 w-12 rounded-full shadow-sm border bg-white border-rose-200 text-rose-500 hover:bg-rose-50 disabled:opacity-60 disabled:cursor-not-allowed transition"
-            title="Start recording"
+            title={isUsageBlocked ? "You've used your 3 free attempts today. Upgrade to continue." : "Start recording"}
           >
             <span className="material-icons-outlined text-xl">mic</span>
           </button>

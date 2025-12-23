@@ -5,6 +5,7 @@ import { getUserKey } from "../utils/userKey.js";
 import { apiClient, ApiError } from "../utils/apiClient.js";
 import { isNetworkError } from "../utils/networkError.js";
 import { usePro } from "../contexts/ProContext.jsx";
+import { isBlocked } from "../utils/usage.js";
 
 // Fetch usage from backend API
 async function fetchUsage() {
@@ -76,26 +77,19 @@ export default function ListenToAnswerButton({ improvedText, onUpgradeNeeded }) 
       audioUrlRef.current = null;
     }
 
-    // Free limit blocks new value creation, not consumption of earned value
-    // If transcript already exists (improvedText), allow TTS playback even at limit
-    // Only block TTS if trying to generate audio without an existing transcript
+    // Check usage from backend before proceeding (only for non-Pro users)
     if (!isPro) {
       // Refresh usage from backend
       const currentUsage = await fetchUsage();
       setUsage(currentUsage);
       
-      // Allow TTS if transcript exists (user earned this value, can consume it)
-      const hasExistingTranscript = improvedText && improvedText.trim().length > 0;
-      
-      if (!hasExistingTranscript && (currentUsage.blocked || currentUsage.used >= currentUsage.limit)) {
-        // Block only if no transcript exists AND limit reached
-        setError("You've used today's free practice. Upgrade to Pro for unlimited practice.");
+      // Block if usage is blocked or remaining <= 0
+      if (isBlocked(currentUsage)) {
         if (typeof onUpgradeNeeded === "function") {
           onUpgradeNeeded();
         }
         return;
       }
-      // If transcript exists, allow TTS playback regardless of attempt count
     }
 
     setIsLoading(true);
@@ -241,17 +235,20 @@ export default function ListenToAnswerButton({ improvedText, onUpgradeNeeded }) 
     }
   };
 
+  const isUsageBlocked = !isPro && isBlocked(usage);
+
   return (
     <div className="mt-3 flex flex-col items-start gap-2">
       <button
         type="button"
         onClick={handleClick}
-        disabled={isLoading}
+        disabled={isLoading || isUsageBlocked}
         className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium shadow-sm ${
-          isLoading
+          isLoading || isUsageBlocked
             ? "bg-gray-300 text-gray-700 cursor-not-allowed"
             : "bg-emerald-600 text-white hover:bg-emerald-700"
         }`}
+        title={isUsageBlocked ? "You've used your 3 free attempts today. Upgrade to continue." : undefined}
       >
         {isLoading ? (
           <>
