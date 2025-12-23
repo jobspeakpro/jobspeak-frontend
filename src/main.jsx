@@ -1,8 +1,8 @@
 // src/main.jsx
+import * as Sentry from "@sentry/react";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import * as Sentry from "@sentry/react";
 import LandingPage from "./LandingPage.jsx";
 import App from "./App.jsx";
 import PracticePage from "./components/PracticePage.jsx";
@@ -15,11 +15,21 @@ import "./styles/globals.css";
 
 // --- Sentry setup ---
 Sentry.init({
-  dsn: "https://5653911c2d435d161da94e14d939b9df@o4510463592497152.ingest.us.sentry.io/4510511928377344",
-  integrations: (integrations) => integrations,
+  dsn: import.meta.env.VITE_SENTRY_DSN,
   tracesSampleRate: 1.0,
   sendDefaultPii: true,
+  environment: import.meta.env.MODE || "development",
 });
+
+// TEMPORARY: Safe client-side test error (remove after testing)
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get("sentry_test") === "true") {
+  console.error("SENTRY TEST TRIGGERED");
+  Sentry.captureException(new Error("Sentry test error (Vite captureException)"));
+  setTimeout(() => {
+    throw new Error("Sentry test error (Vite captureException)");
+  }, 0);
+}
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
