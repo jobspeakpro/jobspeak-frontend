@@ -14,6 +14,8 @@ export function ProProvider({ children }) {
 
   const checkBillingStatus = async () => {
     try {
+      // apiClient automatically includes 'x-user-key' header for all requests
+      // Do NOT send 'x-attempt-id' on billing/status (only STT uses it)
       const data = await apiClient(`/api/billing/status`);
       setIsPro(data.isPro || false);
     } catch (err) {

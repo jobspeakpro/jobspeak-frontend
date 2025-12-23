@@ -58,6 +58,12 @@ export default function ListenToAnswerButton({ improvedText, onUpgradeNeeded }) 
     // Determine the text to speak
     const textToSpeak = improvedText || "";
 
+    // Validate that text is non-empty before making request
+    if (!textToSpeak || textToSpeak.trim().length === 0) {
+      setError("No text available to generate audio. Please generate an answer first.");
+      return;
+    }
+
     // stop any existing audio
     if (audioRef.current) {
       audioRef.current.pause();
@@ -98,15 +104,19 @@ export default function ListenToAnswerButton({ improvedText, onUpgradeNeeded }) 
     // Always call the backend endpoint
     const endpoint = "/voice/generate";
     console.log("[TTS] endpoint", endpoint);
+    // apiClient automatically includes 'x-user-key' header for all requests
+    // Do NOT send 'x-attempt-id' on voice/generate (only STT uses it)
 
     try {
       const res = await apiClient(endpoint, {
         method: "POST",
         headers: {
           Accept: "audio/mpeg, application/json",
+          // x-user-key is automatically added by apiClient
+          // x-attempt-id is NOT sent (only for STT)
         },
         body: {
-          text: textToSpeak,
+          text: textToSpeak.trim(), // Ensure non-empty text field
         },
         parseJson: false, // Get raw response to check content type
       });
