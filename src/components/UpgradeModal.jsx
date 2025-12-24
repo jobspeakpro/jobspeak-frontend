@@ -73,6 +73,12 @@ export default function UpgradeModal({ onClose, isPro = false, source }) {
 
   const handleUpgradeClick = () => {
     gaEvent("paywall_upgrade_click", { page: "practice", period: billingPeriod, source: paywallSource });
+    // Store paywallSource in localStorage for GA tracking on Stripe return
+    try {
+      localStorage.setItem("jobspeak_upgrade_source", paywallSource);
+    } catch (err) {
+      console.warn("Failed to store upgrade source:", err);
+    }
   };
 
   return (

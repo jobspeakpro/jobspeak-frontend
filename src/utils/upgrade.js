@@ -38,6 +38,14 @@ export async function initiateUpgrade({
     });
 
     if (data?.url) {
+      // Store period and source in localStorage for GA tracking on return
+      try {
+        localStorage.setItem("jobspeak_upgrade_period", priceType);
+        localStorage.setItem("jobspeak_upgrade_source", source);
+      } catch (err) {
+        console.warn("Failed to store upgrade metadata:", err);
+      }
+      
       // Track begin checkout before redirecting
       gaEvent("begin_checkout", { source: "free_limit_modal" });
       // Navigate to Stripe checkout - don't reset loading state as we're leaving the page

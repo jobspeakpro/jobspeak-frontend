@@ -1,5 +1,5 @@
 // src/components/PracticePage.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import VoiceRecorder from "./VoiceRecorder.jsx";
 import ListenToAnswerButton from "./ListenToAnswerButton.jsx";
@@ -14,7 +14,7 @@ import { gaEvent } from "../utils/ga.js";
 
 export default function PracticePage() {
   const navigate = useNavigate();
-  const { isPro } = usePro();
+  const { isPro, refreshProStatus } = usePro();
   
   const [text, setText] = useState("");
   const [result, setResult] = useState(null);
@@ -27,6 +27,9 @@ export default function PracticePage() {
   const [serverUnavailable, setServerUnavailable] = useState(false);
   const [freeImproveUsage, setFreeImproveUsage] = useState({ count: 0, limit: 3 });
   const [usage, setUsage] = useState({ used: 0, limit: 3, remaining: 3, blocked: false });
+  
+  // Ref to track if GA events have been fired for this page load (prevent duplicates)
+  const hasTrackedStripeReturn = useRef(false);
   
   // Practice questions array
   const practiceQuestions = [
@@ -150,6 +153,85 @@ export default function PracticePage() {
   useEffect(() => {
     fetchFreeAttempts();
   }, [isPro]);
+
+  // Handle Stripe redirect params (query params or path)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const pathname = window.location.pathname.toLowerCase();
+      
+      // Check query params
+      const success = params.get("success");
+      const canceled = params.get("canceled");
+      
+      // Check pathname for success/cancel patterns
+      const pathSuccess = pathname.includes("/success") || pathname.includes("/checkout/success");
+      const pathCancel = pathname.includes("/cancel") || pathname.includes("/checkout/cancel");
+
+      if (success === "true" || pathSuccess) {
+        // Immediately refresh Pro status
+        if (refreshProStatus) {
+          refreshProStatus();
+        }
+        
+        // Fire GA event for successful upgrade (once per return)
+        if (!hasTrackedStripeReturn.current) {
+          try {
+            // Read period and source from localStorage (stored before redirect)
+            const period = localStorage.getItem("jobspeak_upgrade_period") || "unknown";
+            const source = localStorage.getItem("jobspeak_upgrade_source") || "unknown";
+            
+            gaEvent("paywall_upgrade_success", {
+              page: "practice",
+              period: period,
+              source: source,
+            });
+            
+            // Clean up localStorage after tracking
+            localStorage.removeItem("jobspeak_upgrade_period");
+            localStorage.removeItem("jobspeak_upgrade_source");
+            
+            hasTrackedStripeReturn.current = true;
+          } catch (err) {
+            console.error("Error tracking upgrade success:", err);
+          }
+        }
+        
+        // Clean up URL params
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, "", newUrl);
+      } else if (canceled === "true" || pathCancel) {
+        // Fire GA event for canceled upgrade (once per return)
+        if (!hasTrackedStripeReturn.current) {
+          try {
+            // Read period and source from localStorage (stored before redirect)
+            const period = localStorage.getItem("jobspeak_upgrade_period") || "unknown";
+            const source = localStorage.getItem("jobspeak_upgrade_source") || "unknown";
+            
+            gaEvent("paywall_upgrade_cancel", {
+              page: "practice",
+              period: period,
+              source: source,
+            });
+            
+            // Clean up localStorage after tracking
+            localStorage.removeItem("jobspeak_upgrade_period");
+            localStorage.removeItem("jobspeak_upgrade_source");
+            
+            hasTrackedStripeReturn.current = true;
+          } catch (err) {
+            console.error("Error tracking upgrade cancel:", err);
+          }
+        }
+        
+        // Clean up URL params
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, "", newUrl);
+      }
+    } catch (err) {
+      console.error("URL param parse error", err);
+    }
+  }, [refreshProStatus]);
 
   function getImprovedAnswerText() {
     if (!result) return "";

@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import UpgradeToProButton from "./components/UpgradeToProButton.jsx";
 import UpgradeModal from "./components/UpgradeModal.jsx";
@@ -16,6 +16,7 @@ import { isNetworkError } from "./utils/networkError.js";
 import { apiClient, ApiError } from "./utils/apiClient.js";
 import { getUserKey } from "./utils/userKey.js";
 import { isBlocked } from "./utils/usage.js";
+import { gaEvent } from "./utils/ga.js";
 
 export default function App({ defaultTab = "interview" }) {
   const { isPro, refreshProStatus } = usePro();
@@ -51,6 +52,9 @@ export default function App({ defaultTab = "interview" }) {
 
   // Stripe banner
   const [banner, setBanner] = useState(null); // 'success' | 'canceled' | null
+  
+  // Ref to track if GA events have been fired for this page load (prevent duplicates)
+  const hasTrackedStripeReturn = useRef(false);
 
   // Handle Stripe redirect params (query params or path)
   useEffect(() => {
@@ -71,11 +75,57 @@ export default function App({ defaultTab = "interview" }) {
         // Immediately refresh Pro status
         refreshProStatus();
         
+        // Fire GA event for successful upgrade (once per return)
+        if (!hasTrackedStripeReturn.current) {
+          try {
+            // Read period and source from localStorage (stored before redirect)
+            const period = localStorage.getItem("jobspeak_upgrade_period") || "unknown";
+            const source = localStorage.getItem("jobspeak_upgrade_source") || "unknown";
+            
+            gaEvent("paywall_upgrade_success", {
+              page: "practice",
+              period: period,
+              source: source,
+            });
+            
+            // Clean up localStorage after tracking
+            localStorage.removeItem("jobspeak_upgrade_period");
+            localStorage.removeItem("jobspeak_upgrade_source");
+            
+            hasTrackedStripeReturn.current = true;
+          } catch (err) {
+            console.error("Error tracking upgrade success:", err);
+          }
+        }
+        
         // Clean up URL params
         const newUrl = window.location.pathname;
         window.history.replaceState({}, "", newUrl);
       } else if (canceled === "true" || pathCancel) {
         setBanner("canceled");
+        
+        // Fire GA event for canceled upgrade (once per return)
+        if (!hasTrackedStripeReturn.current) {
+          try {
+            // Read period and source from localStorage (stored before redirect)
+            const period = localStorage.getItem("jobspeak_upgrade_period") || "unknown";
+            const source = localStorage.getItem("jobspeak_upgrade_source") || "unknown";
+            
+            gaEvent("paywall_upgrade_cancel", {
+              page: "practice",
+              period: period,
+              source: source,
+            });
+            
+            // Clean up localStorage after tracking
+            localStorage.removeItem("jobspeak_upgrade_period");
+            localStorage.removeItem("jobspeak_upgrade_source");
+            
+            hasTrackedStripeReturn.current = true;
+          } catch (err) {
+            console.error("Error tracking upgrade cancel:", err);
+          }
+        }
         
         // Clean up URL params
         const newUrl = window.location.pathname;
