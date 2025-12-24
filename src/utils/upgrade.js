@@ -1,6 +1,7 @@
 // src/utils/upgrade.js
 import { apiClient } from "./apiClient.js";
 import { getUserKey } from "./userKey.js";
+import { gaEvent } from "./ga.js";
 
 // Global loading state to prevent double clicks across all upgrade buttons
 let isUpgrading = false;
@@ -37,6 +38,8 @@ export async function initiateUpgrade({
     });
 
     if (data?.url) {
+      // Track begin checkout before redirecting
+      gaEvent("begin_checkout", { source: "free_limit_modal" });
       // Navigate to Stripe checkout - don't reset loading state as we're leaving the page
       window.location.href = data.url;
     } else {

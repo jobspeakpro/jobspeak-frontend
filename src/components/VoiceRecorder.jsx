@@ -5,6 +5,7 @@ import { apiClient, ApiError } from "../utils/apiClient.js";
 import { usePro } from "../contexts/ProContext.jsx";
 import { getUserKey } from "../utils/userKey.js";
 import { isBlocked } from "../utils/usage.js";
+import { gaEvent } from "../utils/ga.js";
 
 // Fetch usage from backend API
 async function fetchUsage() {
@@ -257,6 +258,7 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
 
       mediaRecorder.start();
       setRecording(true);
+      gaEvent("practice_start", { page: "practice" });
     } catch (err) {
       console.error("Microphone access error:", err);
       setPermissionDenied(true);
@@ -273,6 +275,7 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream.getTracks().forEach((t) => t.stop());
       setRecording(false);
+      gaEvent("practice_stop", { page: "practice" });
     }
   };
 

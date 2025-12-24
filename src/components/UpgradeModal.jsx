@@ -1,6 +1,7 @@
 // src/components/UpgradeModal.jsx
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import UpgradeToProButton from "./UpgradeToProButton.jsx";
+import { gaEvent } from "../utils/ga.js";
 
 // source can be:
 // - "fix_answer" → Unlock unlimited answer rewrites
@@ -8,6 +9,15 @@ import UpgradeToProButton from "./UpgradeToProButton.jsx";
 // - "listen"     → Hear every answer spoken naturally
 // - anything else / undefined → generic copy
 export default function UpgradeModal({ onClose, isPro = false, source }) {
+  const hasTrackedOpen = useRef(false);
+
+  // Track modal open ONCE per mount
+  useEffect(() => {
+    if (!hasTrackedOpen.current) {
+      gaEvent("free_limit_reached", { page: "practice" });
+      hasTrackedOpen.current = true;
+    }
+  }, []);
 
   // Auto-close modal if user becomes Pro
   useEffect(() => {

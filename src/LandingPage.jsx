@@ -1,6 +1,7 @@
 // src/LandingPage.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { gaEvent } from "./utils/ga.js";
 
 export default function LandingPage() {
   const [showDemoModal, setShowDemoModal] = useState(false);
@@ -74,7 +75,10 @@ export default function LandingPage() {
 
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-center pt-4">
                 <button 
-                  onClick={handlePracticeNow}
+                  onClick={() => {
+                    gaEvent("start_speaking_click", { page: "landing" });
+                    handlePracticeNow();
+                  }}
                   className="flex min-w-[260px] cursor-pointer items-center justify-center rounded-full h-16 px-10 bg-primary text-white text-lg font-bold shadow-xl shadow-primary/30 hover:bg-red-600 hover:shadow-2xl hover:shadow-primary/40 transition-all transform hover:scale-[1.02]"
                 >
                   <span className="material-symbols-outlined mr-2" style={{ fontSize: 24 }}>mic</span>
@@ -82,6 +86,7 @@ export default function LandingPage() {
                 </button>
                 <button 
                   onClick={() => {
+                    gaEvent("how_it_works_click", { page: "landing" });
                     const element = document.getElementById('methodology');
                     if (element) {
                       element.scrollIntoView({ behavior: 'smooth' });
@@ -279,7 +284,10 @@ export default function LandingPage() {
                 Join professionals transforming their careers with better English.
               </p>
               <button 
-                onClick={handlePracticeNow}
+                onClick={() => {
+                  gaEvent("start_speaking_now_click", { page: "landing" });
+                  handlePracticeNow();
+                }}
                 className="flex min-w-[200px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 px-8 bg-white text-primary text-lg font-bold leading-normal tracking-[0.015em] hover:bg-gray-100 transition-all transform hover:scale-105 shadow-xl"
               >
                 <span className="truncate">Start practicing free</span>

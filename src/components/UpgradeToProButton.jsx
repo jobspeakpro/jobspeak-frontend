@@ -1,12 +1,14 @@
 // src/components/UpgradeToProButton.jsx
 import React, { useState } from "react";
 import { initiateUpgrade } from "../utils/upgrade.js";
+import { gaEvent } from "../utils/ga.js";
 
 export default function UpgradeToProButton({ showPlanPicker = false, defaultPriceType = "monthly" }) {
   const [loading, setLoading] = useState(false);
   const [priceType, setPriceType] = useState(defaultPriceType);
 
   const handleUpgradeClick = async () => {
+    gaEvent("upgrade_click", { source: "free_limit_modal" });
     await initiateUpgrade({
       priceType,
       source: "button",

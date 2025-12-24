@@ -10,6 +10,7 @@ import { apiClient, ApiError } from "../utils/apiClient.js";
 import { usePro } from "../contexts/ProContext.jsx";
 import { getUserKey } from "../utils/userKey.js";
 import { isBlocked } from "../utils/usage.js";
+import { gaEvent } from "../utils/ga.js";
 
 export default function PracticePage() {
   const navigate = useNavigate();
@@ -122,6 +123,7 @@ export default function PracticePage() {
       return; // Return early - do NOT make API call when paywalled
     }
 
+    gaEvent("practice_submit", { page: "practice" });
     setError("");
     setResult(null);
     setLoading(true);
