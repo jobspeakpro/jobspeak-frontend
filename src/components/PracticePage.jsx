@@ -27,6 +27,47 @@ export default function PracticePage() {
   const [serverUnavailable, setServerUnavailable] = useState(false);
   const [freeImproveUsage, setFreeImproveUsage] = useState({ count: 0, limit: 3 });
   const [usage, setUsage] = useState({ used: 0, limit: 3, remaining: 3, blocked: false });
+  
+  // Practice questions array
+  const practiceQuestions = [
+    {
+      question: "Tell me about a time you faced a challenge at work.",
+      hint: "Focus on the STAR method: Situation, Task, Action, Result."
+    },
+    {
+      question: "Describe a situation where you had to work under pressure.",
+      hint: "Explain how you managed your time and priorities effectively."
+    },
+    {
+      question: "Tell me about a time you disagreed with a colleague or manager.",
+      hint: "Show how you handled conflict professionally and found a resolution."
+    },
+    {
+      question: "Give me an example of when you went above and beyond for a project.",
+      hint: "Highlight your initiative and commitment to excellence."
+    },
+    {
+      question: "Describe a time when you had to learn something new quickly.",
+      hint: "Demonstrate your adaptability and learning ability."
+    },
+    {
+      question: "Tell me about a mistake you made and how you handled it.",
+      hint: "Show accountability and what you learned from the experience."
+    },
+    {
+      question: "Describe a time when you had to persuade someone to see your point of view.",
+      hint: "Explain your communication and negotiation skills."
+    },
+    {
+      question: "Tell me about a time you had to work with a difficult team member.",
+      hint: "Show your teamwork and interpersonal skills."
+    }
+  ];
+  
+  // Initialize with random question
+  const [currentQuestion, setCurrentQuestion] = useState(() => {
+    return practiceQuestions[Math.floor(Math.random() * practiceQuestions.length)];
+  });
 
   const isPaywalled =
     !isPro && isBlocked(usage);
@@ -202,6 +243,26 @@ export default function PracticePage() {
 
   const improvedAnswerText = getImprovedAnswerText();
 
+  const handleTryAnotherQuestion = () => {
+    gaEvent("try_another_question_click", {
+      page: "practice"
+    });
+    
+    // Reset practice state
+    setText("");
+    setResult(null);
+    setError("");
+    setLoading(false);
+    
+    // Load a new random question (avoid same question if possible)
+    let newQuestion;
+    do {
+      newQuestion = practiceQuestions[Math.floor(Math.random() * practiceQuestions.length)];
+    } while (newQuestion.question === currentQuestion.question && practiceQuestions.length > 1);
+    
+    setCurrentQuestion(newQuestion);
+  };
+
   return (
     <div className="min-h-screen bg-rose-50 text-slate-900">
       {/* Header */}
@@ -265,10 +326,10 @@ export default function PracticePage() {
         <div className="max-w-3xl mx-auto mb-8">
           <div className="bg-white border border-rose-100 rounded-2xl p-6 shadow-sm">
             <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-2 leading-tight">
-              Tell me about a time you faced a challenge at work.
+              {currentQuestion.question}
             </h2>
             <p className="text-sm text-slate-600 leading-relaxed">
-              Focus on the STAR method: Situation, Task, Action, Result.
+              {currentQuestion.hint}
             </p>
           </div>
         </div>
@@ -413,6 +474,13 @@ export default function PracticePage() {
                     then listen and repeat with the audio to build muscle
                     memory.
                   </div>
+                  <button
+                    type="button"
+                    onClick={handleTryAnotherQuestion}
+                    className="mt-2 px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition-all transform hover:scale-[1.02]"
+                  >
+                    Try another question
+                  </button>
                 </div>
               )
             ) : (
