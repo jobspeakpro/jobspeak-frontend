@@ -287,17 +287,20 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
             type="button"
             onClick={startRecording}
             disabled={transcribing}
-            className="flex items-center justify-center h-16 w-16 rounded-full shadow-lg border-2 bg-white border-rose-300 text-rose-500 hover:bg-rose-50 hover:border-rose-400 hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed transition-all transform hover:scale-105"
+            className="flex items-center justify-center h-20 w-20 rounded-full shadow-xl border-2 bg-emerald-500 border-emerald-500 text-white hover:bg-emerald-600 hover:border-emerald-600 hover:shadow-2xl disabled:opacity-60 disabled:cursor-not-allowed transition-all transform hover:scale-105 relative"
             title="Start recording"
+            style={{
+              boxShadow: '0 0 0 0 rgba(16, 185, 129, 0.4), 0 0 20px 8px rgba(16, 185, 129, 0.2)',
+            }}
           >
-            <span className="material-icons-outlined" style={{ fontSize: 28 }}>mic</span>
+            <span className="material-icons-outlined" style={{ fontSize: 32 }}>mic</span>
           </button>
         ) : (
           <button
             type="button"
             onClick={stopRecording}
             disabled={transcribing}
-            className="flex items-center justify-center h-16 w-16 rounded-full shadow-xl border-2 bg-rose-500 border-rose-500 text-white disabled:opacity-60 disabled:cursor-not-allowed transition-all relative"
+            className="flex items-center justify-center h-20 w-20 rounded-full shadow-xl border-2 bg-rose-500 border-rose-500 text-white disabled:opacity-60 disabled:cursor-not-allowed transition-all relative"
             title="Stop recording"
             aria-label="Stop recording"
             style={{
@@ -305,7 +308,7 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
               animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
             }}
           >
-            <span className="material-icons-outlined" style={{ fontSize: 28 }}>stop</span>
+            <span className="material-icons-outlined" style={{ fontSize: 32 }}>stop</span>
           </button>
         )}
         
@@ -320,16 +323,6 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
 
       {transcribing && (
         <p className="text-[10px] text-slate-600 font-medium">Transcribing...</p>
-      )}
-      
-      {/* Free attempts label - only show for non-Pro users */}
-      {!isPro && (
-        <div className="bg-rose-50 border border-rose-100 rounded-lg px-3 py-2">
-          <p className="text-[10px] text-slate-700">
-            <span className="font-semibold">Free attempts today:</span>{" "}
-            <span className="text-rose-600 font-bold">{usage.used}/{usage.limit === Infinity ? "∞" : usage.limit}</span>
-          </p>
-        </div>
       )}
       
       {error && (

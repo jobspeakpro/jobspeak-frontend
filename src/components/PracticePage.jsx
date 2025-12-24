@@ -68,6 +68,7 @@ export default function PracticePage() {
   const [currentQuestion, setCurrentQuestion] = useState(() => {
     return practiceQuestions[Math.floor(Math.random() * practiceQuestions.length)];
   });
+  const [questionNumber, setQuestionNumber] = useState(1);
 
   const isPaywalled =
     !isPro && isBlocked(usage);
@@ -261,6 +262,7 @@ export default function PracticePage() {
     } while (newQuestion.question === currentQuestion.question && practiceQuestions.length > 1);
     
     setCurrentQuestion(newQuestion);
+    setQuestionNumber(prev => prev + 1);
   };
 
   return (
@@ -306,52 +308,83 @@ export default function PracticePage() {
       )}
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-        {/* Free improve attempts counter */}
+        {/* Free improve attempts counter - rounded pill with dots */}
         {!isPro && (
-          <div className="bg-rose-50 border border-rose-100 rounded-xl px-4 py-2 text-xs mb-6">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-600">Free attempts today:</span>
-              <span className="font-semibold text-slate-900">
-                {freeImproveUsage.count} / {freeImproveUsage.limit}
+          <div className="flex justify-center mb-6">
+            <div className="inline-flex items-center gap-2 bg-white border border-rose-200 rounded-full px-4 py-2 shadow-sm">
+              <span className="text-xs text-slate-600 font-medium">Free attempts today:</span>
+              <span className="text-xs font-bold text-slate-900">
+                {freeImproveUsage.count} / {freeImproveUsage.limit === Infinity ? "∞" : freeImproveUsage.limit}
               </span>
-            </div>
-            {isPaywalled && (
-              <div className="mt-2 text-[11px] text-amber-700">
-                Free limit reached — upgrade to continue practicing.
+              <div className="flex items-center gap-1 ml-1">
+                {Array.from({ length: Math.min(freeImproveUsage.limit, 10) }).map((_, idx) => (
+                  <div
+                    key={idx}
+                    className={`h-1.5 w-1.5 rounded-full transition-colors ${
+                      idx < freeImproveUsage.count
+                        ? "bg-rose-500"
+                        : "bg-rose-200"
+                    }`}
+                  />
+                ))}
               </div>
-            )}
+            </div>
           </div>
         )}
         {/* Question card - centered */}
         <div className="max-w-3xl mx-auto mb-8">
-          <div className="bg-white border border-rose-100 rounded-2xl p-6 shadow-sm">
-            <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-2 leading-tight">
+          <div className="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm">
+            {/* Practice Question badge */}
+            <div className="mb-4">
+              <span className="inline-block px-3 py-1 text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-full">
+                Practice Question #{questionNumber}
+              </span>
+            </div>
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-4 leading-tight">
               {currentQuestion.question}
             </h2>
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <p className="text-sm text-slate-600 leading-relaxed mb-3">
               {currentQuestion.hint}
             </p>
+            {/* Try another question link */}
+            <button
+              type="button"
+              onClick={handleTryAnotherQuestion}
+              className="text-sm text-rose-600 hover:text-rose-700 font-medium underline transition-colors"
+            >
+              Try another question
+            </button>
           </div>
         </div>
 
         {/* Two-column layout */}
         <div className="grid gap-6 md:grid-cols-2">
           {/* LEFT: User answer with VoiceRecorder */}
-          <div className="bg-white border border-rose-100 rounded-2xl p-6 shadow-md flex flex-col h-full">
-            <p className="text-sm font-bold text-rose-500 mb-1 uppercase tracking-wide">
-              Your Answer
-            </p>
-            <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-              Record your answer or type it below. Aim for 45–90 seconds when spoken.
-            </p>
+          <div className="bg-white border border-slate-200/60 rounded-xl p-6 shadow-sm flex flex-col h-full">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-sm font-bold text-slate-900">
+                  Your Response
+                </p>
+              </div>
+              {result && (
+                <span className="text-xs text-slate-500 font-medium">
+                  {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
+            </div>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 handleImproveAnswer();
               }}
-              className="flex flex-col gap-4 flex-1"
+              className="flex flex-col gap-6 flex-1"
             >
-              <div className="flex items-start gap-4">
+              {/* Recording CTA - centered with large green mic button */}
+              <div className="flex flex-col items-center gap-4 mb-4">
                 <VoiceRecorder 
                   onTranscript={(transcript) => {
                     setText(transcript);
@@ -368,31 +401,24 @@ export default function PracticePage() {
                   }}
                   onAttemptsRefresh={() => fetchFreeAttempts()}
                 />
-                <div className="flex-1 text-xs text-slate-600">
-                  <div className="font-semibold text-slate-800 mb-1">
-                    {isRecording ? "Recording..." : isTranscribing ? "Transcribing..." : "Speak your answer"}
-                  </div>
-                  <div>
-                    {isRecording 
-                      ? "Click stop when finished"
-                      : isTranscribing
-                      ? "Processing your audio..."
-                      : "Click the mic to speak or type below."}
-                  </div>
-                </div>
+                <p className="text-sm text-slate-600 font-medium text-center">
+                  Tap microphone to start speaking
+                </p>
               </div>
 
               {/* Transcript textarea (auto-filled) */}
-              <textarea
-                value={text}
-                onChange={(e) => {
-                  setText(e.target.value);
-                  if (error) setError("");
-                }}
-                placeholder="Your transcript will appear here after recording, or type your answer directly..."
-                disabled={isTranscribing}
-                className="w-full flex-1 min-h-[160px] border-2 border-rose-100 bg-rose-50 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-rose-400 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
-              />
+              <div className="flex-1">
+                <textarea
+                  value={text}
+                  onChange={(e) => {
+                    setText(e.target.value);
+                    if (error) setError("");
+                  }}
+                  placeholder="Your transcript will appear here after recording, or type your answer directly..."
+                  disabled={isTranscribing}
+                  className="w-full min-h-[160px] border border-slate-200 bg-slate-50 rounded-lg px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed transition-all leading-relaxed resize-none"
+                />
+              </div>
               
               <div className="flex flex-wrap gap-2 items-center">
                 <button
@@ -426,7 +452,7 @@ export default function PracticePage() {
           </div>
 
           {/* RIGHT: Improved answer */}
-          <div className="bg-white border border-rose-100 rounded-2xl p-6 shadow-md flex flex-col h-full">
+          <div className="bg-white border border-rose-100/60 rounded-2xl p-6 shadow-sm flex flex-col h-full">
             <p className="text-sm font-bold text-emerald-600 mb-1 uppercase tracking-wide">
               Better way to say it
             </p>
@@ -456,13 +482,15 @@ export default function PracticePage() {
                     )}
                   </div>
                   {improvedAnswerText && (
-                    <ListenToAnswerButton
-                      improvedText={improvedAnswerText}
-                      onUpgradeNeeded={(source) => {
-                        setPaywallSource(source || "listen");
-                        setShowUpgradeModal(true);
-                      }}
-                    />
+                    <div className="mt-2">
+                      <ListenToAnswerButton
+                        improvedText={improvedAnswerText}
+                        onUpgradeNeeded={(source) => {
+                          setPaywallSource(source || "listen");
+                          setShowUpgradeModal(true);
+                        }}
+                      />
+                    </div>
                   )}
                   {result.message && (
                     <div className="text-[11px] text-slate-500">
@@ -474,13 +502,6 @@ export default function PracticePage() {
                     then listen and repeat with the audio to build muscle
                     memory.
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleTryAnotherQuestion}
-                    className="mt-2 px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition-all transform hover:scale-[1.02]"
-                  >
-                    Try another question
-                  </button>
                 </div>
               )
             ) : (

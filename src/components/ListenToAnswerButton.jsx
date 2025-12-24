@@ -237,15 +237,15 @@ export default function ListenToAnswerButton({ improvedText, onUpgradeNeeded }) 
   };
 
   return (
-    <div className="mt-3 flex flex-col items-start gap-2">
+    <div className="flex flex-col items-start gap-2">
       <button
         type="button"
         onClick={handleClick}
         disabled={isLoading}
-        className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium shadow-sm ${
+        className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold shadow-md transition-all ${
           isLoading
-            ? "bg-gray-300 text-gray-700 cursor-not-allowed"
-            : "bg-emerald-600 text-white hover:bg-emerald-700"
+            ? "bg-slate-300 text-slate-700 cursor-not-allowed"
+            : "bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-lg"
         }`}
       >
         {isLoading ? (
@@ -255,21 +255,15 @@ export default function ListenToAnswerButton({ improvedText, onUpgradeNeeded }) 
           </>
         ) : (
           <>
-            <span role="img" aria-label="speaker">
-              🔊
-            </span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M6.343 6.343l-.707-.707m13.728 0l-.707.707M6.343 17.657l-.707.707m13.728 0l-.707-.707M5 12h.01M19 12h.01M12 5v.01M12 19v.01" />
+            </svg>
             <span>Listen to this answer</span>
           </>
         )}
       </button>
 
-      {!isPro && (
-        <p className="text-xs text-gray-600">
-          Free attempts today: {usage.used}/{usage.limit === Infinity ? "∞" : usage.limit}
-        </p>
-      )}
-
-      {error && <p className="text-xs text-gray-600 max-w-md">{error}</p>}
+      {error && <p className="text-xs text-rose-600 max-w-md">{error}</p>}
     </div>
   );
 }
