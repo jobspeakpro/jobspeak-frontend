@@ -1,5 +1,5 @@
 // src/components/UpgradeModal.jsx
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import UpgradeToProButton from "./UpgradeToProButton.jsx";
 import { gaEvent } from "../utils/ga.js";
 
@@ -10,6 +10,7 @@ import { gaEvent } from "../utils/ga.js";
 // - anything else / undefined → generic copy
 export default function UpgradeModal({ onClose, isPro = false, source }) {
   const hasTrackedOpen = useRef(false);
+  const [billingPeriod, setBillingPeriod] = useState("annual");
 
   // Track modal open ONCE per mount
   useEffect(() => {
@@ -103,10 +104,34 @@ export default function UpgradeModal({ onClose, isPro = false, source }) {
           </ul>
 
           <div className="flex flex-col gap-3">
-            {/* Primary CTA Button */}
-            <div className="[&_button:last-child]:w-full [&_button:last-child]:h-12 [&_button:last-child]:text-base [&_button:last-child]:font-bold [&_button:last-child]:rounded-lg [&_button:last-child]:bg-green-600 [&_button:last-child]:hover:bg-green-700 [&_button:last-child]:shadow-lg [&_button:last-child]:!bg-green-600 [&_button:last-child]:hover:!bg-green-700">
-              <UpgradeToProButton showPlanPicker={true} />
+            {/* Plan Picker Toggle */}
+            <div className="flex gap-2 p-1 bg-slate-100 rounded-full border border-slate-200">
+              <button
+                type="button"
+                onClick={() => setBillingPeriod("monthly")}
+                className={`flex-1 px-3 py-2 rounded-full text-xs font-semibold transition ${
+                  billingPeriod === "monthly"
+                    ? "bg-emerald-600 text-white shadow-sm"
+                    : "bg-white text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                onClick={() => setBillingPeriod("annual")}
+                className={`flex-1 px-3 py-2 rounded-full text-xs font-semibold transition ${
+                  billingPeriod === "annual"
+                    ? "bg-emerald-600 text-white shadow-sm"
+                    : "bg-white text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                Annual
+              </button>
             </div>
+
+            {/* Primary CTA Button */}
+            <UpgradeToProButton showPlanPicker={false} priceType={billingPeriod} />
             {/* Secondary Close link */}
             <button
               type="button"

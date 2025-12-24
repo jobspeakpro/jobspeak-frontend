@@ -3,9 +3,11 @@ import React, { useState } from "react";
 import { initiateUpgrade } from "../utils/upgrade.js";
 import { gaEvent } from "../utils/ga.js";
 
-export default function UpgradeToProButton({ showPlanPicker = false, defaultPriceType = "monthly" }) {
+export default function UpgradeToProButton({ showPlanPicker = false, defaultPriceType = "annual", priceType: priceTypeProp = null }) {
   const [loading, setLoading] = useState(false);
-  const [priceType, setPriceType] = useState(defaultPriceType);
+  // Use prop if provided (from parent state), otherwise fall back to internal state
+  const [internalPriceType, setInternalPriceType] = useState(defaultPriceType);
+  const priceType = priceTypeProp !== null ? priceTypeProp : internalPriceType;
 
   const handleUpgradeClick = async () => {
     gaEvent("upgrade_click", { source: "free_limit_modal" });
@@ -23,22 +25,24 @@ export default function UpgradeToProButton({ showPlanPicker = false, defaultPric
         <div className="flex gap-2 p-1 bg-slate-100 rounded-lg">
           <button
             type="button"
-            onClick={() => setPriceType("monthly")}
+            onClick={() => setInternalPriceType("monthly")}
+            aria-pressed={priceType === "monthly"}
             className={`flex-1 px-3 py-2 rounded-md text-xs font-semibold transition ${
               priceType === "monthly"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-600 hover:text-slate-900"
+                ? "bg-emerald-600 text-white shadow-sm"
+                : "bg-white text-slate-600 hover:text-slate-900"
             }`}
           >
             Monthly
           </button>
           <button
             type="button"
-            onClick={() => setPriceType("annual")}
+            onClick={() => setInternalPriceType("annual")}
+            aria-pressed={priceType === "annual"}
             className={`flex-1 px-3 py-2 rounded-md text-xs font-semibold transition ${
               priceType === "annual"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-600 hover:text-slate-900"
+                ? "bg-emerald-600 text-white shadow-sm"
+                : "bg-white text-slate-600 hover:text-slate-900"
             }`}
           >
             Annual
@@ -49,7 +53,7 @@ export default function UpgradeToProButton({ showPlanPicker = false, defaultPric
         <button
           onClick={handleUpgradeClick}
           disabled={loading}
-          className="w-full inline-flex items-center justify-center gap-2 px-5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full h-12 inline-flex items-center justify-center gap-2 px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-base font-bold shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {loading ? (
             <>
