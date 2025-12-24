@@ -1,5 +1,4 @@
 // src/utils/upgrade.js
-import { trackEvent } from "./analytics";
 import { apiClient } from "./apiClient.js";
 import { getUserKey } from "./userKey.js";
 
@@ -29,17 +28,6 @@ export async function initiateUpgrade({
     isUpgrading = true;
     if (onLoadingChange) onLoadingChange(true);
     
-    // Track analytics
-    trackEvent("upgrade_click", { source, priceType });
-    trackEvent("stripe_upgrade_click", { source, priceType });
-    // Track GA4 upgrade_clicked event
-    const upgradeParams = {
-      source: "paywall",
-    };
-    if (priceType === "monthly" || priceType === "annual") {
-      upgradeParams.plan = priceType;
-    }
-    trackEvent("upgrade_clicked", upgradeParams);
 
     // Get userKey and include in both header (via apiClient) and body (for redundancy/compatibility)
     const userKey = getUserKey();
@@ -49,7 +37,6 @@ export async function initiateUpgrade({
     });
 
     if (data?.url) {
-      trackEvent("stripe_checkout_redirect", { source, priceType });
       // Navigate to Stripe checkout - don't reset loading state as we're leaving the page
       window.location.href = data.url;
     } else {

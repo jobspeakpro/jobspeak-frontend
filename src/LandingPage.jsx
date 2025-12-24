@@ -1,14 +1,12 @@
 // src/LandingPage.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { trackEvent } from "./lib/analytics";
 
 export default function LandingPage() {
   const [showDemoModal, setShowDemoModal] = useState(false);
   const navigate = useNavigate();
 
   const handlePracticeNow = () => {
-    trackEvent("start_practice_click", { location: "landing_hero" });
     navigate("/practice");
   };
 

@@ -1,7 +1,6 @@
 // src/components/UpgradeModal.jsx
 import React, { useEffect } from "react";
 import UpgradeToProButton from "./UpgradeToProButton.jsx";
-import { trackEvent } from "../utils/analytics";
 
 // source can be:
 // - "fix_answer" → Unlock unlimited answer rewrites
@@ -9,10 +8,6 @@ import { trackEvent } from "../utils/analytics";
 // - "listen"     → Hear every answer spoken naturally
 // - anything else / undefined → generic copy
 export default function UpgradeModal({ onClose, isPro = false, source }) {
-  // Track when modal is shown
-  useEffect(() => {
-    trackEvent("upgrade_modal_shown", { source: "paywall" });
-  }, []);
 
   // Auto-close modal if user becomes Pro
   useEffect(() => {

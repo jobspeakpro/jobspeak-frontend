@@ -5,7 +5,6 @@ import VoiceRecorder from "./VoiceRecorder.jsx";
 import ListenToAnswerButton from "./ListenToAnswerButton.jsx";
 import InlineError from "./InlineError.jsx";
 import UpgradeModal from "./UpgradeModal.jsx";
-import { trackEvent } from "../utils/analytics";
 import { isNetworkError } from "../utils/networkError.js";
 import { apiClient, ApiError } from "../utils/apiClient.js";
 import { usePro } from "../contexts/ProContext.jsx";
@@ -120,7 +119,6 @@ export default function PracticePage() {
       setError("");
       setPaywallSource("fix_answer");
       setShowUpgradeModal(true);
-      trackEvent("micro_demo_limit_hit", { source: "practice_page" });
       return; // Return early - do NOT make API call when paywalled
     }
 
@@ -134,11 +132,8 @@ export default function PracticePage() {
       return;
     }
 
-    // Track practice start
-    trackEvent("practice_start", { source: "ui" });
 
     try {
-      trackEvent("interview_submit", { textLength: text.length, source: "practice_page" });
 
       try {
         const data = await apiClient("/ai/micro-demo", {
@@ -146,7 +141,6 @@ export default function PracticePage() {
           body: { text },
         });
         setResult(data);
-        trackEvent("interview_submit_success", { textLength: text.length });
         
         // Refresh free attempts from backend after successful submission
         fetchFreeAttempts();
@@ -164,14 +158,11 @@ export default function PracticePage() {
               score: null,
             },
           });
-          // Track practice complete when session is successfully saved
-          trackEvent("practice_complete", { source: "ui" });
         } catch (saveErr) {
           if (saveErr instanceof ApiError && saveErr.status === 402 && saveErr.data?.upgrade === true) {
             // Update UI to reflect limit reached, but don't open modal
             // Session save is non-critical - user should complete their current attempt
             fetchFreeAttempts(); // Refresh to get latest from backend
-            trackEvent("free_limit_reached", { source: "session_save" });
           } else {
             console.error("Failed to save session:", saveErr);
           }
@@ -186,14 +177,11 @@ export default function PracticePage() {
           setFreeImproveUsage({ count: 3, limit: 3 });
           setPaywallSource("fix_answer");
           setShowUpgradeModal(true);
-          trackEvent("free_limit_reached", { source: "practice_page" });
-          trackEvent("interview_submit_fail", { reason: "free_limit", status: err.status });
           setLoading(false);
           return;
         }
         console.error("Micro-demo error status:", err.status || err.message);
         setError("Something went wrong. Try again in a moment.");
-        trackEvent("interview_submit_fail", { reason: "api_error", status: err.status });
         setLoading(false);
         return;
       }
@@ -205,7 +193,6 @@ export default function PracticePage() {
       } else {
         setError("Connection issue. Check your internet and try again.");
       }
-      trackEvent("interview_submit_fail", { reason: "network_error", error: err.message });
     } finally {
       setLoading(false);
     }

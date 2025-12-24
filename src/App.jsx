@@ -11,7 +11,6 @@ import PricingPage from "./components/PricingPage.jsx";
 import ProGuard from "./components/ProGuard.jsx";
 import Navigation from "./components/Navigation.jsx";
 import InlineError from "./components/InlineError.jsx";
-import { trackEvent } from "./utils/analytics";
 import { usePro } from "./contexts/ProContext.jsx";
 import { isNetworkError } from "./utils/networkError.js";
 import { apiClient, ApiError } from "./utils/apiClient.js";
@@ -69,7 +68,6 @@ export default function App({ defaultTab = "interview" }) {
 
       if (success === "true" || pathSuccess) {
         setBanner("success");
-        trackEvent("stripe_payment_success", { location: "landing" });
         // Immediately refresh Pro status
         refreshProStatus();
         
@@ -78,7 +76,6 @@ export default function App({ defaultTab = "interview" }) {
         window.history.replaceState({}, "", newUrl);
       } else if (canceled === "true" || pathCancel) {
         setBanner("canceled");
-        trackEvent("stripe_payment_canceled", { location: "landing" });
         
         // Clean up URL params
         const newUrl = window.location.pathname;
@@ -292,12 +289,10 @@ export default function App({ defaultTab = "interview" }) {
     setActiveTab("interview");
     navigate("/interview");
     scrollToElement("micro-demo");
-    trackEvent("hero_fix_answer_click", { source: "hero" });
   };
 
   const handleHeroSeePricingClick = () => {
     scrollToElement("pricing");
-    trackEvent("hero_pricing_click", { source: "hero" });
   };
 
   // --- Interview Coach: Micro-demo ---
@@ -312,7 +307,6 @@ export default function App({ defaultTab = "interview" }) {
       setError("");
       setPaywallSource("fix_answer");
       setShowUpgradeModal(true);
-      trackEvent("micro_demo_limit_hit", { source: "interview_tab" });
       return; // Return early - do NOT make API call when paywalled
     }
 
@@ -326,13 +320,9 @@ export default function App({ defaultTab = "interview" }) {
       return;
     }
 
-    // Track practice start
-    trackEvent("practice_start", { source: "ui" });
 
     try {
 
-      trackEvent("interview_submit", { textLength: text.length, source: "interview_tab" });
-      trackEvent("micro_demo_used", { source: "interview_tab" });
 
       try {
         const data = await apiClient("/ai/micro-demo", {
@@ -340,7 +330,6 @@ export default function App({ defaultTab = "interview" }) {
           body: { text },
         });
         setResult(data);
-        trackEvent("interview_submit_success", { textLength: text.length });
         
         // Refresh usage after successful submission (includes free attempts)
         fetchUsage();
@@ -362,14 +351,11 @@ export default function App({ defaultTab = "interview" }) {
           setSessionRefreshTrigger((prev) => prev + 1);
           // Refresh usage after successful save
           fetchUsage();
-          // Track practice complete when session is successfully saved
-          trackEvent("practice_complete", { source: "ui" });
         } catch (saveErr) {
           if (saveErr instanceof ApiError && saveErr.status === 402 && saveErr.data?.upgrade === true) {
             // Update UI to reflect limit reached, but don't open modal
             // Session save is non-critical - user should complete their current attempt
             fetchUsage(); // Refresh to get latest from backend
-            trackEvent("free_limit_reached", { source: "session_save" });
           } else {
             console.error("Failed to save session:", saveErr);
             // Don't show error to user, session saving is non-critical
@@ -383,8 +369,6 @@ export default function App({ defaultTab = "interview" }) {
           setPaywallSource("fix_answer");
           setShowUpgradeModal(true);
           fetchUsage(); // Refresh to get latest from backend
-          trackEvent("free_limit_reached", { source: "interview_tab" });
-          trackEvent("interview_submit_fail", { reason: "free_limit", status: err.status });
           setLoading(false);
           return;
         }
@@ -392,7 +376,6 @@ export default function App({ defaultTab = "interview" }) {
         setError(
           "Something went wrong. Try again in a moment."
         );
-        trackEvent("interview_submit_fail", { reason: "api_error", status: err.status });
         setLoading(false);
         return;
       }
@@ -404,7 +387,6 @@ export default function App({ defaultTab = "interview" }) {
       } else {
         setError("Connection issue. Check your internet and try again.");
       }
-      trackEvent("interview_submit_fail", { reason: "network_error", error: err.message });
     } finally {
       setLoading(false);
     }
@@ -425,7 +407,6 @@ export default function App({ defaultTab = "interview" }) {
       );
       setResumeResult(null);
       setShowPaywall(true);
-      trackEvent("resume_limit_hit", { source: "resume_tab" });
       return;
     }
 
@@ -434,7 +415,6 @@ export default function App({ defaultTab = "interview" }) {
       setResumeResult(null);
       setResumeError("");
 
-      trackEvent("resume_doctor_used", { source: "resume_tab" });
 
       const data = await apiClient("/resume/analyze", {
         method: "POST",
@@ -448,7 +428,6 @@ export default function App({ defaultTab = "interview" }) {
       if (err instanceof ApiError && err.status === 402 && err.data?.upgrade === true) {
         setResumeError("");
         setShowUpgradeModal(true);
-        trackEvent("free_limit_reached", { source: "resume_tab" });
         setResumeLoading(false);
         return;
       }

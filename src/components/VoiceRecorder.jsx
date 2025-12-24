@@ -1,6 +1,5 @@
 // src/components/VoiceRecorder.jsx
 import React, { useRef, useState, useEffect } from "react";
-import { trackEvent } from "../utils/analytics";
 import { isNetworkError } from "../utils/networkError.js";
 import { apiClient, ApiError } from "../utils/apiClient.js";
 import { usePro } from "../contexts/ProContext.jsx";
@@ -213,7 +212,6 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
               }
             }
 
-            trackEvent("stt_success", { textLength: transcript.length });
             onTranscript(transcript);
           } catch (err) {
             // Refresh usage from backend after failed STT (success OR 429)
@@ -232,7 +230,6 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
               if (onUpgradeNeeded) {
                 onUpgradeNeeded("mic");
               }
-              trackEvent("stt_fail", { error: "rate_limit_429", status: 429 });
               return; // Stop the flow - don't proceed to transcript-dependent steps
             }
             
@@ -240,11 +237,9 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
             if (err instanceof ApiError && err.status === 402 && err.data?.upgrade === true && onUpgradeNeeded) {
               setError("You've reached your daily limit. Upgrade to Pro for unlimited practice.");
               onUpgradeNeeded("mic");
-              trackEvent("stt_fail", { error: "upgrade_needed_402", status: 402 });
               return; // Stop the flow
             }
             
-            trackEvent("stt_fail", { error: err.data?.error || err.message || "Transcription failed" });
             throw new Error(err.data?.error || err.message || "Transcription failed");
           }
         } catch (err) {
@@ -254,7 +249,6 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
             setError(err.message);
           }
           if (!err.message.includes("Transcription failed") && !isNetworkError(err)) {
-            trackEvent("stt_fail", { error: err.message });
           }
         } finally {
           setTranscribing(false);
@@ -263,7 +257,6 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
 
       mediaRecorder.start();
       setRecording(true);
-      trackEvent("start_recording");
     } catch (err) {
       console.error("Microphone access error:", err);
       setPermissionDenied(true);
@@ -280,7 +273,6 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream.getTracks().forEach((t) => t.stop());
       setRecording(false);
-      trackEvent("stop_recording");
     }
   };
 
