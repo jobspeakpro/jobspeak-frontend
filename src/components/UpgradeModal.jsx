@@ -3,6 +3,12 @@ import React, { useEffect, useRef, useState } from "react";
 import UpgradeToProButton from "./UpgradeToProButton.jsx";
 import { gaEvent } from "../utils/ga.js";
 
+// Pricing constants - easy to update later
+const PRICING = {
+  monthly: { price: 19, label: "$19 / mo" },
+  annual: { price: 15, label: "$15 / mo", savings: "20%" },
+};
+
 // source can be:
 // - "fix_answer" → Unlock unlimited answer rewrites
 // - "mic"        → Practice speaking without limits
@@ -11,14 +17,16 @@ import { gaEvent } from "../utils/ga.js";
 export default function UpgradeModal({ onClose, isPro = false, source }) {
   const hasTrackedOpen = useRef(false);
   const [billingPeriod, setBillingPeriod] = useState("annual");
+  const paywallSource = source || "unknown";
 
   // Track modal open ONCE per mount
   useEffect(() => {
     if (!hasTrackedOpen.current) {
       gaEvent("free_limit_reached", { page: "practice" });
+      gaEvent("paywall_modal_open", { page: "practice", source: paywallSource });
       hasTrackedOpen.current = true;
     }
-  }, []);
+  }, [paywallSource]);
 
   // Auto-close modal if user becomes Pro
   useEffect(() => {
@@ -53,9 +61,29 @@ export default function UpgradeModal({ onClose, isPro = false, source }) {
     return "You've practiced hard today. Unlock your full potential and keep the momentum going with JobSpeak Pro.";
   };
 
+  const handleBillingToggle = (period) => {
+    setBillingPeriod(period);
+    gaEvent("paywall_billing_toggle", { page: "practice", period });
+  };
+
+  const handleClose = () => {
+    gaEvent("paywall_modal_close", { page: "practice", source: paywallSource });
+    onClose();
+  };
+
+  const handleUpgradeClick = () => {
+    gaEvent("paywall_upgrade_click", { page: "practice", period: billingPeriod, source: paywallSource });
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full relative border border-slate-200">
+    <div 
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={handleClose}
+    >
+      <div 
+        className="bg-white rounded-2xl shadow-xl max-w-md w-full relative border border-slate-200"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-8">
           <div className="flex flex-col items-center text-center mb-6">
             {/* Lock icon in light blue circle */}
@@ -69,6 +97,9 @@ export default function UpgradeModal({ onClose, isPro = false, source }) {
             </h2>
             <p className="text-base text-slate-600 leading-relaxed">
               {getSubcopy()}
+            </p>
+            <p className="text-sm text-slate-500 mt-2">
+              Keep your momentum going — practice again in seconds.
             </p>
           </div>
 
@@ -105,39 +136,65 @@ export default function UpgradeModal({ onClose, isPro = false, source }) {
             <div className="flex gap-2 p-1 bg-slate-100 rounded-full border border-slate-200">
               <button
                 type="button"
-                onClick={() => setBillingPeriod("monthly")}
+                onClick={() => handleBillingToggle("monthly")}
                 className={`flex-1 px-3 py-2 rounded-full text-xs font-semibold transition ${
                   billingPeriod === "monthly"
                     ? "bg-emerald-600 text-white shadow-sm"
                     : "bg-white text-slate-600 hover:bg-slate-50"
                 }`}
               >
-                Monthly
+                <div className="flex flex-col items-center">
+                  <span>Monthly</span>
+                  <span className={`text-[10px] mt-0.5 ${billingPeriod === "monthly" ? "text-emerald-50" : "text-slate-500"}`}>
+                    {PRICING.monthly.label}
+                  </span>
+                </div>
               </button>
               <button
                 type="button"
-                onClick={() => setBillingPeriod("annual")}
+                onClick={() => handleBillingToggle("annual")}
                 className={`flex-1 px-3 py-2 rounded-full text-xs font-semibold transition ${
                   billingPeriod === "annual"
                     ? "bg-emerald-600 text-white shadow-sm"
                     : "bg-white text-slate-600 hover:bg-slate-50"
                 }`}
               >
-                Annual
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center gap-1">
+                    <span>Annual</span>
+                    {billingPeriod === "annual" && (
+                      <span className="px-1 py-0.5 bg-emerald-500 text-white text-[9px] font-bold rounded">
+                        Save {PRICING.annual.savings}
+                      </span>
+                    )}
+                  </div>
+                  <span className={`text-[10px] mt-0.5 ${billingPeriod === "annual" ? "text-emerald-50" : "text-slate-500"}`}>
+                    {PRICING.annual.label}
+                  </span>
+                </div>
               </button>
             </div>
 
             {/* Primary CTA Button - Centered with max-width */}
             <div className="flex justify-center">
               <div className="max-w-sm w-full [&_button]:w-full [&_button]:h-12 [&_button]:rounded-xl [&_button]:font-bold [&_button]:text-base">
-                <UpgradeToProButton showPlanPicker={false} priceType={billingPeriod} />
+                <UpgradeToProButton 
+                  showPlanPicker={false} 
+                  priceType={billingPeriod}
+                  onUpgradeClick={handleUpgradeClick}
+                />
               </div>
+            </div>
+            {/* Trust reducers */}
+            <div className="flex flex-col items-center gap-1 mt-2">
+              <p className="text-xs text-slate-500">Secure checkout via Stripe</p>
+              <p className="text-xs text-slate-500">Cancel anytime</p>
             </div>
             {/* Secondary "Come back tomorrow" button */}
             <div className="flex justify-center">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleClose}
                 className="bg-transparent hover:bg-slate-100 text-slate-600 rounded-lg px-4 py-2 text-sm transition-colors"
               >
                 Come back tomorrow

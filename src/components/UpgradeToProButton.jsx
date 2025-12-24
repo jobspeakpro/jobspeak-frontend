@@ -3,13 +3,17 @@ import React, { useState } from "react";
 import { initiateUpgrade } from "../utils/upgrade.js";
 import { gaEvent } from "../utils/ga.js";
 
-export default function UpgradeToProButton({ showPlanPicker = false, defaultPriceType = "annual", priceType: priceTypeProp = null }) {
+export default function UpgradeToProButton({ showPlanPicker = false, defaultPriceType = "annual", priceType: priceTypeProp = null, onUpgradeClick = null }) {
   const [loading, setLoading] = useState(false);
   // Use prop if provided (from parent state), otherwise fall back to internal state
   const [internalPriceType, setInternalPriceType] = useState(defaultPriceType);
   const priceType = priceTypeProp !== null ? priceTypeProp : internalPriceType;
 
   const handleUpgradeClick = async () => {
+    // Call optional callback (e.g., for paywall-specific GA events)
+    if (onUpgradeClick) {
+      onUpgradeClick();
+    }
     gaEvent("upgrade_click", { source: "free_limit_modal" });
     await initiateUpgrade({
       priceType,
