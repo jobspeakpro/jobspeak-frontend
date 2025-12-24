@@ -1,8 +1,8 @@
 // src/main.jsx
 import * as Sentry from "@sentry/react";
-import React, { useEffect } from "react";
+import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LandingPage from "./LandingPage.jsx";
 import App from "./App.jsx";
 import PracticePage from "./components/PracticePage.jsx";
@@ -11,34 +11,18 @@ import PrivacyPage from "./components/PrivacyPage.jsx";
 import TermsPage from "./components/TermsPage.jsx";
 import { ProProvider } from "./contexts/ProContext.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
-import { initGA, trackPageView } from "./lib/analytics";
 import "./styles/globals.css";
-
-// Initialize GA4
-initGA();
 
 // --- Sentry setup ---
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
 });
 
-// Component to track page views on route changes
-function PageViewTracker() {
-  const location = useLocation();
-
-  useEffect(() => {
-    trackPageView(location.pathname);
-  }, [location.pathname]);
-
-  return null;
-}
-
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <ErrorBoundary>
       <ProProvider>
         <BrowserRouter>
-          <PageViewTracker />
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/interview" element={<App defaultTab="interview" />} />
