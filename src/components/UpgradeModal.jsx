@@ -49,70 +49,73 @@ export default function UpgradeModal({ onClose, isPro = false, source }) {
     if (source === "listen") {
       return "You've used your free listening attempts. Upgrade to hear every answer spoken in natural, clear English.";
     }
-    return "You've used your 3 free attempts today. Upgrade to continue practicing.";
+    return "You've practiced hard today. Unlock your full potential and keep the momentum going with JobSpeak Pro.";
   };
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 relative">
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-full hover:bg-slate-100"
-          aria-label="Close"
-        >
-          <span className="material-symbols-outlined" style={{ fontSize: 24 }}>close</span>
-        </button>
+      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full relative border border-slate-200">
+        {/* Blue top accent bar */}
+        <div className="h-1 bg-blue-600 rounded-t-2xl"></div>
 
-        <div className="flex flex-col items-center text-center mb-6">
-          <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
-            <span className="material-symbols-outlined text-emerald-600" style={{ fontSize: 32 }}>
-              upgrade
-            </span>
+        <div className="p-8">
+          <div className="flex flex-col items-center text-center mb-6">
+            {/* Lock icon in light blue circle */}
+            <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+              <span className="material-symbols-outlined text-blue-600" style={{ fontSize: 32 }}>
+                lock
+              </span>
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">
+              {getHeadline()}
+            </h2>
+            <p className="text-base text-slate-600 leading-relaxed">
+              {getSubcopy()}
+            </p>
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">
-            {getHeadline()}
-          </h2>
-          <p className="text-base text-slate-600 leading-relaxed">
-            {getSubcopy()}
-          </p>
-        </div>
 
-        <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-5 mb-6">
-          <h3 className="text-sm font-bold text-emerald-900 mb-3 uppercase tracking-wide">
-            JobSpeak Pro includes:
-          </h3>
-          <ul className="text-sm text-emerald-800 space-y-2.5">
-            <li className="flex items-start gap-3">
-              <span className="text-emerald-600 font-bold mt-0.5 text-lg">✓</span>
-              <span>Unlimited interview answer rewrites</span>
+          {/* Feature checklist */}
+          <ul className="space-y-3 mb-6">
+            <li className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-xs font-bold">✓</span>
+              </div>
+              <span className="text-sm text-slate-900">Unlimited interview answer rewrites</span>
             </li>
-            <li className="flex items-start gap-3">
-              <span className="text-emerald-600 font-bold mt-0.5 text-lg">✓</span>
-              <span>Full Resume Doctor access</span>
+            <li className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-xs font-bold">✓</span>
+              </div>
+              <span className="text-sm text-slate-900">Full Resume Doctor access</span>
             </li>
-            <li className="flex items-start gap-3">
-              <span className="text-emerald-600 font-bold mt-0.5 text-lg">✓</span>
-              <span>Practice speaking with natural voice</span>
+            <li className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-xs font-bold">✓</span>
+              </div>
+              <span className="text-sm text-slate-900">Practice speaking with natural voice</span>
             </li>
-            <li className="flex items-start gap-3">
-              <span className="text-emerald-600 font-bold mt-0.5 text-lg">✓</span>
-              <span>Track your progress over time</span>
+            <li className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-xs font-bold">✓</span>
+              </div>
+              <span className="text-sm text-slate-900">Track your progress over time</span>
             </li>
           </ul>
-        </div>
 
-        <div className="flex flex-col gap-3">
-          <div className="[&>div]:space-y-3 [&>div>button:last-child]:h-12 [&>div>button:last-child]:text-base [&>div>button:last-child]:font-bold [&>div>button:last-child]:shadow-lg [&>div>button:last-child]:hover:shadow-xl">
-            <UpgradeToProButton showPlanPicker={true} />
+          <div className="flex flex-col gap-3">
+            {/* Primary CTA Button */}
+            <div className="[&_button:last-child]:w-full [&_button:last-child]:h-12 [&_button:last-child]:text-base [&_button:last-child]:font-bold [&_button:last-child]:rounded-lg [&_button:last-child]:bg-green-600 [&_button:last-child]:hover:bg-green-700 [&_button:last-child]:shadow-lg [&_button:last-child]:!bg-green-600 [&_button:last-child]:hover:!bg-green-700">
+              <UpgradeToProButton showPlanPicker={true} />
+            </div>
+            {/* Secondary Close link */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-center text-slate-600 text-sm hover:text-slate-900 transition-colors"
+            >
+              Close
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2.5 rounded-full border-2 border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all"
-          >
-            Come back tomorrow
-          </button>
         </div>
       </div>
     </div>
