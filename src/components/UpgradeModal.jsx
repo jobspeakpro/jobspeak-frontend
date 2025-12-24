@@ -5,8 +5,8 @@ import { gaEvent } from "../utils/ga.js";
 
 // Pricing constants - easy to update later
 const PRICING = {
-  monthly: { price: 19, label: "$19 / mo" },
-  annual: { price: 15, label: "$15 / mo", savings: "20%" },
+  monthly: { price: 9.99, label: "$9.99 / mo" },
+  annual: { price: 79.99, label: "$79.99 / yr", savings: "33%" },
 };
 
 // source can be:
