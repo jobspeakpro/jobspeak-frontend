@@ -287,7 +287,7 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
             type="button"
             onClick={startRecording}
             disabled={transcribing}
-            className="flex items-center justify-center h-20 w-20 rounded-full shadow-xl border-2 bg-emerald-500 border-emerald-500 text-white hover:bg-emerald-600 hover:border-emerald-600 hover:shadow-2xl disabled:opacity-60 disabled:cursor-not-allowed transition-all transform hover:scale-105 relative"
+            className="flex items-center justify-center h-20 w-20 rounded-full shadow-xl border-2 bg-emerald-500 border-emerald-500 text-white hover:bg-emerald-600 hover:border-emerald-600 hover:shadow-2xl disabled:opacity-60 disabled:cursor-not-allowed transition-all transform hover:scale-105 relative ring-4 ring-emerald-200/50"
             title="Start recording"
             style={{
               boxShadow: '0 0 0 0 rgba(16, 185, 129, 0.4), 0 0 20px 8px rgba(16, 185, 129, 0.2)',

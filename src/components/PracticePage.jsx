@@ -266,12 +266,12 @@ export default function PracticePage() {
   };
 
   return (
-    <div className="min-h-screen bg-rose-50 text-slate-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
       {/* Header */}
-      <header className="border-b border-rose-100 bg-white/80 backdrop-blur">
+      <header className="border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.15em] text-rose-500 font-semibold">
+            <p className="text-[11px] uppercase tracking-[0.15em] text-slate-500 font-semibold">
               Voice Practice
             </p>
             <h1 className="text-sm md:text-base font-semibold text-slate-900">
@@ -280,7 +280,7 @@ export default function PracticePage() {
           </div>
           <button
             onClick={() => navigate("/")}
-            className="text-xs text-slate-600 hover:text-rose-600 underline"
+            className="text-xs text-slate-600 hover:text-blue-600 underline"
           >
             ← Back to Demo
           </button>
@@ -311,7 +311,7 @@ export default function PracticePage() {
         {/* Free improve attempts counter - rounded pill with dots */}
         {!isPro && (
           <div className="flex justify-center mb-6">
-            <div className="inline-flex items-center gap-2 bg-white border border-rose-200 rounded-full px-4 py-2 shadow-sm">
+            <div className="inline-flex items-center gap-2 bg-white border border-slate-200/60 rounded-full px-4 py-2 shadow-sm">
               <span className="text-xs text-slate-600 font-medium">Free attempts today:</span>
               <span className="text-xs font-bold text-slate-900">
                 {freeImproveUsage.count} / {freeImproveUsage.limit === Infinity ? "∞" : freeImproveUsage.limit}
@@ -322,8 +322,8 @@ export default function PracticePage() {
                     key={idx}
                     className={`h-1.5 w-1.5 rounded-full transition-colors ${
                       idx < freeImproveUsage.count
-                        ? "bg-rose-500"
-                        : "bg-rose-200"
+                        ? "bg-emerald-500"
+                        : "bg-slate-200"
                     }`}
                   />
                 ))}
@@ -336,7 +336,7 @@ export default function PracticePage() {
           <div className="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm">
             {/* Practice Question badge */}
             <div className="mb-4">
-              <span className="inline-block px-3 py-1 text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-full">
+              <span className="inline-block px-3 py-1 text-xs font-semibold text-slate-600 bg-slate-100 rounded-full">
                 Practice Question #{questionNumber}
               </span>
             </div>
@@ -350,7 +350,7 @@ export default function PracticePage() {
             <button
               type="button"
               onClick={handleTryAnotherQuestion}
-              className="text-sm text-rose-600 hover:text-rose-700 font-medium underline transition-colors"
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium underline transition-colors"
             >
               Try another question
             </button>
@@ -452,7 +452,7 @@ export default function PracticePage() {
           </div>
 
           {/* RIGHT: Improved answer */}
-          <div className="bg-white border border-rose-100/60 rounded-2xl p-6 shadow-sm flex flex-col h-full">
+          <div className="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm flex flex-col h-full">
             <p className="text-sm font-bold text-emerald-600 mb-1 uppercase tracking-wide">
               Better way to say it
             </p>
@@ -473,7 +473,7 @@ export default function PracticePage() {
                 />
               ) : (
                 <div className="flex flex-col gap-4 flex-1">
-                  <div className="bg-rose-50 border-2 border-rose-100 rounded-xl px-4 py-3 text-sm text-slate-900 whitespace-pre-wrap break-words leading-relaxed">
+                  <div className="bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 whitespace-pre-wrap break-words leading-relaxed">
                     {improvedAnswerText || (
                       <span className="text-slate-400">
                         Your improved answer will appear here after you
