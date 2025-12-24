@@ -56,9 +56,6 @@ export default function UpgradeModal({ onClose, isPro = false, source }) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl max-w-md w-full relative border border-slate-200">
-        {/* Blue top accent bar */}
-        <div className="h-1 bg-blue-600 rounded-t-2xl"></div>
-
         <div className="p-8">
           <div className="flex flex-col items-center text-center mb-6">
             {/* Lock icon in light blue circle */}
@@ -130,16 +127,22 @@ export default function UpgradeModal({ onClose, isPro = false, source }) {
               </button>
             </div>
 
-            {/* Primary CTA Button */}
-            <UpgradeToProButton showPlanPicker={false} priceType={billingPeriod} />
-            {/* Secondary Close link */}
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-center text-slate-600 text-sm hover:text-slate-900 transition-colors"
-            >
-              Close
-            </button>
+            {/* Primary CTA Button - Centered with max-width */}
+            <div className="flex justify-center">
+              <div className="max-w-sm w-full [&_button]:w-full [&_button]:h-12 [&_button]:rounded-xl [&_button]:font-bold [&_button]:text-base">
+                <UpgradeToProButton showPlanPicker={false} priceType={billingPeriod} />
+              </div>
+            </div>
+            {/* Secondary "Come back tomorrow" button */}
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={onClose}
+                className="bg-transparent hover:bg-slate-100 text-slate-600 rounded-lg px-4 py-2 text-sm transition-colors"
+              >
+                Come back tomorrow
+              </button>
+            </div>
           </div>
         </div>
       </div>
