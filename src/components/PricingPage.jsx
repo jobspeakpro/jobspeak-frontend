@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { initiateUpgrade } from "../utils/upgrade.js";
 
 export default function PricingPage() {
-  const [selectedPlan, setSelectedPlan] = useState("monthly"); // 'monthly' | 'annual'
   const [loading, setLoading] = useState(false);
 
   const handleUpgrade = async (priceType) => {
@@ -14,243 +13,194 @@ export default function PricingPage() {
     });
   };
 
-  const features = [
-    "Unlimited interview answer rewrites",
-    "Full Resume Doctor access",
-    "Practice speaking with natural voice",
-    "Track your progress over time",
-    "AI-powered feedback on your English",
-    "Access from any device",
-  ];
-
   const faqs = [
     {
+      question: "Will this actually help me?",
+      answer: "JobSpeak helps you practice speaking clearly and confidently so you sound natural under pressure.",
+    },
+    {
       question: "Can I cancel anytime?",
-      answer: "Yes. Cancel anytime and keep access until your billing period ends. No questions asked.",
-    },
-    {
-      question: "What payment methods do you accept?",
-      answer: "We accept all major credit cards via Stripe's secure payment processing. Your payment information is never stored on our servers.",
-    },
-    {
-      question: "Is there a free trial?",
-      answer: "Yes! Try our free practice tools first. No credit card needed. Free users get 3 practice attempts per day.",
-    },
-    {
-      question: "Is my audio data secure?",
-      answer: "Yes. Your audio is processed securely using industry-standard encryption. We don't store your recordings permanently, and your data is never shared with third parties.",
-    },
-    {
-      question: "Do you offer refunds?",
-      answer: "Yes. We offer a 30-day money-back guarantee. If you're not satisfied, contact us within 30 days for a full refund.",
-    },
-    {
-      question: "What's the difference between free and Pro?",
-      answer: "Free users get 3 practice attempts per day. Pro users get unlimited practice, full resume analysis, voice playback, and progress tracking.",
-    },
-    {
-      question: "Can I use this on mobile?",
-      answer: "Yes! JobSpeak Pro works on any device with a web browser. Practice on your phone, tablet, or computer.",
-    },
-    {
-      question: "Will my subscription auto-renew?",
-      answer: "Yes, subscriptions automatically renew at the end of each billing period. You can cancel anytime from your account settings or billing portal.",
+      answer: "Yes. Cancel in one click.",
     },
   ];
 
   return (
-    <section id="pricing" className="mt-8 space-y-8">
+    <section id="pricing" className="mt-8 space-y-12">
       {/* Header */}
-      <div className="text-center">
-        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">
-          Simple, Transparent Pricing
-        </h2>
-        <p className="text-sm text-slate-600 max-w-2xl mx-auto">
-          Choose your plan. All plans include full access to all features.
+      <div className="text-center max-w-3xl mx-auto">
+        <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+          Practice with confidence. Walk into interviews prepared.
+        </h1>
+        <p className="text-base md:text-lg text-slate-600 leading-relaxed mb-8">
+          JobSpeak helps you practice real interview answers, hear how you sound, and improve without judgment so you do not freeze when it matters.
+        </p>
+        
+        {/* Empathy block */}
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 text-left max-w-2xl mx-auto">
+          <p className="text-sm text-slate-700 leading-relaxed">
+            Interviews are stressful, even for qualified people.<br />
+            Most candidates do not fail because they are unprepared.<br />
+            They fail because they did not get enough real practice.
+          </p>
+        </div>
+      </div>
+
+      {/* Pricing Cards - All three plans visible */}
+      <div className="grid gap-6 md:grid-cols-3 max-w-6xl mx-auto">
+        {/* Free Plan */}
+        <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 shadow-sm">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-slate-900 mb-1">
+              Free Practice
+            </h3>
+            <p className="text-sm text-slate-600 mb-4">
+              Great for trying JobSpeak, not ideal for serious preparation.
+            </p>
+          </div>
+
+          <ul className="space-y-2 mb-6">
+            <li className="flex items-start gap-2 text-sm text-slate-700">
+              <span className="text-slate-400 mt-0.5">•</span>
+              <span>3 answer rewrites per day</span>
+            </li>
+            <li className="flex items-start gap-2 text-sm text-slate-700">
+              <span className="text-slate-400 mt-0.5">•</span>
+              <span>Basic feedback</span>
+            </li>
+            <li className="flex items-start gap-2 text-sm text-slate-700">
+              <span className="text-slate-400 mt-0.5">•</span>
+              <span>Limited practice</span>
+            </li>
+          </ul>
+
+          <button
+            onClick={() => window.location.href = "/"}
+            className="w-full px-5 py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold shadow-sm transition"
+          >
+            Continue with Free
+          </button>
+        </div>
+
+        {/* Monthly Plan */}
+        <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 shadow-sm">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-slate-900 mb-1">
+              Monthly Plan
+            </h3>
+            <div className="flex items-baseline gap-2 mb-1">
+              <span className="text-3xl font-bold text-slate-900">$9.99</span>
+              <span className="text-sm text-slate-500">/ month</span>
+            </div>
+            <p className="text-xs text-slate-500">
+              Best for short-term interview prep.
+            </p>
+          </div>
+
+          <ul className="space-y-2 mb-6">
+            <li className="flex items-start gap-2 text-sm text-slate-700">
+              <span className="text-emerald-600 mt-0.5">✓</span>
+              <span>Unlimited answer rewrites</span>
+            </li>
+            <li className="flex items-start gap-2 text-sm text-slate-700">
+              <span className="text-emerald-600 mt-0.5">✓</span>
+              <span>Voice practice and playback</span>
+            </li>
+            <li className="flex items-start gap-2 text-sm text-slate-700">
+              <span className="text-emerald-600 mt-0.5">✓</span>
+              <span>Structured feedback</span>
+            </li>
+            <li className="flex items-start gap-2 text-sm text-slate-700">
+              <span className="text-emerald-600 mt-0.5">✓</span>
+              <span>Cancel anytime</span>
+            </li>
+          </ul>
+
+          <button
+            onClick={() => handleUpgrade("monthly")}
+            disabled={loading}
+            className="w-full px-5 py-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition mb-2"
+          >
+            {loading ? "Opening checkout..." : "Start Monthly"}
+          </button>
+          
+          <p className="text-xs text-slate-500 text-center">
+            Flexible. Cancel anytime.
+          </p>
+        </div>
+
+        {/* Annual Plan - Recommended */}
+        <div className="bg-white border-2 border-blue-200 rounded-2xl p-6 shadow-lg relative">
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full">
+            Save 33%
+          </div>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-slate-900 mb-1">
+              Annual Plan
+            </h3>
+            <div className="flex items-baseline gap-2 mb-1">
+              <span className="text-3xl font-bold text-slate-900">$79.99</span>
+              <span className="text-sm text-slate-500">/ year</span>
+            </div>
+            <p className="text-xs text-slate-500">
+              Best for consistent confidence and stress-free practice.
+            </p>
+          </div>
+
+          <ul className="space-y-2 mb-6">
+            <li className="flex items-start gap-2 text-sm text-slate-700">
+              <span className="text-emerald-600 mt-0.5">✓</span>
+              <span>Unlimited answer rewrites</span>
+            </li>
+            <li className="flex items-start gap-2 text-sm text-slate-700">
+              <span className="text-emerald-600 mt-0.5">✓</span>
+              <span>Voice practice and playback</span>
+            </li>
+            <li className="flex items-start gap-2 text-sm text-slate-700">
+              <span className="text-emerald-600 mt-0.5">✓</span>
+              <span>Structured feedback</span>
+            </li>
+            <li className="flex items-start gap-2 text-sm text-slate-700">
+              <span className="text-emerald-600 mt-0.5">✓</span>
+              <span>Resume and answer improvement</span>
+            </li>
+            <li className="flex items-start gap-2 text-sm text-slate-700">
+              <span className="text-emerald-600 mt-0.5">✓</span>
+              <span>Progress without daily limits</span>
+            </li>
+          </ul>
+
+          <button
+            onClick={() => handleUpgrade("annual")}
+            disabled={loading}
+            className="w-full px-5 py-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition mb-2"
+          >
+            {loading ? "Opening checkout..." : "Upgrade to Pro"}
+          </button>
+          
+          <p className="text-xs text-slate-500 text-center">
+            Most users choose this for uninterrupted practice.
+          </p>
+        </div>
+      </div>
+
+      {/* Trust + Reassurance */}
+      <div className="max-w-3xl mx-auto text-center">
+        <div className="flex flex-col items-center gap-2 text-sm text-slate-600">
+          <p>Secure checkout via Stripe</p>
+          <p>Cancel anytime</p>
+          <p>No contracts. No pressure.</p>
+        </div>
+      </div>
+
+      {/* Gentle Urgency */}
+      <div className="max-w-3xl mx-auto text-center">
+        <p className="text-base md:text-lg text-slate-700 font-medium">
+          You were making progress. Do not lose momentum now.
         </p>
       </div>
 
-      {/* Plan Toggle */}
-      <div className="flex justify-center">
-        <div className="inline-flex gap-2 p-1 bg-slate-100 rounded-lg">
-          <button
-            type="button"
-            onClick={() => setSelectedPlan("monthly")}
-            className={`px-4 py-2 rounded-md text-sm font-semibold transition ${
-              selectedPlan === "monthly"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            Monthly
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedPlan("annual")}
-            className={`px-4 py-2 rounded-md text-sm font-semibold transition ${
-              selectedPlan === "annual"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            Annual
-            <span className="ml-1.5 px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded">
-              Save 20%
-            </span>
-          </button>
-        </div>
-      </div>
-
-      {/* Primary CTA Above Fold */}
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-gradient-to-r from-rose-500 to-rose-600 rounded-2xl p-6 md:p-8 text-center shadow-lg">
-          <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
-            Ready to improve your English?
-          </h3>
-          <p className="text-sm md:text-base text-rose-50 mb-6 max-w-lg mx-auto">
-            Join thousands landing their dream jobs with confidence.
-          </p>
-          <button
-            onClick={() => handleUpgrade(selectedPlan)}
-            disabled={loading}
-            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-white hover:bg-rose-50 text-rose-600 text-base font-bold shadow-lg disabled:opacity-60 disabled:cursor-not-allowed transition transform hover:scale-105"
-          >
-            {loading ? (
-              <>
-                <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Opening checkout...</span>
-              </>
-            ) : (
-              <>
-                <span>Start Your Pro Journey</span>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </>
-            )}
-          </button>
-          <p className="text-xs text-rose-100 mt-4">
-            No credit card required to start • Cancel anytime
-          </p>
-        </div>
-      </div>
-
-      {/* Pricing Cards */}
-      <div className="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
-        {/* Monthly Card */}
-        {selectedPlan === "monthly" && (
-          <div className="bg-white border-2 border-rose-200 rounded-2xl p-6 shadow-lg">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold text-slate-900 mb-1">
-                Monthly Plan
-              </h3>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-slate-900">$19</span>
-                <span className="text-sm text-slate-500">/month</span>
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Billed monthly, cancel anytime
-              </p>
-            </div>
-
-            <ul className="space-y-2 mb-6">
-              {features.map((feature, idx) => (
-                <li key={idx} className="flex items-start gap-2 text-sm text-slate-700">
-                  <span className="text-emerald-600 mt-0.5">✓</span>
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
-
-            <button
-              onClick={() => handleUpgrade("monthly")}
-              disabled={loading}
-              className="w-full px-5 py-3 rounded-full bg-rose-500 hover:bg-rose-600 text-white text-sm font-semibold shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition mb-3"
-            >
-              {loading ? "Opening checkout..." : "Upgrade to Pro"}
-            </button>
-            
-            {/* Secure payments badge */}
-            <div className="text-center">
-              <p className="text-xs text-slate-500 flex items-center justify-center gap-1.5">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                Secure payments by Stripe
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Annual Card */}
-        {selectedPlan === "annual" && (
-          <div className="bg-white border-2 border-emerald-200 rounded-2xl p-6 shadow-lg relative">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-full">
-              BEST VALUE
-            </div>
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold text-slate-900 mb-1">
-                Annual Plan
-              </h3>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-slate-900">$15</span>
-                <span className="text-sm text-slate-500">/month</span>
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Billed $180 annually, save 20%
-              </p>
-            </div>
-
-            <ul className="space-y-2 mb-6">
-              {features.map((feature, idx) => (
-                <li key={idx} className="flex items-start gap-2 text-sm text-slate-700">
-                  <span className="text-emerald-600 mt-0.5">✓</span>
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
-
-            <button
-              onClick={() => handleUpgrade("annual")}
-              disabled={loading}
-              className="w-full px-5 py-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition mb-3"
-            >
-              {loading ? "Opening checkout..." : "Upgrade to Pro"}
-            </button>
-            
-            {/* Secure payments badge */}
-            <div className="text-center">
-              <p className="text-xs text-slate-500 flex items-center justify-center gap-1.5">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                Secure payments by Stripe
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Money-back guarantee */}
-      <div className="max-w-4xl mx-auto mt-6">
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
-          <div className="flex items-center justify-center gap-2 mb-1">
-            <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <h4 className="text-sm font-semibold text-emerald-900">30-day money-back guarantee</h4>
-          </div>
-          <p className="text-xs text-emerald-700">
-            Not satisfied? Full refund within 30 days. No questions asked.
-          </p>
-        </div>
-      </div>
-
       {/* FAQ Section */}
-      <div className="max-w-3xl mx-auto mt-12">
+      <div className="max-w-3xl mx-auto">
         <h3 className="text-xl font-bold text-slate-900 mb-6 text-center">
           Frequently Asked Questions
         </h3>
@@ -258,7 +208,7 @@ export default function PricingPage() {
           {faqs.map((faq, idx) => (
             <div
               key={idx}
-              className="bg-white border border-rose-100 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow"
+              className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm"
             >
               <h4 className="text-base font-semibold text-slate-900 mb-2">
                 {faq.question}
@@ -269,70 +219,15 @@ export default function PricingPage() {
         </div>
       </div>
 
-      {/* Secondary CTA Below FAQ */}
-      <div className="max-w-3xl mx-auto mt-12">
-        <div className="bg-white border-2 border-rose-200 rounded-2xl p-8 text-center shadow-lg">
-          <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-2">
-            Still have questions?
-          </h3>
-          <p className="text-sm text-slate-600 mb-6 max-w-md mx-auto">
-            Try it risk-free. Start free practice now, or upgrade for unlimited access.
+      {/* Final Reassurance */}
+      <div className="max-w-3xl mx-auto text-center pb-8">
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-8">
+          <p className="text-base text-slate-700 leading-relaxed">
+            JobSpeak is built to support you, not judge you.<br />
+            Practice privately. Improve calmly. Show up confident.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-            <button
-              onClick={() => handleUpgrade(selectedPlan)}
-              disabled={loading}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-rose-500 hover:bg-rose-600 text-white text-sm font-semibold shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition"
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>Opening checkout...</span>
-                </>
-              ) : (
-                <>
-                  <span>Upgrade to Pro</span>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </>
-              )}
-            </button>
-            <p className="text-xs text-slate-500">
-              or <span className="font-semibold text-slate-700">try free practice first</span>
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Trust & Safety Section */}
-      <div className="max-w-3xl mx-auto mt-12 pt-8 border-t border-rose-100">
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6 text-center">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            <h3 className="text-sm font-semibold text-emerald-900">
-              Secure & Private
-            </h3>
-          </div>
-          <p className="text-xs text-emerald-700 leading-relaxed max-w-2xl mx-auto mb-4">
-            Your audio is processed securely using industry-standard encryption. We don't store your recordings permanently, and your data is never shared with third parties. All payments are processed securely through Stripe.
-          </p>
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-emerald-200 rounded-lg">
-            <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            <p className="text-xs text-emerald-700 font-medium">
-              Secure payments by Stripe • Cancel anytime
-            </p>
-          </div>
         </div>
       </div>
     </section>
   );
 }
-
