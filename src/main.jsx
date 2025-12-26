@@ -25,6 +25,8 @@ import { AuthProvider } from "./context/AuthContext.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import StripeCancelHandler from "./components/StripeCancelHandler.jsx";
+import SupabaseConfigError from "./components/SupabaseConfigError.jsx";
+import { isSupabaseConfigured } from "./lib/supabaseClient.js";
 import "./styles/globals.css";
 
 // Route logger to track all route changes
@@ -44,12 +46,15 @@ Sentry.init({
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <ProProvider>
-        <AuthProvider>
-          <BrowserRouter>
-            <RouteLogger />
-            <StripeCancelHandler />
-            <Routes>
+      {!isSupabaseConfigured ? (
+        <SupabaseConfigError />
+      ) : (
+        <ProProvider>
+          <AuthProvider>
+            <BrowserRouter>
+              <RouteLogger />
+              <StripeCancelHandler />
+              <Routes>
             {/* Marketing routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/pricing" element={<PricingPage />} />
@@ -83,6 +88,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         </BrowserRouter>
         </AuthProvider>
       </ProProvider>
+      )}
     </ErrorBoundary>
   </React.StrictMode>
 );

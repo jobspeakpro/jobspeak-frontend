@@ -375,7 +375,7 @@ export default function App({ defaultTab = "interview" }) {
 
 
       try {
-        const data = await apiClient("/api/ai/micro-demo", {
+        const data = await apiClient("/ai/micro-demo", {
           method: "POST",
           body: { text },
         });
