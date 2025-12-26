@@ -1,19 +1,59 @@
 // src/pages/app/PracticeSpeakingPage.jsx
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import VoiceRecorder from "../../components/VoiceRecorder.jsx";
-import ListenToAnswerButton from "../../components/ListenToAnswerButton.jsx";
 import InlineError from "../../components/InlineError.jsx";
 import PaywallModal from "../../components/PaywallModal.jsx";
 import { usePracticeSession } from "../../hooks/usePracticeSession.js";
+import { getUserKey } from "../../utils/userKey.js";
 
 export default function PracticeSpeakingPage() {
   const navigate = useNavigate();
-  const listenButtonRef = useRef(null);
   const [textInputMode, setTextInputMode] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const [showNotificationToast, setShowNotificationToast] = useState(false);
   const [showFixToast, setShowFixToast] = useState(false);
+  
+  // Audio player state
+  const audioRef = useRef(null);
+  const [audioUrl, setAudioUrl] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [voiceId, setVoiceId] = useState("DEFAULT");
+  const [speed, setSpeed] = useState(1.0);
+  
+  // Keep voice list small (labels can be edited later)
+  const VOICES = useMemo(
+    () => [
+      { id: "DEFAULT", label: "Default" },
+      { id: "VOICE_1", label: "Calm" },
+      { id: "VOICE_2", label: "Confident" },
+    ],
+    []
+  );
+  
+  const SPEEDS = useMemo(
+    () => [
+      { value: 0.75, label: "0.75×" },
+      { value: 1.0, label: "1.0×" },
+      { value: 1.25, label: "1.25×" },
+      { value: 1.5, label: "1.5×" },
+    ],
+    []
+  );
+  
+  // Cleanup object URL on unmount or when replaced
+  useEffect(() => {
+    return () => {
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
+    };
+  }, [audioUrl]);
+  
+  // Update playback rate when speed changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = speed;
+    }
+  }, [speed]);
   const {
     text,
     setText,
@@ -55,12 +95,65 @@ export default function PracticeSpeakingPage() {
     // Result will be cleared on next submission
   };
 
-  // Handler for "Listen to example" - triggers audio playback via ref
-  const handleListenToExample = () => {
-    if (listenButtonRef.current) {
-      listenButtonRef.current.play();
+  // Handler for "Listen to example" - handles play/pause and audio generation
+  async function handlePlayExample(exampleText) {
+    try {
+      // If we already have audio loaded, just toggle play/pause
+      if (audioRef.current && audioUrl) {
+        if (isPlaying) {
+          audioRef.current.pause();
+          setIsPlaying(false);
+        } else {
+          audioRef.current.playbackRate = speed;
+          await audioRef.current.play();
+          setIsPlaying(true);
+        }
+        return;
+      }
+
+      // Otherwise fetch TTS audio
+      const payload = {
+        text: exampleText,
+        ...(voiceId !== "DEFAULT" ? { voiceId } : {}),
+      };
+
+      const userKey = getUserKey();
+      const res = await fetch("/voice/generate", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "x-user-key": userKey,
+        },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        throw new Error(`TTS failed: ${res.status}`);
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+
+      // Revoke previous URL if any
+      setAudioUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return url;
+      });
+
+      // Play once the element has the URL
+      requestAnimationFrame(async () => {
+        if (!audioRef.current) return;
+        audioRef.current.src = url;
+        audioRef.current.playbackRate = speed;
+        await audioRef.current.play();
+        setIsPlaying(true);
+      });
+    } catch (e) {
+      console.error("Example audio error:", e);
+      setIsPlaying(false);
     }
-  };
+  }
 
   // Get "Why this works better" text from result
   const whyThisWorksBetter = result?.message || result?.why || "Using active verbs like 'prioritized' and 'created' shows ownership and decisive action.";
@@ -330,30 +423,64 @@ export default function PracticeSpeakingPage() {
                   <p className="text-text-main dark:text-gray-200 text-base leading-relaxed">
                     {improvedAnswerText || "Your improved answer will appear here."}
                   </p>
-                  {improvedAnswerText && (
-                    <button
-                      type="button"
-                      onClick={handleListenToExample}
-                      className="mt-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-green-900/40 hover:bg-green-100 dark:hover:bg-green-900/60 border border-green-200 dark:border-green-800/50 text-green-700 dark:text-green-300 text-sm font-medium transition-all shadow-sm group"
-                    >
-                      <span className="material-symbols-outlined text-lg group-hover:text-green-800 dark:group-hover:text-green-200">volume_up</span>
-                      <span>Listen to example</span>
-                    </button>
-                  )}
-                  {/* Hidden ListenToAnswerButton for ref access - button is shown above */}
-                  {improvedAnswerText && (
-                    <div className="hidden">
-                      <ListenToAnswerButton
-                        ref={listenButtonRef}
-                        improvedText={improvedAnswerText}
-                        onUpgradeNeeded={(source) => {
-                          setPaywallSource(source || "listen");
-                          setShowUpgradeModal(true);
-                          setShowPaywall(true);
-                        }}
-                      />
-                    </div>
-                  )}
+                  {(() => {
+                    const hasExampleText = Boolean(improvedAnswerText?.trim());
+                    return (
+                      <div className="mt-4 flex items-center gap-3 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => hasExampleText && handlePlayExample(improvedAnswerText)}
+                          disabled={!hasExampleText}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-green-900/40 hover:bg-green-100 dark:hover:bg-green-900/60 border border-green-200 dark:border-green-800/50 text-green-700 dark:text-green-300 text-sm font-medium transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-green-900/40"
+                        >
+                          <span className="material-symbols-outlined text-lg">
+                            {isPlaying ? "pause" : "play_arrow"}
+                          </span>
+                          <span>{isPlaying ? "Pause" : hasExampleText ? "Play audio" : "Generate example first"}</span>
+                        </button>
+
+                        <div className="inline-flex items-center gap-2">
+                          <span className="text-xs text-text-secondary dark:text-gray-400">Voice</span>
+                          <select
+                            value={voiceId}
+                            onChange={(e) => {
+                              setVoiceId(e.target.value);
+                              // clear cached audio so next click regenerates with new voice
+                              if (audioUrl) URL.revokeObjectURL(audioUrl);
+                              setAudioUrl(null);
+                              setIsPlaying(false);
+                            }}
+                            className="h-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-white px-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                          >
+                            {VOICES.map(v => (
+                              <option key={v.id} value={v.id}>{v.label}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="inline-flex items-center gap-2">
+                          <span className="text-xs text-text-secondary dark:text-gray-400">Speed</span>
+                          <select
+                            value={String(speed)}
+                            onChange={(e) => setSpeed(Number(e.target.value))}
+                            className="h-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-white px-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                          >
+                            {SPEEDS.map(s => (
+                              <option key={s.value} value={String(s.value)}>{s.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  {/* Hidden audio element */}
+                  <audio
+                    ref={audioRef}
+                    onEnded={() => setIsPlaying(false)}
+                    onPause={() => setIsPlaying(false)}
+                    onPlay={() => setIsPlaying(true)}
+                    style={{ display: "none" }}
+                  />
                 </div>
                 <div className="flex flex-col justify-center gap-2">
                   <p className="text-text-secondary dark:text-gray-400 text-sm font-medium">Why this works better:</p>
