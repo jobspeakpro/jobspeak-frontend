@@ -10,13 +10,15 @@ let isUpgrading = false;
  * Shared upgrade function for all upgrade CTAs
  * Prevents double clicks globally and handles the upgrade flow consistently
  * @param {Object} options
- * @param {string} options.priceType - 'monthly' | 'annual'
+ * @param {string} options.priceType - 'monthly' | 'annual' (deprecated, use interval)
+ * @param {string} options.interval - 'monthly' | 'annual' (preferred)
  * @param {string} options.source - Source identifier for analytics (e.g., 'button', 'pricing_page')
  * @param {Function} options.onLoadingChange - Optional callback to update component loading state
  * @returns {Promise<void>}
  */
 export async function initiateUpgrade({ 
-  priceType = "monthly", 
+  priceType = "monthly",
+  interval = null,
   source = "unknown",
   onLoadingChange = null 
 }) {
@@ -29,12 +31,14 @@ export async function initiateUpgrade({
     isUpgrading = true;
     if (onLoadingChange) onLoadingChange(true);
     
+    // Use interval if provided, otherwise fall back to priceType for backward compatibility
+    const billingInterval = interval || priceType;
 
     // Get userKey and include in both header (via apiClient) and body (for redundancy/compatibility)
     const userKey = getUserKey();
     const data = await apiClient("/api/billing/create-checkout-session", {
       method: "POST",
-      body: { userKey, priceType },
+      body: { interval: billingInterval },
     });
 
     if (data?.url) {

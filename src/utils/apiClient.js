@@ -1,9 +1,10 @@
 // src/utils/apiClient.js
 
-// ALWAYS use relative paths - Vercel proxy handles routing to Railway backend
-// This ensures production NEVER calls Railway directly (avoids CORS)
-// Production must ALWAYS use relative paths (e.g., /api/stt, /voice/generate, /ai/micro-demo)
-// No environment variables, no fallback URLs, no absolute URLs allowed
+// API routing strategy:
+// ALL API calls must use RELATIVE paths only (e.g., /api/billing/create-checkout-session)
+// Vite dev server proxies /api/* to http://localhost:3000/api/*
+// Production uses Vercel rewrites to route /api/* to backend
+// This ensures the browser NEVER calls backend URLs directly (avoids CORS and ERR_CONNECTION_REFUSED)
 
 import { getUserKey } from "./userKey.js";
 
@@ -31,15 +32,12 @@ export class ApiError extends Error {
 export async function apiClient(endpoint, options = {}) {
   const { parseJson = true, ...fetchOptions } = options;
   
-  // PRODUCTION ENFORCEMENT: Force relative paths only
-  // Block ALL absolute URLs - no exceptions
-  // ALL requests must use relative paths (e.g., /api/stt, /voice/generate, /ai/micro-demo)
-  // Vercel rewrites handle routing to the Railway backend
+  // Block absolute URLs - all API calls must use relative paths
   if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
     throw new Error(
       `Absolute URL blocked: ${endpoint}. ` +
-      `Use relative paths only (e.g., /api/stt, /voice/generate, /ai/micro-demo). ` +
-      `Vercel rewrites handle routing to the backend.`
+      `Use relative paths only (e.g., /api/billing/create-checkout-session). ` +
+      `Vite proxy (dev) or Vercel rewrites (production) handle routing to the backend.`
     );
   }
   
@@ -71,13 +69,29 @@ export async function apiClient(endpoint, options = {}) {
   
   try {
     const response = await fetch(url, {
+      credentials: "include", // Always include cookies for authentication
       ...fetchOptions,
       headers,
     });
     
     // Parse JSON if requested
     if (parseJson) {
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        // If JSON parsing fails, check if response is an error
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => '');
+          throw new ApiError(
+            `Request failed with status ${response.status}`,
+            response.status,
+            { errorText }
+          );
+        }
+        // If response is ok but not JSON, re-throw parse error
+        throw parseError;
+      }
       
       if (!response.ok) {
         throw new ApiError(

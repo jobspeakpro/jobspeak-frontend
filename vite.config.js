@@ -21,6 +21,26 @@ export default defineConfig({
       }
     }
   ],
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+      },
+      "/voice": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+      },
+      "/ai": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+      },
+      "/resume": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+      },
+    },
+  },
   // Vite automatically handles SPA routing in dev mode
   // For production, ensure your server is configured to serve index.html for all routes
 });

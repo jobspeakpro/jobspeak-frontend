@@ -2,59 +2,23 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { gaEvent } from "./utils/ga.js";
+import MarketingLayout from "./layouts/MarketingLayout.jsx";
 
 export default function LandingPage() {
   const [showDemoModal, setShowDemoModal] = useState(false);
   const navigate = useNavigate();
 
   const handlePracticeNow = () => {
-    navigate("/practice");
+    navigate("/start");
   };
 
   const handleWatchDemo = () => {
     setShowDemoModal(true);
   };
+
   return (
-    <div className="bg-white text-slate-900 font-display overflow-x-hidden">
-      <div className="relative flex min-h-screen w-full flex-col group/design-root">
-        {/* HEADER */}
-        <header className="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 bg-white/95 backdrop-blur-sm px-6 py-4 lg:px-40">
-          <div className="flex items-center gap-4">
-            <div className="size-8 flex items-center justify-center rounded-full bg-blue-100 text-blue-600">
-              <span
-                className="material-symbols-outlined"
-                style={{ fontSize: 24 }}
-              >
-                graphic_eq
-              </span>
-            </div>
-            <h2 className="text-slate-900 text-xl font-bold leading-tight tracking-[-0.015em]">
-              JobSpeak Pro
-            </h2>
-          </div>
-          <div className="flex flex-1 justify-end gap-8">
-            <div className="hidden md:flex items-center gap-9">
-              <a
-                className="text-slate-600 text-sm font-medium leading-normal hover:text-slate-900 transition-colors"
-                href="#blog"
-              >
-                Blog
-              </a>
-              <a
-                className="text-slate-600 text-sm font-medium leading-normal hover:text-slate-900 transition-colors"
-                href="#pricing"
-              >
-                Pricing
-              </a>
-            </div>
-            <button 
-              onClick={() => navigate("/practice")}
-              className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-6 bg-blue-600 text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-blue-700 transition-colors shadow-sm"
-            >
-              <span className="truncate">Login</span>
-            </button>
-          </div>
-        </header>
+    <MarketingLayout>
+      <div className="relative w-full overflow-x-hidden">
 
         {/* HERO SECTION */}
         <div className="relative w-full overflow-hidden px-6 py-16 lg:px-40 lg:py-32 bg-white">
@@ -92,10 +56,7 @@ export default function LandingPage() {
                 <button 
                   onClick={() => {
                     gaEvent("how_it_works_click", { page: "landing" });
-                    const element = document.getElementById('how-it-works');
-                    if (element) {
-                      element.scrollIntoView({ behavior: 'smooth' });
-                    }
+                    navigate("/how-it-works");
                   }}
                   className="flex min-w-[200px] cursor-pointer items-center justify-center rounded-full h-14 px-8 bg-white border border-slate-200 text-slate-900 text-lg font-bold hover:bg-slate-50 transition-colors"
                 >
@@ -254,10 +215,7 @@ export default function LandingPage() {
 
 
         {/* BOTTOM CTA */}
-        <section
-          id="pricing"
-          className="w-full bg-white py-20 px-6 lg:px-40"
-        >
+        <section className="w-full bg-white py-20 px-6 lg:px-40">
           <div className="max-w-6xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
               Ready to speak with confidence?
@@ -265,129 +223,28 @@ export default function LandingPage() {
             <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">
               Join professionals transforming their careers with better English.
             </p>
-            <button 
-              onClick={() => {
-                gaEvent("start_speaking_now_click", { page: "landing" });
-                handlePracticeNow();
-              }}
-              className="inline-flex items-center justify-center rounded-full h-14 px-8 bg-blue-600 text-white text-lg font-bold hover:bg-blue-700 transition-colors shadow-sm"
-            >
-              Start practicing free
-            </button>
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+              <button 
+                onClick={() => {
+                  gaEvent("start_speaking_now_click", { page: "landing" });
+                  handlePracticeNow();
+                }}
+                className="inline-flex items-center justify-center rounded-full h-14 px-8 bg-blue-600 text-white text-lg font-bold hover:bg-blue-700 transition-colors shadow-sm"
+              >
+                Start practicing free
+              </button>
+              <button 
+                onClick={() => {
+                  gaEvent("view_pricing_click", { page: "landing" });
+                  navigate("/pricing");
+                }}
+                className="inline-flex items-center justify-center rounded-full h-14 px-8 bg-white border-2 border-blue-600 text-blue-600 text-lg font-bold hover:bg-blue-50 transition-colors"
+              >
+                View Pricing
+              </button>
+            </div>
           </div>
         </section>
-
-        {/* FOOTER */}
-        <footer className="w-full bg-white border-t border-slate-200 py-16 px-6 lg:px-40">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-              {/* Brand column */}
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="size-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                    <span
-                      className="material-symbols-outlined"
-                      style={{ fontSize: 18 }}
-                    >
-                      graphic_eq
-                    </span>
-                  </div>
-                  <span className="text-slate-900 font-bold text-lg">
-                    JobSpeak Pro
-                  </span>
-                </div>
-                <p className="text-sm text-slate-600">
-                  Practice your interview English with AI-powered feedback and improve your confidence.
-                </p>
-              </div>
-
-              {/* Product column */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-900 mb-4 uppercase tracking-wider">
-                  Product
-                </h3>
-                <ul className="space-y-3">
-                  <li>
-                    <a href="#how-it-works" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
-                      How it works
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#pricing" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
-                      Pricing
-                    </a>
-                  </li>
-                  <li>
-                    <a href="/practice" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
-                      Practice
-                    </a>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Resources column */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-900 mb-4 uppercase tracking-wider">
-                  Resources
-                </h3>
-                <ul className="space-y-3">
-                  <li>
-                    <a href="#blog" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
-                      Blog
-                    </a>
-                  </li>
-                  <li>
-                    <a href="mailto:support@jobspeakpro.com" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
-                      Support
-                    </a>
-                  </li>
-                  <li>
-                    <a href="/privacy" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
-                      Privacy Policy
-                    </a>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Company column */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-900 mb-4 uppercase tracking-wider">
-                  Company
-                </h3>
-                <ul className="space-y-3">
-                  <li>
-                    <a href="/terms" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
-                      Terms
-                    </a>
-                  </li>
-                  <li>
-                    <a href="mailto:contact@jobspeakpro.com" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
-                      Contact
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            {/* Bottom row */}
-            <div className="border-t border-slate-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="text-sm text-slate-500">
-                © 2024 JobSpeak Pro. All rights reserved.
-              </div>
-              <div className="flex gap-6 text-sm text-slate-500">
-                <a href="/privacy" className="hover:text-slate-900 transition-colors">
-                  Privacy
-                </a>
-                <a href="/terms" className="hover:text-slate-900 transition-colors">
-                  Terms
-                </a>
-                <a href="#" className="hover:text-slate-900 transition-colors">
-                  Cookies
-                </a>
-              </div>
-            </div>
-          </div>
-        </footer>
 
         {/* Demo Modal */}
         {showDemoModal && (
@@ -470,7 +327,7 @@ export default function LandingPage() {
           </div>
         )}
       </div>
-    </div>
+    </MarketingLayout>
   );
 }
 

@@ -4,8 +4,6 @@ import React from "react";
 export default function Navigation({ activeTab, onTabChange, variant = "desktop" }) {
   const navItems = [
     { id: "interview", label: "Interview" },
-    { id: "resume", label: "Resume" },
-    { id: "progress", label: "Progress" },
     { id: "pricing", label: "Pricing" },
   ];
 

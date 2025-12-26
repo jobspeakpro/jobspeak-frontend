@@ -375,7 +375,7 @@ export default function App({ defaultTab = "interview" }) {
 
 
       try {
-        const data = await apiClient("/ai/micro-demo", {
+        const data = await apiClient("/api/ai/micro-demo", {
           method: "POST",
           body: { text },
         });
@@ -559,7 +559,7 @@ export default function App({ defaultTab = "interview" }) {
               JobSpeak Pro
             </div>
             <div className="text-[11px] text-slate-500">
-              AI Interview Coach
+              Practice Platform
             </div>
           </div>
         </div>
@@ -610,7 +610,7 @@ export default function App({ defaultTab = "interview" }) {
               </p>
               <div className="flex items-center gap-2">
                 <h1 className="text-sm md:text-base font-semibold text-slate-900">
-                  JobSpeak Pro — AI Interview Coach
+                  JobSpeak Pro
                 </h1>
                 {isPro ? (
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300 text-[10px] font-bold uppercase tracking-wide">
@@ -676,72 +676,6 @@ export default function App({ defaultTab = "interview" }) {
         )}
 
         <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5">
-          {/* Hero / Home section */}
-          <section className="mb-8">
-            <div className="max-w-3xl mx-auto text-center">
-              {/* Headline with strong hook */}
-              <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-                Stop losing job offers because of your English.
-              </h1>
-              
-              {/* Subheadline */}
-              <p className="text-base md:text-lg text-slate-600 mb-6 max-w-2xl mx-auto">
-                Get instant AI feedback on your interview answers. Practice until you speak with confidence.
-              </p>
-
-              {/* 3 Benefit Bullets */}
-              <ul className="text-sm text-slate-700 mb-8 space-y-2 max-w-xl mx-auto text-left md:text-center">
-                <li className="flex items-start md:justify-center gap-2">
-                  <span className="text-emerald-600 font-bold mt-0.5">✓</span>
-                  <span>Fix broken English in seconds with AI-powered rewrites</span>
-                </li>
-                <li className="flex items-start md:justify-center gap-2">
-                  <span className="text-emerald-600 font-bold mt-0.5">✓</span>
-                  <span>Practice speaking with natural voice playback</span>
-                </li>
-                <li className="flex items-start md:justify-center gap-2">
-                  <span className="text-emerald-600 font-bold mt-0.5">✓</span>
-                  <span>Build confidence in 2–3 minutes per day</span>
-                </li>
-              </ul>
-
-              {/* CTAs */}
-              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-6">
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigate("/practice");
-                  }}
-                  className="w-full sm:w-auto px-6 py-3 rounded-full bg-rose-500 hover:bg-rose-600 text-white text-sm font-semibold shadow-sm"
-                >
-                  Try Interview Practice (Free)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveTab("pricing");
-                    navigate("/pricing");
-                  }}
-                  className="w-full sm:w-auto px-6 py-3 rounded-full border-2 border-rose-500 text-rose-600 text-sm font-semibold bg-white hover:bg-rose-50"
-                >
-                  Upgrade to Pro
-                </button>
-              </div>
-
-              {/* Social Proof Placeholder */}
-              <div className="border-t border-rose-100 pt-6">
-                <p className="text-xs text-slate-500 mb-2">Trusted by professionals worldwide</p>
-                <div className="flex items-center justify-center gap-6 text-xs text-slate-400">
-                  <div>⭐ 4.8/5 rating</div>
-                  <div>•</div>
-                  <div>1,000+ users</div>
-                  <div>•</div>
-                  <div>20+ countries</div>
-                </div>
-              </div>
-            </div>
-          </section>
-
           {/* Paywall callout */}
           {showPaywall && (
             <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">

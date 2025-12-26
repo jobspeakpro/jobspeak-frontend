@@ -28,7 +28,7 @@ async function fetchUsage() {
   }
 }
 
-export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNeeded, onAttemptsRefresh }) {
+export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNeeded, onAttemptsRefresh, renderButton }) {
   const { isPro } = usePro();
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
@@ -279,6 +279,12 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
     }
   };
 
+  // If renderButton is provided, use it instead of default UI
+  if (renderButton) {
+    return renderButton({ startRecording, stopRecording, recording, transcribing, error, permissionDenied });
+  }
+
+  // Default UI (unchanged)
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="flex items-center gap-3">
@@ -300,13 +306,9 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
             type="button"
             onClick={stopRecording}
             disabled={transcribing}
-            className="flex items-center justify-center h-20 w-20 rounded-full shadow-xl border-2 bg-rose-500 border-rose-500 text-white disabled:opacity-60 disabled:cursor-not-allowed transition-all relative"
+            className="flex items-center justify-center h-20 w-20 rounded-full bg-rose-500 text-white disabled:opacity-60 disabled:cursor-not-allowed ring-2 ring-red-500/55 shadow-[0_0_0_8px_rgba(239,68,68,0.18)] shadow-red-500/10 transition-all duration-200 ease-out"
             title="Stop recording"
             aria-label="Stop recording"
-            style={{
-              boxShadow: '0 0 0 0 rgba(244, 63, 94, 0.7), 0 0 20px 8px rgba(244, 63, 94, 0.3)',
-              animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
-            }}
           >
             <span className="material-icons-outlined" style={{ fontSize: 32 }}>stop</span>
           </button>

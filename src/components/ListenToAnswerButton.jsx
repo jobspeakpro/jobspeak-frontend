@@ -1,6 +1,6 @@
 // jobspeak-frontend/src/components/ListenToAnswerButton.jsx
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useImperativeHandle, forwardRef } from "react";
 import { getUserKey } from "../utils/userKey.js";
 import { apiClient, ApiError } from "../utils/apiClient.js";
 import { isNetworkError } from "../utils/networkError.js";
@@ -28,7 +28,7 @@ async function fetchUsage() {
   }
 }
 
-export default function ListenToAnswerButton({ improvedText, onUpgradeNeeded }) {
+const ListenToAnswerButton = forwardRef(function ListenToAnswerButton({ improvedText, onUpgradeNeeded }, ref) {
   const { isPro } = usePro();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -112,6 +112,7 @@ export default function ListenToAnswerButton({ improvedText, onUpgradeNeeded }) 
         },
         body: {
           text: textToSpeak.trim(), // Ensure non-empty text field
+          languageCode: "en-GB", // Default to Google UK English Female
         },
         parseJson: false, // Get raw response to check content type
       });
@@ -236,6 +237,11 @@ export default function ListenToAnswerButton({ improvedText, onUpgradeNeeded }) 
     }
   };
 
+  // Expose handleClick method via ref
+  useImperativeHandle(ref, () => ({
+    play: handleClick,
+  }));
+
   return (
     <div className="flex flex-col items-start gap-2">
       <button
@@ -266,4 +272,6 @@ export default function ListenToAnswerButton({ improvedText, onUpgradeNeeded }) 
       {error && <p className="text-xs text-rose-600 max-w-md">{error}</p>}
     </div>
   );
-}
+});
+
+export default ListenToAnswerButton;
