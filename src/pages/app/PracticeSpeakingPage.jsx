@@ -17,6 +17,8 @@ export default function PracticeSpeakingPage() {
   
   // Guidance section audio state (for improved answer)
   const guidanceAudioRef = useRef(null);
+  const guidanceAudioUrlRef = useRef(null);   // holds current live blob URL
+  const guidancePlayTokenRef = useRef(0);     // prevents stale async play from older clicks
   const [guidanceAudioUrl, setGuidanceAudioUrl] = useState(null);
   const [guidanceIsPlaying, setGuidanceIsPlaying] = useState(false);
   const [guidanceSpeed, setGuidanceSpeed] = useState(1.0);
@@ -24,6 +26,8 @@ export default function PracticeSpeakingPage() {
   // Question audio state (for question text)
   const questionAudioRef = useRef(null);
   const lastAutoplayKeyRef = useRef(null);
+  const questionAudioUrlRef = useRef(null);   // holds current live blob URL
+  const questionPlayTokenRef = useRef(0);     // prevents stale async play from older clicks
   const [questionAudioUrl, setQuestionAudioUrl] = useState(null);
   const [questionIsPlaying, setQuestionIsPlaying] = useState(false);
   const [questionAutoplay, setQuestionAutoplay] = useState(() => {
@@ -75,14 +79,38 @@ export default function PracticeSpeakingPage() {
   useEffect(() => {
     localStorage.setItem("tts_question_voiceId", questionVoiceId);
   }, [questionVoiceId]);
-  
-  // Cleanup object URLs on unmount
+
+  // Safe URL setter for question audio - only revokes previous URL after new one is set
+  function setQuestionAudioUrlSafe(newUrl) {
+    const prev = questionAudioUrlRef.current;
+    questionAudioUrlRef.current = newUrl;
+    setQuestionAudioUrl(newUrl);
+    if (prev && prev !== newUrl) {
+      // revoke previous AFTER we swapped to new
+      setTimeout(() => URL.revokeObjectURL(prev), 500);
+    }
+  }
+
+  // Safe URL setter for guidance audio - only revokes previous URL after new one is set
+  function setGuidanceAudioUrlSafe(newUrl) {
+    const prev = guidanceAudioUrlRef.current;
+    guidanceAudioUrlRef.current = newUrl;
+    setGuidanceAudioUrl(newUrl);
+    if (prev && prev !== newUrl) {
+      // revoke previous AFTER we swapped to new
+      setTimeout(() => URL.revokeObjectURL(prev), 500);
+    }
+  }
+
+  // Cleanup object URLs on unmount using refs (always current)
   useEffect(() => {
     return () => {
-      if (guidanceAudioUrl) URL.revokeObjectURL(guidanceAudioUrl);
-      if (questionAudioUrl) URL.revokeObjectURL(questionAudioUrl);
+      const qUrl = questionAudioUrlRef.current;
+      const gUrl = guidanceAudioUrlRef.current;
+      if (qUrl) URL.revokeObjectURL(qUrl);
+      if (gUrl) URL.revokeObjectURL(gUrl);
     };
-  }, [guidanceAudioUrl, questionAudioUrl]);
+  }, []);
   
   // Update playback rates when speed changes
   useEffect(() => {
@@ -146,15 +174,29 @@ export default function PracticeSpeakingPage() {
   // Handler for Guidance section audio (improved answer)
   async function handlePlayGuidance(exampleText) {
     try {
+      const token = ++guidancePlayTokenRef.current;
+      const a = guidanceAudioRef.current;
+      
+      if (!a) return;
+
       // If we already have audio loaded, just toggle play/pause
-      if (guidanceAudioRef.current && guidanceAudioUrl) {
+      if (guidanceAudioUrl) {
         if (guidanceIsPlaying) {
-          guidanceAudioRef.current.pause();
+          a.pause();
           setGuidanceIsPlaying(false);
         } else {
-          guidanceAudioRef.current.playbackRate = guidanceSpeed;
-          await guidanceAudioRef.current.play();
-          setGuidanceIsPlaying(true);
+          a.playbackRate = guidanceSpeed;
+          try {
+            await a.play();
+            if (token === guidancePlayTokenRef.current) {
+              setGuidanceIsPlaying(true);
+            }
+          } catch (err) {
+            // Ignore AbortError (can happen on rapid toggles)
+            if (err.name !== "AbortError") {
+              console.error("Guidance audio play error:", err);
+            }
+          }
         }
         return;
       }
@@ -172,20 +214,27 @@ export default function PracticeSpeakingPage() {
       }
 
       if (url) {
-        // Revoke previous URL if any
-        setGuidanceAudioUrl((prev) => {
-          if (prev) URL.revokeObjectURL(prev);
-          return url;
-        });
+        // Check if this play was cancelled
+        if (token !== guidancePlayTokenRef.current) return;
 
-        // Play once the element has the URL
-        requestAnimationFrame(async () => {
-          if (!guidanceAudioRef.current) return;
-          guidanceAudioRef.current.src = url;
-          guidanceAudioRef.current.playbackRate = guidanceSpeed;
-          await guidanceAudioRef.current.play();
-          setGuidanceIsPlaying(true);
-        });
+        // Set URL safely (revokes previous only after new is set)
+        setGuidanceAudioUrlSafe(url);
+        a.src = url;
+        a.playbackRate = guidanceSpeed;
+        
+        try {
+          await a.play();
+          // Check again after play (might have been cancelled)
+          if (token === guidancePlayTokenRef.current) {
+            setGuidanceIsPlaying(true);
+          }
+        } catch (err) {
+          // Ignore AbortError (can happen on rapid toggles)
+          if (err.name !== "AbortError") {
+            console.error("Guidance audio play error:", err);
+          }
+          setGuidanceIsPlaying(false);
+        }
       }
     } catch (e) {
       console.error("Guidance audio error:", e);
@@ -197,30 +246,34 @@ export default function PracticeSpeakingPage() {
   const handlePlayQuestion = useCallback(async (options = {}) => {
     try {
       const { forceRegenerate = false } = options;
+      const token = ++questionPlayTokenRef.current;
+      const a = questionAudioRef.current;
+      
+      if (!a) return;
 
-      // If forceRegenerate is true, clear existing audio URL
-      if (forceRegenerate && questionAudioUrl) {
-        const old = questionAudioUrl;
-        setQuestionAudioUrl(null);
-        setQuestionIsPlaying(false);
-        // Revoke after a tick to avoid race conditions
-        setTimeout(() => URL.revokeObjectURL(old), 0);
-      }
-
-      // If we already have audio loaded and not forcing regenerate, just toggle play/pause
-      if (questionAudioRef.current && questionAudioUrl && !forceRegenerate) {
+      // If we have a URL AND not forceRegenerate, toggle play/pause
+      if (questionAudioUrl && !forceRegenerate) {
         if (questionIsPlaying) {
-          questionAudioRef.current.pause();
+          a.pause();
           setQuestionIsPlaying(false);
         } else {
-          questionAudioRef.current.playbackRate = questionSpeed;
-          await questionAudioRef.current.play();
-          setQuestionIsPlaying(true);
+          a.playbackRate = questionSpeed;
+          try {
+            await a.play();
+            if (token === questionPlayTokenRef.current) {
+              setQuestionIsPlaying(true);
+            }
+          } catch (err) {
+            // Ignore AbortError (can happen on rapid toggles)
+            if (err.name !== "AbortError") {
+              console.error("Question audio play error:", err);
+            }
+          }
         }
         return;
       }
 
-      // Fetch TTS audio using shared helper
+      // If forceRegenerate OR no URL, fetch new blob URL with CURRENT voiceId
       const { url, error } = await fetchTtsBlobUrl({
         text: questionPrompt,
         voiceId: questionVoiceId,
@@ -233,20 +286,27 @@ export default function PracticeSpeakingPage() {
       }
 
       if (url) {
-        // Revoke previous URL if any
-        setQuestionAudioUrl((prev) => {
-          if (prev) URL.revokeObjectURL(prev);
-          return url;
-        });
+        // Check if this play was cancelled
+        if (token !== questionPlayTokenRef.current) return;
 
-        // Play once the element has the URL
-        requestAnimationFrame(async () => {
-          if (!questionAudioRef.current) return;
-          questionAudioRef.current.src = url;
-          questionAudioRef.current.playbackRate = questionSpeed;
-          await questionAudioRef.current.play();
-          setQuestionIsPlaying(true);
-        });
+        // Set URL safely (revokes previous only after new is set)
+        setQuestionAudioUrlSafe(url);
+        a.src = url;
+        a.playbackRate = questionSpeed;
+        
+        try {
+          await a.play();
+          // Check again after play (might have been cancelled)
+          if (token === questionPlayTokenRef.current) {
+            setQuestionIsPlaying(true);
+          }
+        } catch (err) {
+          // Ignore AbortError (can happen on rapid toggles)
+          if (err.name !== "AbortError") {
+            console.error("Question audio play error:", err);
+          }
+          setQuestionIsPlaying(false);
+        }
       }
     } catch (e) {
       console.error("Question audio error:", e);
@@ -273,24 +333,17 @@ export default function PracticeSpeakingPage() {
   
   // Clear question audio when voice changes - stop audio and force regeneration
   useEffect(() => {
-    // Stop playback first
     const a = questionAudioRef.current;
     if (a) {
       a.pause();
       a.currentTime = 0;
-      a.src = "";
+      // DO NOT blank src here (it triggers load failures / races)
     }
-
-    // Revoke old URL after a tick (avoid AbortError race)
-    if (questionAudioUrl) {
-      const old = questionAudioUrl;
-      setQuestionAudioUrl(null);
-      setQuestionIsPlaying(false);
-      setTimeout(() => URL.revokeObjectURL(old), 0);
-    } else {
-      setQuestionIsPlaying(false);
-    }
-  }, [questionVoiceId, questionAudioUrl]);
+    // clear state so next play regenerates
+    setQuestionIsPlaying(false);
+    setQuestionAudioUrl(null);
+    // IMPORTANT: do NOT revoke here; revoke happens when we successfully set a new URL
+  }, [questionVoiceId]);
 
   // Get "Why this works better" text from result
   const whyThisWorksBetter = result?.message || result?.why || "Using active verbs like 'prioritized' and 'created' shows ownership and decisive action.";
