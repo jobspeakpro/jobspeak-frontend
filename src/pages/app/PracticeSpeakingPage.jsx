@@ -23,6 +23,7 @@ export default function PracticeSpeakingPage() {
   
   // Question audio state (for question text)
   const questionAudioRef = useRef(null);
+  const lastAutoplayQuestionRef = useRef(null);
   const [questionAudioUrl, setQuestionAudioUrl] = useState(null);
   const [questionIsPlaying, setQuestionIsPlaying] = useState(false);
   const [questionAutoplay, setQuestionAutoplay] = useState(() => {
@@ -35,24 +36,25 @@ export default function PracticeSpeakingPage() {
   });
   const [questionVoiceId, setQuestionVoiceId] = useState(() => {
     const stored = localStorage.getItem("tts_question_voiceId");
-    return stored || "us_female_emma";
+    return stored || "nova";
   });
   
-  // Voice options
-  const VOICES = useMemo(
+  // Voice options with real voice IDs
+  const QUESTION_VOICES = useMemo(
     () => [
-      { id: "us_female_emma", label: "US Female — Emma" },
-      { id: "us_female_olivia", label: "US Female — Olivia" },
-      { id: "us_male_liam", label: "US Male — Liam" },
-      { id: "us_male_noah", label: "US Male — Noah" },
-      { id: "uk_female_amelia", label: "UK Female — Amelia" },
-      { id: "uk_male_oliver", label: "UK Male — Oliver" },
+      { id: "nova", label: "US Female — Emma" },
+      { id: "onyx", label: "US Male — Jake" },
+      { id: "shimmer", label: "US Female — Ava" },
+      { id: "echo", label: "UK Male — Oliver" },
+      { id: "fable", label: "UK Female — Amelia" },
+      { id: "ash", label: "UK Male — Harry" },
     ],
     []
   );
   
   const SPEEDS = useMemo(
     () => [
+      { value: 0.7, label: "0.70×" },
       { value: 0.75, label: "0.75×" },
       { value: 1.0, label: "1.0×" },
       { value: 1.25, label: "1.25×" },
@@ -236,24 +238,35 @@ export default function PracticeSpeakingPage() {
   }, [questionAudioUrl, questionIsPlaying, questionSpeed, questionPrompt, questionVoiceId]);
   
   // Auto-play question audio on load if enabled
+  // Only trigger once per question - track last autoplayed question
   useEffect(() => {
-    if (questionAutoplay && questionPrompt) {
-      // Small delay to ensure page is ready
-      const timer = setTimeout(() => {
-        handlePlayQuestion();
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [questionAutoplay, questionPrompt, handlePlayQuestion]); // Run when autoplay or question changes
+    if (!questionAutoplay) return;
+    if (!questionPrompt) return;
+    if (lastAutoplayQuestionRef.current === questionPrompt) return;
+
+    // Mark this question as autoplayed
+    lastAutoplayQuestionRef.current = questionPrompt;
+    
+    // Small delay to ensure page is ready
+    const timer = setTimeout(() => {
+      handlePlayQuestion();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [questionAutoplay, questionPrompt]); // Only depend on autoplay and question, NOT handlePlayQuestion or audio state
   
-  // Clear question audio cache when voice changes
+  // Clear question audio when voice changes - stop audio and force regeneration
   useEffect(() => {
+    // Stop any playing audio
+    if (questionAudioRef.current) {
+      questionAudioRef.current.pause();
+      questionAudioRef.current.src = "";
+    }
+    // Clear existing audio URL to force regeneration on next play
     if (questionAudioUrl) {
-      clearTtsCacheEntry(questionPrompt, questionVoiceId);
       URL.revokeObjectURL(questionAudioUrl);
       setQuestionAudioUrl(null);
-      setQuestionIsPlaying(false);
     }
+    setQuestionIsPlaying(false);
   }, [questionVoiceId]);
 
   // Get "Why this works better" text from result
@@ -393,7 +406,7 @@ export default function PracticeSpeakingPage() {
                       onChange={(e) => setQuestionVoiceId(e.target.value)}
                       className="h-7 rounded-lg border border-white/30 bg-white/20 backdrop-blur-sm text-white text-xs px-2 focus:outline-none focus:ring-2 focus:ring-white/50"
                     >
-                      {VOICES.map(v => (
+                      {QUESTION_VOICES.map(v => (
                         <option key={v.id} value={v.id} style={{ background: "#1e293b", color: "white" }}>{v.label}</option>
                       ))}
                     </select>
