@@ -18,8 +18,8 @@ export async function fetchTtsBlobUrl({ text, voiceId = "DEFAULT" }) {
     return { url: null, error: { status: 400, message: "No text provided", isProRequired: false } };
   }
 
-  // Check cache first
-  const cacheKey = `${text.trim()}_${voiceId}`;
+  // Check cache first - cache key includes voiceId
+  const cacheKey = `${text.trim()}::${voiceId}`;
   if (ttsCache.has(cacheKey)) {
     const cachedUrl = ttsCache.get(cacheKey);
     // Verify the URL is still valid (not revoked)
@@ -29,9 +29,10 @@ export async function fetchTtsBlobUrl({ text, voiceId = "DEFAULT" }) {
   }
 
   try {
+    // Always include voiceId in payload
     const payload = {
       text: text.trim(),
-      ...(voiceId !== "DEFAULT" ? { voiceId } : {}),
+      voiceId: voiceId,
     };
 
     const res = await apiClient("/voice/generate", {
@@ -175,7 +176,7 @@ export function clearTtsCache() {
  * Clear cache for specific text/voice combination
  */
 export function clearTtsCacheEntry(text, voiceId = "DEFAULT") {
-  const cacheKey = `${text.trim()}_${voiceId}`;
+  const cacheKey = `${text.trim()}::${voiceId}`;
   const url = ttsCache.get(cacheKey);
   if (url && typeof url === "string" && url.startsWith("blob:")) {
     URL.revokeObjectURL(url);

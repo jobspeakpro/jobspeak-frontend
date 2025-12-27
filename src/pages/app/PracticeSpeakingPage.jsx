@@ -23,7 +23,7 @@ export default function PracticeSpeakingPage() {
   
   // Question audio state (for question text)
   const questionAudioRef = useRef(null);
-  const lastAutoplayQuestionRef = useRef(null);
+  const lastAutoplayKeyRef = useRef(null);
   const [questionAudioUrl, setQuestionAudioUrl] = useState(null);
   const [questionIsPlaying, setQuestionIsPlaying] = useState(false);
   const [questionAutoplay, setQuestionAutoplay] = useState(() => {
@@ -129,6 +129,12 @@ export default function PracticeSpeakingPage() {
   const questionPrompt = currentQuestion?.question || "Tell me about a time you handled a difficult situation at work.";
   const questionHint = currentQuestion?.hint || "Focus on the actions you took and the result.";
 
+  // Reliable autoplay key - prefer questionNumber, fallback to questionPrompt
+  const autoplayKey = useMemo(() => {
+    // prefer questionNumber if available; else use prompt text
+    return questionNumber || questionPrompt || null;
+  }, [questionNumber, questionPrompt]);
+
   // Handler for "Practice again" - resets the current question
   const handlePracticeAgain = () => {
     setText("");
@@ -188,10 +194,21 @@ export default function PracticeSpeakingPage() {
   }
   
   // Handler for question audio
-  const handlePlayQuestion = useCallback(async () => {
+  const handlePlayQuestion = useCallback(async (options = {}) => {
     try {
-      // If we already have audio loaded, just toggle play/pause
-      if (questionAudioRef.current && questionAudioUrl) {
+      const { forceRegenerate = false } = options;
+
+      // If forceRegenerate is true, clear existing audio URL
+      if (forceRegenerate && questionAudioUrl) {
+        const old = questionAudioUrl;
+        setQuestionAudioUrl(null);
+        setQuestionIsPlaying(false);
+        // Revoke after a tick to avoid race conditions
+        setTimeout(() => URL.revokeObjectURL(old), 0);
+      }
+
+      // If we already have audio loaded and not forcing regenerate, just toggle play/pause
+      if (questionAudioRef.current && questionAudioUrl && !forceRegenerate) {
         if (questionIsPlaying) {
           questionAudioRef.current.pause();
           setQuestionIsPlaying(false);
@@ -235,39 +252,45 @@ export default function PracticeSpeakingPage() {
       console.error("Question audio error:", e);
       setQuestionIsPlaying(false);
     }
-  }, [questionAudioUrl, questionIsPlaying, questionSpeed, questionPrompt, questionVoiceId]);
+  }, [questionPrompt, questionVoiceId, questionSpeed, questionAudioUrl, questionIsPlaying]);
   
   // Auto-play question audio on load if enabled
-  // Only trigger once per question - track last autoplayed question
+  // Only trigger once per question - track last autoplayed key
   useEffect(() => {
     if (!questionAutoplay) return;
-    if (!questionPrompt) return;
-    if (lastAutoplayQuestionRef.current === questionPrompt) return;
+    if (!autoplayKey) return;
+    if (lastAutoplayKeyRef.current === autoplayKey) return;
 
-    // Mark this question as autoplayed
-    lastAutoplayQuestionRef.current = questionPrompt;
-    
-    // Small delay to ensure page is ready
-    const timer = setTimeout(() => {
-      handlePlayQuestion();
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [questionAutoplay, questionPrompt]); // Only depend on autoplay and question, NOT handlePlayQuestion or audio state
+    lastAutoplayKeyRef.current = autoplayKey;
+
+    // delay 250ms so audio ref exists and UI is mounted
+    const t = setTimeout(() => {
+      handlePlayQuestion({ forceRegenerate: true, reason: "autoplay" });
+    }, 250);
+
+    return () => clearTimeout(t);
+  }, [questionAutoplay, autoplayKey, handlePlayQuestion]);
   
   // Clear question audio when voice changes - stop audio and force regeneration
   useEffect(() => {
-    // Stop any playing audio
-    if (questionAudioRef.current) {
-      questionAudioRef.current.pause();
-      questionAudioRef.current.src = "";
+    // Stop playback first
+    const a = questionAudioRef.current;
+    if (a) {
+      a.pause();
+      a.currentTime = 0;
+      a.src = "";
     }
-    // Clear existing audio URL to force regeneration on next play
+
+    // Revoke old URL after a tick (avoid AbortError race)
     if (questionAudioUrl) {
-      URL.revokeObjectURL(questionAudioUrl);
+      const old = questionAudioUrl;
       setQuestionAudioUrl(null);
+      setQuestionIsPlaying(false);
+      setTimeout(() => URL.revokeObjectURL(old), 0);
+    } else {
+      setQuestionIsPlaying(false);
     }
-    setQuestionIsPlaying(false);
-  }, [questionVoiceId]);
+  }, [questionVoiceId, questionAudioUrl]);
 
   // Get "Why this works better" text from result
   const whyThisWorksBetter = result?.message || result?.why || "Using active verbs like 'prioritized' and 'created' shows ownership and decisive action.";
