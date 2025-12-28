@@ -45,7 +45,7 @@ const practiceQuestions = [
 
 export function usePracticeSession() {
   const { isPro, refreshProStatus } = usePro();
-  
+
   const [text, setText] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -57,10 +57,10 @@ export function usePracticeSession() {
   const [serverUnavailable, setServerUnavailable] = useState(false);
   const [freeImproveUsage, setFreeImproveUsage] = useState({ count: 0, limit: 3 });
   const [usage, setUsage] = useState({ used: 0, limit: 3, remaining: 3, blocked: false });
-  
+
   // Ref to track if GA events have been fired for this page load (prevent duplicates)
   const hasTrackedStripeReturn = useRef(false);
-  
+
   // Initialize with random question
   const [currentQuestion, setCurrentQuestion] = useState(() => {
     return practiceQuestions[Math.floor(Math.random() * practiceQuestions.length)];
@@ -110,7 +110,10 @@ export function usePracticeSession() {
         }
       }
     } catch (err) {
-      console.error("Error fetching free attempts:", err);
+      console.error('[FAIL-SOFT] /api/usage/today failed, using defaults:', err);
+      // FAIL-SOFT: Default to safe values if backend is down (MVP BLOCKER FIX)
+      setFreeImproveUsage({ count: 0, limit: 3 });
+      setUsage({ used: 0, limit: 3, remaining: 3, blocked: false });
       if (isNetworkError(err)) {
         setServerUnavailable(true);
       }
@@ -132,7 +135,7 @@ export function usePracticeSession() {
           keysToDelete.push(key);
         }
       }
-      
+
       keysToDelete.forEach(key => {
         localStorage.removeItem(key);
         console.log("[Cleanup] Removed legacy free usage key:", key);
@@ -152,11 +155,11 @@ export function usePracticeSession() {
     try {
       const params = new URLSearchParams(window.location.search);
       const pathname = window.location.pathname.toLowerCase();
-      
+
       // Check query params
       const success = params.get("success");
       const canceled = params.get("canceled");
-      
+
       // Check pathname for success/cancel patterns
       const pathSuccess = pathname.includes("/success") || pathname.includes("/checkout/success");
       const pathCancel = pathname.includes("/cancel") || pathname.includes("/checkout/cancel");
@@ -166,30 +169,30 @@ export function usePracticeSession() {
         if (refreshProStatus) {
           refreshProStatus();
         }
-        
+
         // Fire GA event for successful upgrade (once per return)
         if (!hasTrackedStripeReturn.current) {
           try {
             // Read period and source from localStorage (stored before redirect)
             const period = localStorage.getItem("jobspeak_upgrade_period") || "unknown";
             const source = localStorage.getItem("jobspeak_upgrade_source") || "unknown";
-            
+
             gaEvent("paywall_upgrade_success", {
               page: "practice",
               period: period,
               source: source,
             });
-            
+
             // Clean up localStorage after tracking
             localStorage.removeItem("jobspeak_upgrade_period");
             localStorage.removeItem("jobspeak_upgrade_source");
-            
+
             hasTrackedStripeReturn.current = true;
           } catch (err) {
             console.error("Error tracking upgrade success:", err);
           }
         }
-        
+
         // Clean up URL params
         const newUrl = window.location.pathname;
         window.history.replaceState({}, "", newUrl);
@@ -200,23 +203,23 @@ export function usePracticeSession() {
             // Read period and source from localStorage (stored before redirect)
             const period = localStorage.getItem("jobspeak_upgrade_period") || "unknown";
             const source = localStorage.getItem("jobspeak_upgrade_source") || "unknown";
-            
+
             gaEvent("paywall_upgrade_cancel", {
               page: "practice",
               period: period,
               source: source,
             });
-            
+
             // Clean up localStorage after tracking
             localStorage.removeItem("jobspeak_upgrade_period");
             localStorage.removeItem("jobspeak_upgrade_source");
-            
+
             hasTrackedStripeReturn.current = true;
           } catch (err) {
             console.error("Error tracking upgrade cancel:", err);
           }
         }
-        
+
         // Clean up URL params
         const newUrl = window.location.pathname;
         window.history.replaceState({}, "", newUrl);
@@ -258,7 +261,7 @@ export function usePracticeSession() {
           body: { text },
         });
         setResult(data);
-        
+
         // Refresh free attempts from backend after successful submission
         fetchFreeAttempts();
 
@@ -287,7 +290,7 @@ export function usePracticeSession() {
       } catch (err) {
         // Refresh attempts from backend after failed call
         fetchFreeAttempts();
-        
+
         if (err instanceof ApiError && err.status === 402 && err.data?.upgrade === true) {
           setError("");
           // Immediately update UI to 3/3 when limit reached
@@ -297,7 +300,7 @@ export function usePracticeSession() {
           setLoading(false);
           return;
         }
-        
+
         // Handle network errors (backend unreachable) - show toast
         if (isNetworkError(err)) {
           console.error("Micro-demo network error:", err.message);
@@ -306,7 +309,7 @@ export function usePracticeSession() {
           fixError.isFixUnavailable = true;
           throw fixError;
         }
-        
+
         // Handle 404 or other endpoint errors gracefully
         if (err instanceof ApiError && (err.status === 404 || err.status >= 500)) {
           // Don't set error - let the component show a toast instead
@@ -317,7 +320,7 @@ export function usePracticeSession() {
           fixError.isFixUnavailable = true;
           throw fixError;
         }
-        
+
         // Handle JSON parse errors or other unexpected errors
         // Check if error is from JSON parsing
         if (err.message && (err.message.includes("JSON") || err.message.includes("parse") || err.message.includes("Unexpected token"))) {
@@ -327,7 +330,7 @@ export function usePracticeSession() {
           fixError.isFixUnavailable = true;
           throw fixError;
         }
-        
+
         console.error("Micro-demo error status:", err.status || err.message);
         setError("Something went wrong. Try again in a moment.");
         setLoading(false);
@@ -359,19 +362,19 @@ export function usePracticeSession() {
     gaEvent("try_another_question_click", {
       page: "practice"
     });
-    
+
     // Reset practice state
     setText("");
     setResult(null);
     setError("");
     setLoading(false);
-    
+
     // Load a new random question (avoid same question if possible)
     let newQuestion;
     do {
       newQuestion = practiceQuestions[Math.floor(Math.random() * practiceQuestions.length)];
     } while (newQuestion.question === currentQuestion.question && practiceQuestions.length > 1);
-    
+
     setCurrentQuestion(newQuestion);
     setQuestionNumber(prev => prev + 1);
   };
@@ -401,7 +404,7 @@ export function usePracticeSession() {
     isPro,
     isPaywalled,
     improvedAnswerText,
-    
+
     // Handlers
     handleImproveAnswer,
     handleTryAnotherQuestion,

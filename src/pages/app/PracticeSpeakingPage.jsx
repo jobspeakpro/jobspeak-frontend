@@ -14,7 +14,7 @@ export default function PracticeSpeakingPage() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [showNotificationToast, setShowNotificationToast] = useState(false);
   const [showFixToast, setShowFixToast] = useState(false);
-  
+
   // Guidance section audio state (for improved answer)
   const guidanceAudioRef = useRef(null);
   const guidanceAudioUrlRef = useRef(null);   // holds current live blob URL
@@ -22,7 +22,7 @@ export default function PracticeSpeakingPage() {
   const [guidanceAudioUrl, setGuidanceAudioUrl] = useState(null);
   const [guidanceIsPlaying, setGuidanceIsPlaying] = useState(false);
   const [guidanceSpeed, setGuidanceSpeed] = useState(1.0);
-  
+
   // Question audio state (for question text)
   const questionAudioRef = useRef(null);
   const lastAutoplayKeyRef = useRef(null);
@@ -42,7 +42,7 @@ export default function PracticeSpeakingPage() {
     const stored = localStorage.getItem("tts_question_voiceId");
     return stored || "nova";
   });
-  
+
   // Voice options with real voice IDs
   const QUESTION_VOICES = useMemo(
     () => [
@@ -55,7 +55,7 @@ export default function PracticeSpeakingPage() {
     ],
     []
   );
-  
+
   const SPEEDS = useMemo(
     () => [
       { value: 0.7, label: "0.70×" },
@@ -66,16 +66,16 @@ export default function PracticeSpeakingPage() {
     ],
     []
   );
-  
+
   // Persist question audio preferences
   useEffect(() => {
     localStorage.setItem("tts_question_autoplay", String(questionAutoplay));
   }, [questionAutoplay]);
-  
+
   useEffect(() => {
     localStorage.setItem("tts_question_speed", String(questionSpeed));
   }, [questionSpeed]);
-  
+
   useEffect(() => {
     localStorage.setItem("tts_question_voiceId", questionVoiceId);
   }, [questionVoiceId]);
@@ -111,14 +111,14 @@ export default function PracticeSpeakingPage() {
       if (gUrl) URL.revokeObjectURL(gUrl);
     };
   }, []);
-  
+
   // Update playback rates when speed changes
   useEffect(() => {
     if (guidanceAudioRef.current) {
       guidanceAudioRef.current.playbackRate = guidanceSpeed;
     }
   }, [guidanceSpeed]);
-  
+
   useEffect(() => {
     if (questionAudioRef.current) {
       questionAudioRef.current.playbackRate = questionSpeed;
@@ -176,7 +176,7 @@ export default function PracticeSpeakingPage() {
     try {
       const token = ++guidancePlayTokenRef.current;
       const a = guidanceAudioRef.current;
-      
+
       if (!a) return;
 
       // If we already have audio loaded, just toggle play/pause
@@ -221,7 +221,7 @@ export default function PracticeSpeakingPage() {
         setGuidanceAudioUrlSafe(url);
         a.src = url;
         a.playbackRate = guidanceSpeed;
-        
+
         try {
           await a.play();
           // Check again after play (might have been cancelled)
@@ -241,14 +241,14 @@ export default function PracticeSpeakingPage() {
       setGuidanceIsPlaying(false);
     }
   }
-  
+
   // Handler for question audio
   const handlePlayQuestion = useCallback(async (options = {}) => {
     try {
       const { forceRegenerate = false } = options;
       const token = ++questionPlayTokenRef.current;
       const a = questionAudioRef.current;
-      
+
       if (!a) return;
 
       // If we have a URL AND not forceRegenerate, toggle play/pause
@@ -293,7 +293,7 @@ export default function PracticeSpeakingPage() {
         setQuestionAudioUrlSafe(url);
         a.src = url;
         a.playbackRate = questionSpeed;
-        
+
         try {
           await a.play();
           // Check again after play (might have been cancelled)
@@ -313,7 +313,7 @@ export default function PracticeSpeakingPage() {
       setQuestionIsPlaying(false);
     }
   }, [questionPrompt, questionVoiceId, questionSpeed, questionAudioUrl, questionIsPlaying]);
-  
+
   // Auto-play question audio on load if enabled
   // Only trigger once per question - track last autoplayed key
   useEffect(() => {
@@ -330,7 +330,7 @@ export default function PracticeSpeakingPage() {
 
     return () => clearTimeout(t);
   }, [questionAutoplay, autoplayKey, handlePlayQuestion]);
-  
+
   // Clear question audio when voice changes - stop audio and force regeneration
   useEffect(() => {
     const a = questionAudioRef.current;
@@ -421,14 +421,14 @@ export default function PracticeSpeakingPage() {
               <span className="text-xs font-semibold text-green-700 dark:text-green-300">Free Plan</span>
             </div>
           )}
-          <button 
+          <button
             onClick={() => setShowNotificationToast(true)}
             className="flex items-center justify-center rounded-full size-10 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-text-main dark:text-white"
           >
             <span className="material-symbols-outlined">notifications</span>
           </button>
           <div className="size-8 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden cursor-pointer" data-alt="User profile avatar placeholder">
-            <img alt="User Profile" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7OSQFZhF2rG-VynZ6WAzVggeYqM2KK1RlKBfcxtnvZ5wkKoNZYvIS78KvIQ3MguF106L9mdFmP61Mwv15fIJoq76Q-YtND9b1xiNMqREBjzXc1nnwTuBt64OuVT7ibePkxl2_MeM962jFqlOoLEp7YiYBSU_nBemtkqQzzSreOhqr2o2PSEC0MRgD_2ub6WjYS2-hQsYRrXXjhdDxtV8TCUgo8vHrXP_F_sLUgYVoUOTL3jYcfcb17z-Z6iWow8YIVVSxbDifNfMU"/>
+            <img alt="User Profile" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7OSQFZhF2rG-VynZ6WAzVggeYqM2KK1RlKBfcxtnvZ5wkKoNZYvIS78KvIQ3MguF106L9mdFmP61Mwv15fIJoq76Q-YtND9b1xiNMqREBjzXc1nnwTuBt64OuVT7ibePkxl2_MeM962jFqlOoLEp7YiYBSU_nBemtkqQzzSreOhqr2o2PSEC0MRgD_2ub6WjYS2-hQsYRrXXjhdDxtV8TCUgo8vHrXP_F_sLUgYVoUOTL3jYcfcb17z-Z6iWow8YIVVSxbDifNfMU" />
           </div>
         </div>
       </header>
@@ -441,9 +441,9 @@ export default function PracticeSpeakingPage() {
             <p className="text-text-secondary dark:text-gray-400 text-base md:text-lg font-light">Take your time. Practice is private and judgment-free.</p>
           </div>
 
-            {/* Question Card */}
+          {/* Question Card */}
           <div className="w-full bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-            <div className="relative h-48 w-full bg-cover bg-center" style={{backgroundImage: "linear-gradient(135deg, rgba(19, 109, 236, 0.8) 0%, rgba(16, 24, 34, 0.9) 100%), url('https://lh3.googleusercontent.com/aida-public/AB6AXuDuBe5ft9h7R5hRXjmGP00v19h7Hyg6FG-sBHO3a_wHZOqYyb1mwpub1Eh1XZ9AfTAiJ2Qfcs13PRgmLHiHZ9hDBzJTjWq8BNHbW6Mv2ZvrBKxT1yxaRAGW-cDTv-lzifrxJX68MCE0K9CAhcmPBKzxYuBhuzlDKewC7hVWviiKjqeBXaI9wC9d7NRJI6C26vmZ0yvqw_QX7D3bIoQIwixlQIeRWtOpGFgxI-E9kHlks3YCZ9Bufn_5yr66WTiOMharmAjYlI5iEkI9')"}}>
+            <div className="relative h-48 w-full bg-cover bg-center" style={{ backgroundImage: "linear-gradient(135deg, rgba(19, 109, 236, 0.8) 0%, rgba(16, 24, 34, 0.9) 100%), url('https://lh3.googleusercontent.com/aida-public/AB6AXuDuBe5ft9h7R5hRXjmGP00v19h7Hyg6FG-sBHO3a_wHZOqYyb1mwpub1Eh1XZ9AfTAiJ2Qfcs13PRgmLHiHZ9hDBzJTjWq8BNHbW6Mv2ZvrBKxT1yxaRAGW-cDTv-lzifrxJX68MCE0K9CAhcmPBKzxYuBhuzlDKewC7hVWviiKjqeBXaI9wC9d7NRJI6C26vmZ0yvqw_QX7D3bIoQIwixlQIeRWtOpGFgxI-E9kHlks3YCZ9Bufn_5yr66WTiOMharmAjYlI5iEkI9')" }}>
               <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
                 <div className="flex items-start justify-between gap-4 mb-3">
                   <span className="inline-block px-3 py-1 text-xs font-bold tracking-wider text-white uppercase bg-white/20 backdrop-blur-sm rounded-full w-fit">Behavioral Question</span>
@@ -520,10 +520,10 @@ export default function PracticeSpeakingPage() {
                   )}
 
                   {/* Mic Button - VoiceRecorder handles recording */}
-                  <VoiceRecorder 
+                  <VoiceRecorder
                     onTranscript={(transcript) => {
                       setText(transcript);
-                    }} 
+                    }}
                     onStateChange={({ recording, transcribing }) => {
                       setIsRecording(recording);
                       setIsTranscribing(transcribing);
@@ -623,10 +623,10 @@ export default function PracticeSpeakingPage() {
                   onRetry={
                     error.includes("temporarily unavailable")
                       ? () => {
-                          setError("");
-                          setServerUnavailable(false);
-                          handleImproveAnswer();
-                        }
+                        setError("");
+                        setServerUnavailable(false);
+                        handleImproveAnswer();
+                      }
                       : undefined
                   }
                 />
@@ -641,86 +641,86 @@ export default function PracticeSpeakingPage() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : result && !result.error ? (
-            <div className="animate-fade-in">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-primary">
-                  <span className="material-symbols-outlined text-2xl">school</span>
-                </div>
-                <div>
-                  <h4 className="text-lg font-bold text-text-main dark:text-white">Guidance</h4>
-                  <p className="text-text-secondary dark:text-gray-400 text-sm mt-1">Based on typical responses to this question.</p>
-                </div>
-              </div>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-green-50 dark:bg-green-900/10 p-5 rounded-lg border border-green-100 dark:border-green-900/30 flex flex-col items-start justify-center">
-                  <h5 className="text-green-800 dark:text-green-300 font-semibold text-sm mb-2 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-sm">check_circle</span>
-                    Here's a clearer way to say this:
-                  </h5>
-                  <p className="text-text-main dark:text-gray-200 text-base leading-relaxed">
-                    {improvedAnswerText || "Submit an answer to see improved guidance."}
-                  </p>
-                  <div className="mt-4 flex items-center gap-3 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => improvedAnswerText && handlePlayGuidance(improvedAnswerText)}
-                      disabled={!improvedAnswerText}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-green-900/40 hover:bg-green-100 dark:hover:bg-green-900/60 border border-green-200 dark:border-green-800/50 text-green-700 dark:text-green-300 text-sm font-medium transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-green-900/40"
-                    >
-                      <span className="material-symbols-outlined text-lg">
-                        {guidanceIsPlaying ? "pause" : "play_arrow"}
-                      </span>
-                      <span>{guidanceIsPlaying ? "Pause" : improvedAnswerText ? "Play audio" : "Submit an answer to see improved guidance."}</span>
-                    </button>
-
-                    <div className="inline-flex items-center gap-2">
-                      <span className="text-xs text-text-secondary dark:text-gray-400">Speed</span>
-                      <select
-                        value={String(guidanceSpeed)}
-                        onChange={(e) => setGuidanceSpeed(Number(e.target.value))}
-                        className="h-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-white px-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary"
-                      >
-                        {SPEEDS.map(s => (
-                          <option key={s.value} value={String(s.value)}>{s.label}</option>
-                        ))}
-                      </select>
-                    </div>
+              <div className="animate-fade-in">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-primary">
+                    <span className="material-symbols-outlined text-2xl">school</span>
                   </div>
-                  {/* Hidden audio element for guidance */}
-                  <audio
-                    ref={guidanceAudioRef}
-                    onEnded={() => setGuidanceIsPlaying(false)}
-                    onPause={() => setGuidanceIsPlaying(false)}
-                    onPlay={() => setGuidanceIsPlaying(true)}
-                    style={{ display: "none" }}
-                  />
+                  <div>
+                    <h4 className="text-lg font-bold text-text-main dark:text-white">Guidance</h4>
+                    <p className="text-text-secondary dark:text-gray-400 text-sm mt-1">Based on typical responses to this question.</p>
+                  </div>
                 </div>
-                <div className="flex flex-col justify-center gap-2">
-                  <p className="text-text-secondary dark:text-gray-400 text-sm font-medium">Why this works better:</p>
-                  <p className="text-text-main dark:text-gray-300 text-sm leading-relaxed">
-                    {whyThisWorksBetter}
-                  </p>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="bg-green-50 dark:bg-green-900/10 p-5 rounded-lg border border-green-100 dark:border-green-900/30 flex flex-col items-start justify-center">
+                    <h5 className="text-green-800 dark:text-green-300 font-semibold text-sm mb-2 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm">check_circle</span>
+                      Here's a clearer way to say this:
+                    </h5>
+                    <p className="text-text-main dark:text-gray-200 text-base leading-relaxed">
+                      {improvedAnswerText || "Submit an answer to see improved guidance."}
+                    </p>
+                    <div className="mt-4 flex items-center gap-3 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => improvedAnswerText && handlePlayGuidance(improvedAnswerText)}
+                        disabled={!improvedAnswerText}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-green-900/40 hover:bg-green-100 dark:hover:bg-green-900/60 border border-green-200 dark:border-green-800/50 text-green-700 dark:text-green-300 text-sm font-medium transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-green-900/40"
+                      >
+                        <span className="material-symbols-outlined text-lg">
+                          {guidanceIsPlaying ? "pause" : "play_arrow"}
+                        </span>
+                        <span>{guidanceIsPlaying ? "Pause" : improvedAnswerText ? "Play audio" : "Submit an answer to see improved guidance."}</span>
+                      </button>
+
+                      <div className="inline-flex items-center gap-2">
+                        <span className="text-xs text-text-secondary dark:text-gray-400">Speed</span>
+                        <select
+                          value={String(guidanceSpeed)}
+                          onChange={(e) => setGuidanceSpeed(Number(e.target.value))}
+                          className="h-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-white px-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          {SPEEDS.map(s => (
+                            <option key={s.value} value={String(s.value)}>{s.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    {/* Hidden audio element for guidance */}
+                    <audio
+                      ref={guidanceAudioRef}
+                      onEnded={() => setGuidanceIsPlaying(false)}
+                      onPause={() => setGuidanceIsPlaying(false)}
+                      onPlay={() => setGuidanceIsPlaying(true)}
+                      style={{ display: "none" }}
+                    />
+                  </div>
+                  <div className="flex flex-col justify-center gap-2">
+                    <p className="text-text-secondary dark:text-gray-400 text-sm font-medium">Why this works better:</p>
+                    <p className="text-text-main dark:text-gray-300 text-sm leading-relaxed">
+                      {whyThisWorksBetter}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row justify-end gap-4 mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    type="button"
+                    onClick={handlePracticeAgain}
+                    className="px-6 py-3 rounded-lg border border-slate-200 dark:border-slate-700 text-text-main dark:text-white font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-lg">replay</span>
+                    Practice again
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleTryAnotherQuestion}
+                    className="px-6 py-3 rounded-lg bg-primary hover:bg-primary-hover text-white font-bold text-sm shadow-md shadow-primary/20 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span>Try another question</span>
+                    <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                  </button>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row justify-end gap-4 mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={handlePracticeAgain}
-                  className="px-6 py-3 rounded-lg border border-slate-200 dark:border-slate-700 text-text-main dark:text-white font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
-                >
-                  <span className="material-symbols-outlined text-lg">replay</span>
-                  Practice again
-                </button>
-                <button
-                  type="button"
-                  onClick={handleTryAnotherQuestion}
-                  className="px-6 py-3 rounded-lg bg-primary hover:bg-primary-hover text-white font-bold text-sm shadow-md shadow-primary/20 transition-colors flex items-center justify-center gap-2"
-                >
-                  <span>Try another question</span>
-                  <span className="material-symbols-outlined text-lg">arrow_forward</span>
-                </button>
-              </div>
-            </div>
             ) : result?.error ? (
               <InlineError
                 title="Something went wrong"
@@ -835,6 +835,23 @@ export default function PracticeSpeakingPage() {
             setPaywallSource(null);
           }}
         />
+      )}
+
+      {/* DEV-ONLY: Reset Onboarding Button (MVP BLOCKER FIX) */}
+      {import.meta.env.DEV && (
+        <button
+          onClick={() => {
+            localStorage.removeItem('onboarding_complete');
+            localStorage.removeItem('onboarding_role');
+            localStorage.removeItem('onboarding_level');
+            localStorage.removeItem('onboarding_type');
+            window.location.reload();
+          }}
+          className="fixed bottom-4 left-4 z-[9999] bg-orange-600 hover:bg-orange-700 text-white text-xs px-3 py-2 rounded-lg shadow-lg font-mono"
+          title="Clear onboarding state and reload (DEV only)"
+        >
+          🔄 Reset Onboarding
+        </button>
       )}
     </div>
   );
