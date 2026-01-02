@@ -15,7 +15,7 @@ import { gaEvent } from "../utils/ga.js";
 export default function PracticePage() {
   const navigate = useNavigate();
   const { isPro, refreshProStatus } = usePro();
-  
+
   const [text, setText] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -27,10 +27,10 @@ export default function PracticePage() {
   const [serverUnavailable, setServerUnavailable] = useState(false);
   const [freeImproveUsage, setFreeImproveUsage] = useState({ count: 0, limit: 3 });
   const [usage, setUsage] = useState({ used: 0, limit: 3, remaining: 3, blocked: false });
-  
+
   // Ref to track if GA events have been fired for this page load (prevent duplicates)
   const hasTrackedStripeReturn = useRef(false);
-  
+
   // Practice questions array
   const practiceQuestions = [
     {
@@ -66,7 +66,7 @@ export default function PracticePage() {
       hint: "Show your teamwork and interpersonal skills."
     }
   ];
-  
+
   // Initialize with random question
   const [currentQuestion, setCurrentQuestion] = useState(() => {
     return practiceQuestions[Math.floor(Math.random() * practiceQuestions.length)];
@@ -139,7 +139,7 @@ export default function PracticePage() {
           keysToDelete.push(key);
         }
       }
-      
+
       keysToDelete.forEach(key => {
         localStorage.removeItem(key);
         console.log("[Cleanup] Removed legacy free usage key:", key);
@@ -159,11 +159,11 @@ export default function PracticePage() {
     try {
       const params = new URLSearchParams(window.location.search);
       const pathname = window.location.pathname.toLowerCase();
-      
+
       // Check query params
       const success = params.get("success");
       const canceled = params.get("canceled");
-      
+
       // Check pathname for success/cancel patterns
       const pathSuccess = pathname.includes("/success") || pathname.includes("/checkout/success");
       const pathCancel = pathname.includes("/cancel") || pathname.includes("/checkout/cancel");
@@ -173,30 +173,30 @@ export default function PracticePage() {
         if (refreshProStatus) {
           refreshProStatus();
         }
-        
+
         // Fire GA event for successful upgrade (once per return)
         if (!hasTrackedStripeReturn.current) {
           try {
             // Read period and source from localStorage (stored before redirect)
             const period = localStorage.getItem("jobspeak_upgrade_period") || "unknown";
             const source = localStorage.getItem("jobspeak_upgrade_source") || "unknown";
-            
+
             gaEvent("paywall_upgrade_success", {
               page: "practice",
               period: period,
               source: source,
             });
-            
+
             // Clean up localStorage after tracking
             localStorage.removeItem("jobspeak_upgrade_period");
             localStorage.removeItem("jobspeak_upgrade_source");
-            
+
             hasTrackedStripeReturn.current = true;
           } catch (err) {
             console.error("Error tracking upgrade success:", err);
           }
         }
-        
+
         // Clean up URL params
         const newUrl = window.location.pathname;
         window.history.replaceState({}, "", newUrl);
@@ -207,23 +207,23 @@ export default function PracticePage() {
             // Read period and source from localStorage (stored before redirect)
             const period = localStorage.getItem("jobspeak_upgrade_period") || "unknown";
             const source = localStorage.getItem("jobspeak_upgrade_source") || "unknown";
-            
+
             gaEvent("paywall_upgrade_cancel", {
               page: "practice",
               period: period,
               source: source,
             });
-            
+
             // Clean up localStorage after tracking
             localStorage.removeItem("jobspeak_upgrade_period");
             localStorage.removeItem("jobspeak_upgrade_source");
-            
+
             hasTrackedStripeReturn.current = true;
           } catch (err) {
             console.error("Error tracking upgrade cancel:", err);
           }
         }
-        
+
         // Clean up URL params
         const newUrl = window.location.pathname;
         window.history.replaceState({}, "", newUrl);
@@ -247,27 +247,26 @@ export default function PracticePage() {
       return; // Return early - do NOT make API call when paywalled
     }
 
+    // DEFENSIVE GUARD: Validate input before proceeding
+    if (typeof text !== "string" || !text.trim()) {
+      setError("Record or type an answer first.");
+      setLoading(false);
+      return;
+    }
+
     gaEvent("practice_submit", { page: "practice" });
     setError("");
     setResult(null);
     setLoading(true);
 
-    if (typeof text !== "string" || !text.trim()) {
-      setError("Type or record your answer to begin.");
-      setLoading(false);
-      return;
-    }
-
-
     try {
-
       try {
         const data = await apiClient("/ai/micro-demo", {
           method: "POST",
           body: { text },
         });
         setResult(data);
-        
+
         // Refresh free attempts from backend after successful submission
         fetchFreeAttempts();
 
@@ -296,7 +295,15 @@ export default function PracticePage() {
       } catch (err) {
         // Refresh attempts from backend after failed call
         fetchFreeAttempts();
-        
+
+        // Enhanced error logging for debugging
+        console.error("[Fix My Answer] API Error:", {
+          status: err.status,
+          message: err.message,
+          data: err.data,
+          stack: err.stack
+        });
+
         if (err instanceof ApiError && err.status === 402 && err.data?.upgrade === true) {
           setError("");
           // Immediately update UI to 3/3 when limit reached
@@ -306,13 +313,22 @@ export default function PracticePage() {
           setLoading(false);
           return;
         }
-        console.error("Micro-demo error status:", err.status || err.message);
+
+        // Log response body for debugging
+        if (err.status) {
+          console.error("[Fix My Answer] Response status:", err.status);
+        }
+        if (err.data) {
+          console.error("[Fix My Answer] Response body:", err.data);
+        }
+
+        // Show non-blocking error message instead of crashing
         setError("Something went wrong. Try again in a moment.");
         setLoading(false);
         return;
       }
     } catch (err) {
-      console.error("Micro-demo error:", err);
+      console.error("[Fix My Answer] Outer catch error:", err);
       if (isNetworkError(err)) {
         setServerUnavailable(true);
         setError("We're temporarily unavailable. Try again in a moment.");
@@ -330,19 +346,19 @@ export default function PracticePage() {
     gaEvent("try_another_question_click", {
       page: "practice"
     });
-    
+
     // Reset practice state
     setText("");
     setResult(null);
     setError("");
     setLoading(false);
-    
+
     // Load a new random question (avoid same question if possible)
     let newQuestion;
     do {
       newQuestion = practiceQuestions[Math.floor(Math.random() * practiceQuestions.length)];
     } while (newQuestion.question === currentQuestion.question && practiceQuestions.length > 1);
-    
+
     setCurrentQuestion(newQuestion);
     setQuestionNumber(prev => prev + 1);
   };
@@ -402,11 +418,10 @@ export default function PracticePage() {
                 {Array.from({ length: Math.min(freeImproveUsage.limit, 10) }).map((_, idx) => (
                   <div
                     key={idx}
-                    className={`h-1.5 w-1.5 rounded-full transition-colors ${
-                      idx < freeImproveUsage.count
+                    className={`h-1.5 w-1.5 rounded-full transition-colors ${idx < freeImproveUsage.count
                         ? "bg-emerald-500"
                         : "bg-slate-200"
-                    }`}
+                      }`}
                   />
                 ))}
               </div>
@@ -467,11 +482,11 @@ export default function PracticePage() {
             >
               {/* Recording CTA - centered with large green mic button */}
               <div className="flex flex-col items-center gap-4 mb-4">
-                <VoiceRecorder 
+                <VoiceRecorder
                   onTranscript={(transcript) => {
                     setText(transcript);
                     setError("");
-                  }} 
+                  }}
                   onStateChange={({ recording, transcribing }) => {
                     setIsRecording(recording);
                     setIsTranscribing(transcribing);
@@ -501,31 +516,31 @@ export default function PracticePage() {
                   className="w-full min-h-[160px] border border-slate-200 bg-slate-50 rounded-lg px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed transition-all leading-relaxed resize-none"
                 />
               </div>
-              
+
               <div className="flex flex-wrap gap-2 items-center">
                 <button
                   type="submit"
                   disabled={loading || isTranscribing || (typeof text !== "string" || !text.trim())}
                   className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-rose-500 hover:bg-rose-600 text-white text-sm font-bold shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02]"
                 >
-                  {isTranscribing 
-                    ? "Transcribing..." 
-                    : loading 
-                    ? "Improving..." 
-                    : "✨ Fix my answer"}
+                  {isTranscribing
+                    ? "Transcribing..."
+                    : loading
+                      ? "Improving..."
+                      : "✨ Fix my answer"}
                 </button>
               </div>
-              
+
               {error && (
                 <InlineError
                   message={error}
                   onRetry={
                     error.includes("temporarily unavailable")
                       ? () => {
-                          setError("");
-                          setServerUnavailable(false);
-                          handleImproveAnswer();
-                        }
+                        setError("");
+                        setServerUnavailable(false);
+                        handleImproveAnswer();
+                      }
                       : undefined
                   }
                 />

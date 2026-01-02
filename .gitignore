@@ -3,4 +3,5 @@ dist/
 .vite/
 **/.vite/
 .env*
-
+.history/
+f.headers.txt

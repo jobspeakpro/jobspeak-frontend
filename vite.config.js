@@ -22,22 +22,44 @@ export default defineConfig({
     }
   ],
   server: {
+    port: 5173,
+    strictPort: true,
     proxy: {
       "/api": {
-        target: "http://localhost:3000",
+        target: "http://127.0.0.1:3000",
         changeOrigin: true,
+        secure: false,
       },
       "/voice": {
-        target: "http://localhost:3000",
+        target: "http://127.0.0.1:3000",
         changeOrigin: true,
+        secure: false,
+        configure: (proxy) => {
+          proxy.on("error", (err, req) => {
+            console.log("[proxy:error] /voice", err?.message, req?.url);
+          });
+          proxy.on("proxyReq", (proxyReq, req) => {
+            console.log("[proxy:req] /voice", req.method, req.url);
+          });
+          proxy.on("proxyRes", (proxyRes, req) => {
+            console.log("[proxy:res] /voice", proxyRes.statusCode, req.url);
+          });
+        },
       },
       "/ai": {
-        target: "http://localhost:3000",
+        target: "http://127.0.0.1:3000",
         changeOrigin: true,
+        secure: false,
       },
       "/resume": {
-        target: "http://localhost:3000",
+        target: "http://127.0.0.1:3000",
         changeOrigin: true,
+        secure: false,
+      },
+      "/health": {
+        target: "http://127.0.0.1:3000",
+        changeOrigin: true,
+        secure: false,
       },
     },
   },

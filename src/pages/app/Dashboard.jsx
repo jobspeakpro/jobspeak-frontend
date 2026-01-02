@@ -1,216 +1,355 @@
-import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext.jsx";
+import { supabase } from "../../lib/supabaseClient.js";
+import { apiClient } from "../../utils/apiClient.js";
+import AppHeader from "../../components/AppHeader.jsx";
+import MicAudioTest from "../../components/MicAudioTest.jsx";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+
+  // Mock interview limit status
+  const [mockLimitStatus, setMockLimitStatus] = useState(null);
+  const [checkingLimit, setCheckingLimit] = useState(true);
+
+  // Fetch profile data on mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) {
+        setProfileLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching profile:', error);
+        } else {
+          setProfile(data);
+        }
+      } catch (err) {
+        console.error('Profile fetch error:', err);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [user]);
+
+  // Generate display name - use display_name from profile
+  const displayName = profile?.display_name || user?.email?.split('@')[0] || 'there';
+
+  // Fetch daily reflection from backend
+  const [dailyReflection, setDailyReflection] = useState("Practice makes progress. Every session builds your confidence.");
+
+  useEffect(() => {
+    const fetchDailyReflection = async () => {
+      try {
+        const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+        const response = await fetch(`${API_BASE}/api/daily-reflection`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.reflection) {
+            setDailyReflection(data.reflection);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch daily reflection:', err);
+        // Keep default reflection on error
+      }
+    };
+
+    fetchDailyReflection();
+  }, []);
+
+  // Fetch progress data from backend
+  const [progress, setProgress] = useState(null);
+  const [progressLoading, setProgressLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProgress = async () => {
+      try {
+        const data = await apiClient('/api/progress');
+        setProgress(data);
+      } catch (err) {
+        console.error('Failed to fetch progress:', err);
+      } finally {
+        setProgressLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchProgress();
+    } else {
+      setProgressLoading(false);
+    }
+  }, [user]);
+
+  const recentSessions = progress?.recentSessions || [];
+
+  // Check mock interview limit status on mount
+  useEffect(() => {
+    const checkMockLimit = async () => {
+      try {
+        const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+        const { data } = await supabase.auth.getSession();
+        const token = data?.session?.access_token;
+
+        const response = await fetch(`${API_BASE}/api/mock-interview/limit-status`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setMockLimitStatus(data);
+        }
+      } catch (err) {
+        console.error('[MOCK] Limit check failed:', err);
+      } finally {
+        setCheckingLimit(false);
+      }
+    };
+
+    checkMockLimit();
+  }, []);
+
+  const handleStartMockInterview = () => {
+    if (!mockLimitStatus) return;
+
+    // Guest user - force signup
+    if (mockLimitStatus.isGuest) {
+      alert('Create a free account to use your 1 free mock interview.');
+      navigate('/signup');
+      return;
+    }
+
+    // Free limit reached - redirect to pricing
+    if (!mockLimitStatus.canStartMock) {
+      alert('Your free mock interview is complete. Upgrade for unlimited practice.');
+      navigate('/pricing');
+      return;
+    }
+
+    // Allowed - proceed
+    navigate('/mock-interview/session?type=short');
+  };
 
   return (
     <div className="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white font-display antialiased min-h-screen flex flex-col">
-      {/* Top Navigation */}
-      <header className="sticky top-0 z-50 w-full bg-white dark:bg-[#1A222C] border-b border-[#f0f2f4] dark:border-gray-800">
-        <div className="px-4 sm:px-10 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-4 text-[#111418] dark:text-white">
-            <div className="size-8 rounded bg-primary/10 flex items-center justify-center text-primary">
-              <span className="material-symbols-outlined">graphic_eq</span>
-            </div>
-            <h2 className="text-lg font-bold leading-tight tracking-[-0.015em]">JobSpeak Pro</h2>
-          </div>
-          <div className="flex flex-1 justify-end gap-8 items-center">
-            <nav className="hidden md:flex items-center gap-9">
-              <Link to="/" className="text-[#111418] dark:text-gray-200 text-sm font-medium leading-normal hover:text-primary transition-colors">Home</Link>
-              <span className="text-[#111418] dark:text-gray-200 text-sm font-medium leading-normal text-primary">Dashboard</span>
-              {/* NOTE: Settings route doesn't exist, using /profile as fallback */}
-              <Link to="/profile" className="text-[#111418] dark:text-gray-200 text-sm font-medium leading-normal hover:text-primary transition-colors">Settings</Link>
-            </nav>
-            <div className="flex items-center gap-4">
-              <button onClick={() => navigate("/start")} className="hidden sm:flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary hover:bg-blue-700 transition-colors text-white text-sm font-bold leading-normal tracking-[0.015em]">
-                <span className="truncate">Start Practice</span>
-              </button>
-              <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-white shadow-sm cursor-pointer" data-alt="User profile picture showing a smiling professional" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuCj3D5OlSxZY2a4hiDG5iYy_J9rtUEDyJbJbHFl_r9FQ-yxe0BMyneSSA7_Gew2Sq52WCdfeDt8desZOG948LWdaKS8UFjI3WLSa9WU8pm_TJz8lbVm86eDUzDz6LC0BDwlfunq4_oJpOh9IIRtiTcZeVEF82CXljaZ4QKauTFkxFQUS5VMRPeo6cfLFrGQCqelKpCBt1k6Y461YuNogw6BNpdT0OG9LaT2bAyGNiaz5s5vNWZsgRSA_Hb2DojjKeFpCRl1aCfQtzM1")' }}>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Use new shared header */}
+      <AppHeader />
+
       {/* Main Content */}
       <main className="flex-1 w-full max-w-[1024px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
         {/* Welcome Section */}
         <section className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white dark:bg-[#1A222C] p-6 sm:p-8 rounded-xl border border-[#dbe0e6] dark:border-gray-800 shadow-sm">
           <div className="flex flex-col gap-2 max-w-lg">
-            <h1 className="text-3xl sm:text-4xl font-black leading-tight tracking-[-0.033em] text-[#111418] dark:text-white">
-              Welcome back, Alex
-            </h1>
-            <p className="text-[#617289] dark:text-gray-400 text-base font-normal leading-normal">
-              Ready to find your voice today? Consistent practice builds confidence. You're doing great.
-            </p>
+            {profileLoading ? (
+              <div className="animate-pulse">
+                <div className="h-10 bg-slate-200 dark:bg-slate-700 rounded w-64 mb-2"></div>
+                <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded w-96"></div>
+              </div>
+            ) : (
+              <>
+                <h1 className="text-3xl sm:text-4xl font-black leading-tight tracking-[-0.033em] text-[#111418] dark:text-white">
+                  Welcome back, {displayName}
+                </h1>
+                <p className="text-[#617289] dark:text-gray-400 text-base font-normal leading-normal">
+                  Ready to find your voice today? Consistent practice builds confidence. You're doing great.
+                </p>
+              </>
+            )}
           </div>
           <div className="flex flex-wrap gap-3 w-full md:w-auto">
-            <button onClick={() => navigate("/start")} className="flex-1 md:flex-none min-w-[140px] cursor-pointer items-center justify-center gap-2 rounded-lg h-12 px-6 bg-primary hover:bg-blue-700 transition-colors text-white text-sm font-bold shadow-md hover:shadow-lg flex">
+            <button onClick={() => navigate("/practice")} className="flex-1 md:flex-none min-w-[140px] cursor-pointer items-center justify-center gap-2 rounded-lg h-12 px-6 bg-primary hover:bg-blue-700 transition-colors text-white text-sm font-bold shadow-md hover:shadow-lg flex">
               <span className="material-symbols-outlined text-[20px]">mic</span>
               <span className="truncate">Start New Practice</span>
             </button>
-            {/* NOTE: Review Past Sessions route doesn't exist yet */}
-            <button className="flex-1 md:flex-none min-w-[140px] cursor-pointer items-center justify-center gap-2 rounded-lg h-12 px-6 bg-white dark:bg-gray-700 border border-[#dbe0e6] dark:border-gray-600 hover:bg-[#f0f2f4] dark:hover:bg-gray-600 text-[#111418] dark:text-white text-sm font-bold transition-colors flex">
+            <button onClick={() => navigate("/progress")} className="flex-1 md:flex-none min-w-[140px] cursor-pointer items-center justify-center gap-2 rounded-lg h-12 px-6 bg-white dark:bg-gray-700 border border-[#dbe0e6] dark:border-gray-600 hover:bg-[#f0f2f4] dark:hover:bg-gray-600 text-[#111418] dark:text-white text-sm font-bold transition-colors flex">
               <span className="material-symbols-outlined text-[20px]">history</span>
               <span className="truncate">Review Past Sessions</span>
             </button>
           </div>
         </section>
-        {/* Stats Grid */}
-        <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* Card 1 */}
-          <div className="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-[#1A222C] border border-[#dbe0e6] dark:border-gray-800 shadow-sm hover:border-primary/30 transition-colors group">
+
+        {/* Recent Activity or Empty State */}
+        {recentSessions.length > 0 ? (
+          <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 group-hover:bg-blue-100 transition-colors">
-                <span className="material-symbols-outlined">fact_check</span>
+              <h2 className="text-xl font-bold text-[#111418] dark:text-white">Recent Activity</h2>
+              <button
+                onClick={() => navigate("/progress")}
+                className="text-primary hover:underline text-sm font-medium"
+              >
+                View all
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              {recentSessions.map((session) => (
+                <div
+                  key={session.id}
+                  onClick={() => navigate(session.type === 'practice' ? `/practice/summary/${session.sessionId || session.id}` : `/mock-interview/summary/${session.sessionId || session.id}`)}
+                  className={`bg-white dark:bg-[#1A222C] p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all cursor-pointer hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`size-12 rounded-full flex items-center justify-center shrink-0 ${session.type === 'practice'
+                      ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                      : 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
+                      }`}>
+                      <span className="material-symbols-outlined">
+                        {session.type === 'practice' ? 'mic' : 'video_call'}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-900 dark:text-white">
+                        {session.type === 'practice' ? 'Practice Session' : (session.type === 'mock_short' ? 'Short Mock Interview' : 'Full Mock Interview')}
+                      </h3>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        {new Date(session.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
+                    {session.score && (
+                      <div className="text-center">
+                        <p className="text-xs text-slate-500 uppercase font-bold">Score</p>
+                        <p className={`text-lg font-bold ${session.score >= 80 ? 'text-green-600' : (session.score >= 60 ? 'text-blue-600' : 'text-amber-600')}`}>
+                          {session.score}
+                        </p>
+                      </div>
+                    )}
+
+                    {(session.topStrength || session.topWeakness) && (
+                      <div className="hidden md:block text-right max-w-[200px]">
+                        {session.topStrength && (
+                          <div className="text-xs text-green-600 truncate flex items-center gap-1 justify-end">
+                            <span className="material-symbols-outlined text-[14px]">thumb_up</span>
+                            {session.topStrength}
+                          </div>
+                        )}
+                        {session.topWeakness && (
+                          <div className="text-xs text-amber-600 truncate flex items-center gap-1 justify-end mt-1">
+                            <span className="material-symbols-outlined text-[14px]">warning</span>
+                            {session.topWeakness}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <span className="material-symbols-outlined text-slate-400">chevron_right</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : (
+          <section className="bg-white dark:bg-[#1A222C] rounded-xl border border-[#dbe0e6] dark:border-gray-800 shadow-sm p-12 text-center">
+            <div className="max-w-md mx-auto">
+              <div className="size-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary text-3xl">mic</span>
               </div>
-              <span className="text-xs font-bold text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400 px-2 py-1 rounded-full">+2 this week</span>
+              <h2 className="text-2xl font-bold text-[#111418] dark:text-white mb-2">
+                No interview data yet
+              </h2>
+              <p className="text-[#617289] dark:text-gray-400 mb-6">
+                Start your first practice or mock interview to see your progress here.
+              </p>
+              <button
+                onClick={() => navigate("/practice")}
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-blue-700 text-white font-bold rounded-lg transition-colors shadow-md"
+              >
+                <span className="material-symbols-outlined">mic</span>
+                Start Practicing
+              </button>
             </div>
-            <div>
-              <p className="text-[#617289] dark:text-gray-400 text-sm font-medium leading-normal">Total Sessions</p>
-              <p className="text-[#111418] dark:text-white tracking-tight text-3xl font-bold leading-tight mt-1">12</p>
+          </section>
+        )}
+
+        {/* Mic & Audio Test */}
+        <MicAudioTest />
+
+        {/* Mock Interview Card */}
+        <section className="bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-[#1A222C] rounded-xl border border-purple-200 dark:border-purple-900/30 shadow-sm overflow-hidden">
+          <div className="p-6 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+            <div className="size-16 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+              <span className="material-symbols-outlined text-purple-600 dark:text-purple-400 text-3xl">video_call</span>
             </div>
-          </div>
-          {/* Card 2 */}
-          <div className="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-[#1A222C] border border-[#dbe0e6] dark:border-gray-800 shadow-sm hover:border-teal-500/30 transition-colors group">
-            <div className="flex items-center justify-between">
-              <div className="p-2 rounded-lg bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 group-hover:bg-teal-100 transition-colors">
-                <span className="material-symbols-outlined">timer</span>
-              </div>
-            </div>
-            <div>
-              <p className="text-[#617289] dark:text-gray-400 text-sm font-medium leading-normal">Practice Time</p>
-              <p className="text-[#111418] dark:text-white tracking-tight text-3xl font-bold leading-tight mt-1">45m</p>
-            </div>
-          </div>
-          {/* Card 3 */}
-          <div className="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-[#1A222C] border border-[#dbe0e6] dark:border-gray-800 shadow-sm hover:border-orange-500/30 transition-colors group">
-            <div className="flex items-center justify-between">
-              <div className="p-2 rounded-lg bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 group-hover:bg-orange-100 transition-colors">
-                <span className="material-symbols-outlined">local_fire_department</span>
-              </div>
-              <span className="text-xs font-medium text-[#617289] dark:text-gray-400">Keep it up!</span>
-            </div>
-            <div>
-              <p className="text-[#617289] dark:text-gray-400 text-sm font-medium leading-normal">Current Streak</p>
-              <p className="text-[#111418] dark:text-white tracking-tight text-3xl font-bold leading-tight mt-1">3 Days</p>
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Ready for a Mock Interview?</h2>
+              <p className="text-slate-600 dark:text-slate-400 mb-4">
+                Practice builds skills. Mock interviews test readiness. Choose between a quick warmup or deep dive.
+              </p>
+              <button
+                onClick={handleStartMockInterview}
+                disabled={checkingLimit || (mockLimitStatus && !mockLimitStatus.canStartMock && !mockLimitStatus.isGuest)}
+                className={`inline-flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors shadow-md ${(checkingLimit || (mockLimitStatus && !mockLimitStatus.canStartMock && !mockLimitStatus.isGuest)) ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+              >
+                <span className="material-symbols-outlined">
+                  {mockLimitStatus?.isGuest ? 'person_add' : mockLimitStatus?.canStartMock ? 'play_arrow' : 'workspace_premium'}
+                </span>
+                {checkingLimit ? 'Checking...' : mockLimitStatus?.isGuest ? 'Create Free Account' : 'Start Mock Interview'}
+              </button>
+
+              {/* Helper text based on status */}
+              {!checkingLimit && mockLimitStatus?.isGuest && (
+                <p className="text-xs text-amber-600 dark:text-amber-500 mt-2">
+                  Sign up to get 1 free mock interview
+                </p>
+              )}
+              {!checkingLimit && !mockLimitStatus?.isGuest && !mockLimitStatus?.canStartMock && (
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                  Free Trial used (1 mock). <button onClick={() => navigate('/pricing')} className="text-primary underline hover:no-underline">Upgrade for unlimited</button>
+                </p>
+              )}
+              {!checkingLimit && !mockLimitStatus?.isGuest && mockLimitStatus?.canStartMock && (
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                  Free Trial: 1 mock interview<br />
+                  Upgrade for unlimited practice<br />
+                  <span className="text-slate-400">No credit card required</span>
+                </p>
+              )}
             </div>
           </div>
         </section>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column: Recent Activity */}
-          <div className="lg:col-span-2 flex flex-col gap-4">
-            <div className="flex items-center justify-between px-1">
-              <h3 className="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Recent Activity</h3>
-              <a className="text-primary text-sm font-medium hover:underline" href="#">View All</a>
-            </div>
-            <div className="bg-white dark:bg-[#1A222C] border border-[#dbe0e6] dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
-              {/* Item 1 */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border-b border-[#f0f2f4] dark:border-gray-700 hover:bg-background-light dark:hover:bg-gray-800/50 transition-colors group cursor-pointer">
-                <div className="flex items-center gap-4 mb-3 sm:mb-0">
-                  <div className="size-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                    <span className="material-symbols-outlined">record_voice_over</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <p className="text-[#111418] dark:text-white font-semibold text-sm">Mock Interview: Behavioral</p>
-                    <p className="text-[#617289] dark:text-gray-400 text-xs mt-0.5">Yesterday • 4:30 PM</p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
-                  <div className="flex items-center gap-1 text-[#617289] dark:text-gray-400">
-                    <span className="material-symbols-outlined text-[18px]">schedule</span>
-                    <span className="text-sm font-medium">15 min</span>
-                  </div>
-                  <span className="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors">chevron_right</span>
-                </div>
-              </div>
-              {/* Item 2 */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border-b border-[#f0f2f4] dark:border-gray-700 hover:bg-background-light dark:hover:bg-gray-800/50 transition-colors group cursor-pointer">
-                <div className="flex items-center gap-4 mb-3 sm:mb-0">
-                  <div className="size-10 rounded-lg bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600 dark:text-teal-400">
-                    <span className="material-symbols-outlined">speed</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <p className="text-[#111418] dark:text-white font-semibold text-sm">Elevator Pitch Practice</p>
-                    <p className="text-[#617289] dark:text-gray-400 text-xs mt-0.5">2 days ago • 10:15 AM</p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
-                  <div className="flex items-center gap-1 text-[#617289] dark:text-gray-400">
-                    <span className="material-symbols-outlined text-[18px]">schedule</span>
-                    <span className="text-sm font-medium">5 min</span>
-                  </div>
-                  <span className="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors">chevron_right</span>
-                </div>
-              </div>
-              {/* Item 3 */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-background-light dark:hover:bg-gray-800/50 transition-colors group cursor-pointer">
-                <div className="flex items-center gap-4 mb-3 sm:mb-0">
-                  <div className="size-10 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                    <span className="material-symbols-outlined">psychology</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <p className="text-[#111418] dark:text-white font-semibold text-sm">Star Method Drill</p>
-                    <p className="text-[#617289] dark:text-gray-400 text-xs mt-0.5">3 days ago • 2:00 PM</p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
-                  <div className="flex items-center gap-1 text-[#617289] dark:text-gray-400">
-                    <span className="material-symbols-outlined text-[18px]">schedule</span>
-                    <span className="text-sm font-medium">10 min</span>
-                  </div>
-                  <span className="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors">chevron_right</span>
-                </div>
-              </div>
-            </div>
+
+        {/* Moment of Reflection - Dynamic from backend */}
+        <section className="bg-gradient-to-br from-teal-50 to-white dark:from-[#1A222C] dark:to-[#1A222C] p-6 rounded-xl border border-teal-100 dark:border-gray-800 shadow-sm">
+          <div className="flex items-center gap-2 text-teal-700 dark:text-teal-400 mb-3">
+            <span className="material-symbols-outlined">lightbulb</span>
+            <h3 className="text-sm font-bold uppercase tracking-wider">Moment of Reflection</h3>
           </div>
-          {/* Right Column: Goals & Tips */}
-          <div className="flex flex-col gap-6">
-            {/* Goal Card */}
-            <div className="flex flex-col gap-4 bg-white dark:bg-[#1A222C] p-6 rounded-xl border border-[#dbe0e6] dark:border-gray-800 shadow-sm">
-              <h3 className="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Weekly Goal</h3>
-              <div className="flex flex-col gap-3">
-                <div className="flex gap-6 justify-between items-end">
-                  <p className="text-[#111418] dark:text-white text-3xl font-bold leading-none">30<span className="text-base font-normal text-[#617289] dark:text-gray-400 ml-1">min</span></p>
-                  <div className="text-right">
-                    <p className="text-[#111418] dark:text-white text-sm font-bold">60%</p>
-                    <p className="text-[#617289] dark:text-gray-400 text-xs">of 50 min goal</p>
-                  </div>
-                </div>
-                <div className="h-3 w-full bg-[#f0f2f4] dark:bg-gray-700 rounded-full overflow-hidden">
-                  <div className="h-full bg-primary rounded-full" style={{ width: "60%" }}></div>
-                </div>
-                <p className="text-[#617289] dark:text-gray-400 text-sm font-normal leading-normal mt-1 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-green-500 text-[18px]">check_circle</span>
-                  On track to reach your goal!
-                </p>
-              </div>
-            </div>
-            {/* Tip Card */}
-            <div className="flex flex-col gap-4 bg-gradient-to-br from-teal-50 to-white dark:from-[#1A222C] dark:to-[#1A222C] p-6 rounded-xl border border-teal-100 dark:border-gray-800 shadow-sm">
-              <div className="flex items-center gap-2 text-teal-700 dark:text-teal-400">
-                <span className="material-symbols-outlined">lightbulb</span>
-                <h3 className="text-sm font-bold uppercase tracking-wider">Daily Tip</h3>
-              </div>
-              <p className="text-[#111418] dark:text-white text-base font-medium italic">
-                "Pause before answering complex questions. A brief silence shows thoughtfulness and confidence."
-              </p>
-            </div>
-          </div>
-        </div>
+          <p className="text-[#111418] dark:text-white text-base font-medium italic">
+            "{dailyReflection}"
+          </p>
+        </section>
       </main>
+
       {/* Footer */}
       <footer className="mt-auto border-t border-[#f0f2f4] dark:border-gray-800 bg-white dark:bg-[#1A222C] py-8">
         <div className="max-w-[1024px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[#617289] dark:text-gray-500 text-sm">© 2024 JobSpeak Pro. All rights reserved.</p>
           <div className="flex gap-6">
             <a className="text-[#617289] dark:text-gray-500 text-sm hover:text-primary transition-colors" href="#">Help Center</a>
-            <Link to="/privacy" className="text-[#617289] dark:text-gray-500 text-sm hover:text-primary transition-colors">Privacy Policy</Link>
-            <Link to="/terms" className="text-[#617289] dark:text-gray-500 text-sm hover:text-primary transition-colors">Terms of Service</Link>
+            <a className="text-[#617289] dark:text-gray-500 text-sm hover:text-primary transition-colors" href="/privacy">Privacy Policy</a>
+            <a className="text-[#617289] dark:text-gray-500 text-sm hover:text-primary transition-colors" href="/terms">Terms of Service</a>
           </div>
         </div>
       </footer>
     </div>
   );
 }
-

@@ -13,13 +13,18 @@ const ttsCache = new Map();
  * @param {string} options.voiceId - Voice ID (optional, defaults to "DEFAULT")
  * @returns {Promise<{url: string, error: null}|{url: null, error: {status: number, message: string, isProRequired: boolean}}>}
  */
-export async function fetchTtsBlobUrl({ text, voiceId = "DEFAULT" }) {
+export async function fetchTtsBlobUrl({ text, voiceId = "DEFAULT", speed = 1.0 }) {
   if (!text || !text.trim()) {
     return { url: null, error: { status: 400, message: "No text provided", isProRequired: false } };
   }
 
-  // Check cache first - cache key includes voiceId
-  const cacheKey = `${text.trim()}::${voiceId}`;
+  // Clamp speed to a number 0.7 - 1.3
+  let speakingRate = typeof speed === "number" ? speed : 1.0;
+  if (speakingRate < 0.7) speakingRate = 0.7;
+  if (speakingRate > 1.3) speakingRate = 1.3;
+
+  // Check cache first - cache key includes voiceId and speed
+  const cacheKey = `${text.trim()}::${voiceId}::${speakingRate}`;
   if (ttsCache.has(cacheKey)) {
     const cachedUrl = ttsCache.get(cacheKey);
     // Verify the URL is still valid (not revoked)
@@ -29,52 +34,95 @@ export async function fetchTtsBlobUrl({ text, voiceId = "DEFAULT" }) {
   }
 
   try {
-    // Always include voiceId in payload
-    const payload = {
-      text: text.trim(),
-      voiceId: voiceId,
-    };
+    // Derive strict locale and variant from voiceId
+    let locale = "en-US";
+    let voiceName = "female"; // default gender
 
-    const res = await apiClient("/voice/generate", {
-      method: "POST",
-      headers: {
-        Accept: "audio/mpeg, application/json",
-      },
-      body: payload,
-      parseJson: false, // Get raw response to handle blob
-    });
+    const vIdLow = (voiceId || "us_female_emma").toLowerCase();
 
-    // Handle 402 (Payment Required) - treat as regular error
-    if (res.status === 402) {
-      return {
-        url: null,
-        error: {
-          status: 402,
-          message: "Audio generation failed. Please try again.",
-          isProRequired: false,
-        },
-      };
+    // 1. Determine Locale
+    if (vIdLow.startsWith("uk") || vIdLow.includes("gb")) {
+      locale = "en-GB";
     }
 
+    // 2. Determine Gender (voiceName)
+    if (vIdLow.includes("male") && !vIdLow.includes("female")) {
+      voiceName = "male";
+    }
+
+    // 3. Determine Variant (strict mapping)
+    // Extract the variant name from the end of the ID (e.g. us_female_emma -> emma)
+    let voiceVariant = "emma"; // fallback
+    const parts = vIdLow.split("_");
+    if (parts.length > 0) {
+      voiceVariant = parts[parts.length - 1]; // last token is usually the name
+    }
+
+    // Explicit overrides to ensure safety
+    if (vIdLow.includes("emma")) voiceVariant = "emma";
+    else if (vIdLow.includes("ava")) voiceVariant = "ava";
+    else if (vIdLow.includes("jake")) voiceVariant = "jake";
+    else if (vIdLow.includes("noah")) voiceVariant = "noah"; // if exists
+    else if (vIdLow.includes("amelia")) voiceVariant = "amelia";
+    else if (vIdLow.includes("sophie")) voiceVariant = "sophie"; // if exists
+    else if (vIdLow.includes("oliver")) voiceVariant = "oliver";
+    else if (vIdLow.includes("harry")) voiceVariant = "harry";
+
+    // Construct payload for /api/tts
+    const payload = {
+      text: text.trim(),
+      locale,
+      voiceName, // "male" or "female"
+      voiceVariant, // "emma", "ava", etc.
+      speakingRate,
+    };
+
+    // Low-noise debug log
+    console.log("TTS payload (/api/tts)", payload);
+
+    const res = await apiClient("/api/tts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "audio/mpeg",
+      },
+      body: JSON.stringify(payload),
+      parseJson: false,
+    });
+
     if (!res.ok) {
+      // Try to parse error JSON if possible, or read text
+      let errMsg = `Audio generation failed (${res.status})`;
+      try {
+        const errData = await res.json();
+        if (errData.error) errMsg = errData.error;
+      } catch (e) {
+        // Fallback to text reading if JSON parse fails
+        const text = await res.text().catch(() => "");
+        if (text) errMsg += `: ${text.slice(0, 200)}`;
+      }
+
       return {
         url: null,
+        contentType: null,
         error: {
           status: res.status,
-          message: `Audio generation failed (${res.status})`,
+          message: errMsg,
           isProRequired: false,
         },
       };
     }
 
     const contentType = res.headers.get("content-type") || "";
+    const isAudio = contentType.startsWith("audio/") || contentType.includes("audio/") || contentType === "application/octet-stream";
 
-    if (contentType.startsWith("audio/")) {
+    if (isAudio) {
       // Handle blob response
       const blob = await res.blob();
       if (blob.size === 0) {
         return {
           url: null,
+          contentType,
           error: {
             status: 500,
             message: "Received empty audio blob",
@@ -83,71 +131,45 @@ export async function fetchTtsBlobUrl({ text, voiceId = "DEFAULT" }) {
         };
       }
 
-      const url = URL.createObjectURL(blob);
+      // Force type to audio/mpeg if missing, or use detected type
+      const finalType = blob.type || "audio/mpeg";
+      const audioBlob = new Blob([blob], { type: finalType });
+      const url = URL.createObjectURL(audioBlob);
       // Cache the URL
       ttsCache.set(cacheKey, url);
-      return { url, error: null };
+      return { url, contentType: finalType, error: null };
     } else {
-      // Handle JSON response with audioUrl or base64 audio
-      const data = await res.json();
-      let audioUrl = null;
-
-      if (data.audioUrl) {
-        audioUrl = data.audioUrl;
-      } else if (data.url) {
-        audioUrl = data.url;
-      } else if (data.audio) {
-        // Base64 audio data - convert to Blob
-        const base64Data = data.audio.replace(/^data:audio\/[^;]+;base64,/, "");
-        const binaryString = atob(base64Data);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-        const blob = new Blob([bytes], { type: "audio/mpeg" });
-        audioUrl = URL.createObjectURL(blob);
-      } else {
-        return {
-          url: null,
-          error: {
-            status: 500,
-            message: "No audio data found in response",
-            isProRequired: false,
-          },
-        };
+      // Rejected Content-Type - Read as text/json to find error
+      let errorBody = "";
+      try {
+        errorBody = await res.text();
+      } catch (e) {
+        errorBody = "[Could not read response text]";
       }
 
-      // Cache the URL (for blob URLs only, not external URLs)
-      if (audioUrl.startsWith("blob:")) {
-        ttsCache.set(cacheKey, audioUrl);
-      }
-      return { url: audioUrl, error: null };
-    }
-  } catch (err) {
-    // Handle ApiError with 402 status
-    if (err instanceof ApiError && err.status === 402) {
+      const snippet = errorBody.slice(0, 200);
+
       return {
         url: null,
+        contentType,
         error: {
-          status: 402,
-          message: "Audio generation failed. Please try again.",
+          status: 500,
+          message: `Invalid Content-Type: ${contentType}. Body: ${snippet}`,
           isProRequired: false,
         },
       };
     }
-
-    // Handle network errors
+  } catch (err) {
     if (err instanceof ApiError) {
       return {
         url: null,
         error: {
           status: err.status || 500,
           message: err.message || "Audio generation failed",
-          isProRequired: err.status === 402,
+          isProRequired: false,
         },
       };
     }
-
     return {
       url: null,
       error: {

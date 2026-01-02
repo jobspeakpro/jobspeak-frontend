@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { saveContactMessage } from "../../lib/storage.js";
+import AppHeader from "../../components/AppHeader.jsx";
 
 export default function ContactUs() {
   const [formData, setFormData] = useState({
@@ -52,34 +53,7 @@ export default function ContactUs() {
   return (
     <div className="font-display antialiased text-slate-900 dark:text-white bg-background-light dark:bg-background-dark">
       <div className="relative flex flex-col min-h-screen w-full overflow-x-hidden">
-        <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-10 py-3 sticky top-0 z-50">
-          <div className="flex items-center gap-4 text-slate-900 dark:text-white">
-            <div className="size-8 text-primary">
-              <svg className="w-full h-full" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                <path clipRule="evenodd" d="M24 0.757355L47.2426 24L24 47.2426L0.757355 24L24 0.757355ZM21 35.7574V12.2426L9.24264 24L21 35.7574Z" fill="currentColor" fillRule="evenodd"></path>
-              </svg>
-            </div>
-            <h2 className="text-lg font-bold leading-tight tracking-[-0.015em]">JobSpeak Pro</h2>
-          </div>
-          <div className="hidden md:flex flex-1 justify-end gap-8">
-            <div className="flex items-center gap-9">
-              <Link to="/dashboard" className="text-sm font-medium leading-normal hover:text-primary transition-colors">Dashboard</Link>
-              <Link to="/start" className="text-sm font-medium leading-normal hover:text-primary transition-colors">Practice</Link>
-              {/* NOTE: History route doesn't exist yet */}
-              <a href="#" className="text-sm font-medium leading-normal hover:text-primary transition-colors">History</a>
-              {/* NOTE: Upgrade route exists at /upgrade but keeping as # per requirements */}
-              <a href="#" className="text-sm font-medium leading-normal hover:text-primary transition-colors">Upgrade</a>
-            </div>
-            <button className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-blue-600 transition-colors">
-              <span className="truncate">Sign Out</span>
-            </button>
-            <Link to="/profile" className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border border-slate-200 dark:border-slate-700" data-alt="User profile avatar placeholder showing a generic silhouette" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuCctnStr7jO3aJe_eBo6IF_QPCc1pwTDqRkDNWOC-eGlFamR0LNiu4EFO2icL9VbnsLN-pIQcvRGt4qWMrOkFDuESSbyFkgeTbEvFCrn1DauU1ULmXUhwAuBX9fPbvFBFPExFeswSXx9ANk7Sx-DuX7deW8iEcXZ4KvJhkuRRPlpKoOR0t7H22H87zroHx8B_DXlwgabNw_0rdUkzVmWJG2_ERRLe5zaqfVz03PwXsxHEs-vf0vRwDYe6FGFveOZW5CA8LpyNqAOBdu")' }}>
-            </Link>
-          </div>
-          <button className="md:hidden p-2 text-slate-500">
-            <span className="material-symbols-outlined">menu</span>
-          </button>
-        </header>
+        <AppHeader />
         <main className="flex-grow layout-container flex flex-col items-center py-10 px-4 sm:px-6 lg:px-8">
           <div className="w-full max-w-6xl flex flex-col gap-10">
             <div className="flex flex-col items-center text-center space-y-4">
@@ -99,10 +73,10 @@ export default function ContactUs() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <label className="flex flex-col gap-2">
                         <span className="text-base font-medium text-slate-900 dark:text-slate-100">Full name</span>
-                        <input 
-                          className="form-input w-full rounded-xl border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-primary focus:ring-primary ring-1 ring-slate-200 dark:ring-slate-700 h-12 px-4 placeholder:text-slate-400" 
-                          placeholder="Jane Doe" 
-                          type="text" 
+                        <input
+                          className="form-input w-full rounded-xl border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-primary focus:ring-primary ring-1 ring-slate-200 dark:ring-slate-700 h-12 px-4 placeholder:text-slate-400"
+                          placeholder="Jane Doe"
+                          type="text"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                           required
@@ -110,10 +84,10 @@ export default function ContactUs() {
                       </label>
                       <label className="flex flex-col gap-2">
                         <span className="text-base font-medium text-slate-900 dark:text-slate-100">Email</span>
-                        <input 
-                          className="form-input w-full rounded-xl border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-primary focus:ring-primary ring-1 ring-slate-200 dark:ring-slate-700 h-12 px-4 placeholder:text-slate-400" 
-                          placeholder="jane@example.com" 
-                          type="email" 
+                        <input
+                          className="form-input w-full rounded-xl border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-primary focus:ring-primary ring-1 ring-slate-200 dark:ring-slate-700 h-12 px-4 placeholder:text-slate-400"
+                          placeholder="jane@example.com"
+                          type="email"
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           required
@@ -123,13 +97,13 @@ export default function ContactUs() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <label className="flex flex-col gap-2">
                         <span className="text-base font-medium text-slate-900 dark:text-slate-100">
-                          Phone number 
+                          Phone number
                           <span className="text-slate-400 dark:text-slate-500 font-normal text-sm ml-1">(Optional)</span>
                         </span>
-                        <input 
-                          className="form-input w-full rounded-xl border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-primary focus:ring-primary ring-1 ring-slate-200 dark:ring-slate-700 h-12 px-4 placeholder:text-slate-400" 
-                          placeholder="+1 (555) 000-0000" 
-                          type="tel" 
+                        <input
+                          className="form-input w-full rounded-xl border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-primary focus:ring-primary ring-1 ring-slate-200 dark:ring-slate-700 h-12 px-4 placeholder:text-slate-400"
+                          placeholder="+1 (555) 000-0000"
+                          type="tel"
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         />
@@ -140,7 +114,7 @@ export default function ContactUs() {
                           <span className="text-slate-400 dark:text-slate-500 font-normal text-sm ml-1">(Optional)</span>
                         </span>
                         <div className="relative">
-                          <select 
+                          <select
                             className="form-select w-full rounded-xl border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-primary focus:ring-primary ring-1 ring-slate-200 dark:ring-slate-700 h-12 px-4 pr-10 appearance-none"
                             value={formData.messagingAppType}
                             onChange={(e) => setFormData({ ...formData, messagingAppType: e.target.value })}
@@ -160,10 +134,10 @@ export default function ContactUs() {
                           Messaging App Username
                           <span className="text-slate-400 dark:text-slate-500 font-normal text-sm ml-1">(Optional)</span>
                         </span>
-                        <input 
-                          className="form-input w-full rounded-xl border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-primary focus:ring-primary ring-1 ring-slate-200 dark:ring-slate-700 h-12 px-4 placeholder:text-slate-400" 
-                          placeholder="Your username" 
-                          type="text" 
+                        <input
+                          className="form-input w-full rounded-xl border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-primary focus:ring-primary ring-1 ring-slate-200 dark:ring-slate-700 h-12 px-4 placeholder:text-slate-400"
+                          placeholder="Your username"
+                          type="text"
                           value={formData.messagingAppUsername}
                           onChange={(e) => setFormData({ ...formData, messagingAppUsername: e.target.value })}
                         />
@@ -171,7 +145,7 @@ export default function ContactUs() {
                       <label className="flex flex-col gap-2">
                         <span className="text-base font-medium text-slate-900 dark:text-slate-100">Topic</span>
                         <div className="relative">
-                          <select 
+                          <select
                             className="form-select w-full rounded-xl border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-primary focus:ring-primary ring-1 ring-slate-200 dark:ring-slate-700 h-12 px-4 pr-10 appearance-none"
                             value={formData.topic}
                             onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
@@ -189,8 +163,8 @@ export default function ContactUs() {
                     </div>
                     <label className="flex flex-col gap-2 flex-1">
                       <span className="text-base font-medium text-slate-900 dark:text-slate-100">Message</span>
-                      <textarea 
-                        className="form-textarea w-full rounded-xl border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-primary focus:ring-primary ring-1 ring-slate-200 dark:ring-slate-700 min-h-[160px] p-4 placeholder:text-slate-400 resize-none" 
+                      <textarea
+                        className="form-textarea w-full rounded-xl border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-primary focus:ring-primary ring-1 ring-slate-200 dark:ring-slate-700 min-h-[160px] p-4 placeholder:text-slate-400 resize-none"
                         placeholder="How can we help you today?"
                         value={formData.message}
                         onChange={(e) => setFormData({ ...formData, message: e.target.value })}
@@ -198,8 +172,8 @@ export default function ContactUs() {
                       ></textarea>
                     </label>
                     <div className="pt-2 flex flex-col gap-3">
-                      <button 
-                        className="w-full bg-primary hover:bg-blue-600 text-white font-bold rounded-xl h-12 text-base transition-colors shadow-md shadow-blue-500/20 disabled:opacity-60 disabled:cursor-not-allowed" 
+                      <button
+                        className="w-full bg-primary hover:bg-blue-600 text-white font-bold rounded-xl h-12 text-base transition-colors shadow-md shadow-blue-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
                         type="submit"
                         disabled={loading}
                       >
@@ -251,18 +225,18 @@ export default function ContactUs() {
                   <div className="flex flex-col gap-4 mt-auto">
                     <h3 className="text-base font-bold text-slate-900 dark:text-white">FAQ quick links</h3>
                     <div className="flex flex-col gap-2">
-                      <a className="group flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-600" href="#">
+                      <Link to="/help#cancel" className="group flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-600">
                         <span className="text-sm font-medium text-slate-700 dark:text-slate-200 group-hover:text-primary">How do I cancel?</span>
                         <span className="material-symbols-outlined text-slate-400 text-lg group-hover:translate-x-1 transition-transform">chevron_right</span>
-                      </a>
-                      <a className="group flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-600" href="#">
+                      </Link>
+                      <Link to="/help#progress" className="group flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-600">
                         <span className="text-sm font-medium text-slate-700 dark:text-slate-200 group-hover:text-primary">Do I lose progress if I downgrade?</span>
                         <span className="material-symbols-outlined text-slate-400 text-lg group-hover:translate-x-1 transition-transform">chevron_right</span>
-                      </a>
-                      <a className="group flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-600" href="#">
+                      </Link>
+                      <Link to="/help#microphone" className="group flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-600">
                         <span className="text-sm font-medium text-slate-700 dark:text-slate-200 group-hover:text-primary">Microphone issues troubleshooting</span>
                         <span className="material-symbols-outlined text-slate-400 text-lg group-hover:translate-x-1 transition-transform">chevron_right</span>
-                      </a>
+                      </Link>
                     </div>
                   </div>
                 </div>

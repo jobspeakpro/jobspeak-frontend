@@ -55,13 +55,13 @@ const ListenToAnswerButton = forwardRef(function ListenToAnswerButton({ improved
 
   const handleClick = async () => {
     console.log("[TTS] CLICKED");
-    
+
     // Check usage FIRST - if blocked, open paywall modal and return early (do NOT make API call)
     if (!isPro) {
       // Refresh usage from backend
       const currentUsage = await fetchUsage();
       setUsage(currentUsage);
-      
+
       // Block if usage is blocked or remaining <= 0
       if (isBlocked(currentUsage)) {
         if (typeof onUpgradeNeeded === "function") {
@@ -100,20 +100,19 @@ const ListenToAnswerButton = forwardRef(function ListenToAnswerButton({ improved
     const endpoint = "/voice/generate";
     console.log("[TTS] endpoint", endpoint);
     // apiClient automatically includes 'x-user-key' header for all requests
-    // Do NOT send 'x-attempt-id' on voice/generate (only STT uses it)
 
     try {
       const res = await apiClient(endpoint, {
         method: "POST",
         headers: {
           Accept: "audio/mpeg, application/json",
-          // x-user-key is automatically added by apiClient
-          // x-attempt-id is NOT sent (only for STT)
+          "Content-Type": "application/json",
         },
-        body: {
-          text: textToSpeak.trim(), // Ensure non-empty text field
-          languageCode: "en-GB", // Default to Google UK English Female
-        },
+        body: JSON.stringify({
+          text: textToSpeak.trim(),
+          voiceId: "uk_female_amelia", // Default to UK Female (Amelia)
+          speed: 1.0,
+        }),
         parseJson: false, // Get raw response to check content type
       });
 
@@ -248,11 +247,10 @@ const ListenToAnswerButton = forwardRef(function ListenToAnswerButton({ improved
         type="button"
         onClick={handleClick}
         disabled={isLoading}
-        className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold shadow-md transition-all ${
-          isLoading
-            ? "bg-slate-300 text-slate-700 cursor-not-allowed"
-            : "bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-lg"
-        }`}
+        className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold shadow-md transition-all ${isLoading
+          ? "bg-slate-300 text-slate-700 cursor-not-allowed"
+          : "bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-lg"
+          }`}
       >
         {isLoading ? (
           <>

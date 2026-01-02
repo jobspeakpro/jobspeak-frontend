@@ -20,7 +20,7 @@ export default function RootRouteHandler() {
     // Check if user has an existing userKey (logged-in state)
     const STORAGE_KEY = "jobspeak_user_key";
     const existingUserKey = localStorage.getItem(STORAGE_KEY);
-    
+
     // If user has a userKey, they're considered logged in
     // Redirect them to the start page
     if (existingUserKey) {

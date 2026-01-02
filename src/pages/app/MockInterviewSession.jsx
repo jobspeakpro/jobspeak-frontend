@@ -1,0 +1,834 @@
+import React, { useState, useEffect, useRef } from "react";
+import { useSearchParams, useNavigate, Navigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext.jsx";
+import { supabase } from "../../lib/supabaseClient.js";
+import { apiClient } from "../../utils/apiClient.js";
+import AppHeader from "../../components/AppHeader.jsx";
+import VoiceRecorder from "../../components/VoiceRecorder.jsx";
+import MockInterviewGate from "../../components/MockInterviewGate.jsx";
+import interviewerAvatar from "../../assets/avatars/SarahJ.png";
+
+// LOCAL HISTORY TEST #2 - 2025-12-31 09:30 - Second verification attempt
+// Adding debug Logging for Persistence
+
+export default function MockInterviewSession() {
+    const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    const type = searchParams.get("type") || "short";
+    const [elig, setElig] = useState({ loading: true, canStartMock: false, reason: null, isGuest: false });
+
+    // Route guard: redirect if user tries to access long interview
+    useEffect(() => {
+        if (type === 'long') {
+            alert('Long interview coming soon.');
+            navigate('/mock-interview/session?type=short', { replace: true });
+        }
+    }, [type, navigate]);
+
+    // Check mock interview limit status on mount
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+                const { data } = await supabase.auth.getSession();
+                const token = data?.session?.access_token;
+
+                const res = await fetch(`${API_BASE}/api/mock-interview/limit-status`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                });
+
+                const json = await res.json().catch(() => ({}));
+                if (!cancelled) {
+                    if (res.ok) {
+                        setElig({ loading: false, ...json });
+                    } else {
+                        setElig({ loading: false, canStartMock: false, reason: "ERROR" });
+                    }
+                }
+            } catch (e) {
+                if (!cancelled) setElig({ loading: false, canStartMock: false, reason: "ERROR" });
+            }
+        })();
+        return () => { cancelled = true; };
+    }, []);
+
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [transcript, setTranscript] = useState("");
+    const [isRecording, setIsRecording] = useState(false);
+    const [recordingTime, setRecordingTime] = useState(0);
+    const [audioBlob, setAudioBlob] = useState(null);
+    const [typedAnswer, setTypedAnswer] = useState("");
+    const [inputMode, setInputMode] = useState("voice"); // "voice" or "type"
+    const [timeRemaining, setTimeRemaining] = useState(type === "short" ? 600 : 1500); // 10 or 25 minutes
+    const timerRef = useRef(null);
+    const recordingTimerRef = useRef(null);
+
+    // MediaRecorder refs
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
+    const streamRef = useRef(null);
+
+    // TTS audio ref
+    const questionAudioRef = useRef(new Audio());
+
+    // Questions state - fetched from API
+    const [questions, setQuestions] = useState([]);
+    const [questionsLoading, setQuestionsLoading] = useState(true);
+    const [questionsError, setQuestionsError] = useState(null);
+
+    // Session management
+    const [sessionId, setSessionId] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
+
+    // State for auto-dictate
+    const [typedEdited, setTypedEdited] = useState(false);
+
+    // Transcribing state to prevent double-record
+    const [isTranscribing, setIsTranscribing] = useState(false);
+
+    // Persist sessionId in ref to guarantee access during closures/async
+    const sessionIdRef = useRef(null);
+
+    // Track submitted questions to prevent duplicates
+    const submittedQuestionsRef = useRef(new Set());
+
+    // VoiceRecorder handlers
+    const handleTranscriptValue = (text, blob) => {
+        setTranscript(text); // Keep raw transcript if needed
+        setAudioBlob(blob);
+
+        // LIVE DICTATION: Always merge voice transcript into typedAnswer (single source of truth)
+        setTypedAnswer(text);
+    };
+
+    const totalQuestions = questions.length;
+    const sessionLabel = type === "short" ? "SHORT SESSION" : "LONG SESSION";
+    const currentQuestion = questions[currentQuestionIndex];
+
+    // Fetch questions from API - ONLY after eligibility is confirmed
+    useEffect(() => {
+        // Gate: Do not fetch questions until eligibility check completes
+        if (elig.loading) {
+            return; // Still checking eligibility
+        }
+
+        // Gate: Do not fetch questions for guests or ineligible users
+        if (!elig.canStartMock || elig.reason === "AUTH_REQUIRED" || elig.isGuest) {
+            return; // User will be redirected by render logic
+        }
+
+        const fetchQuestions = async () => {
+            setQuestionsLoading(true);
+            setQuestionsError(null);
+
+            try {
+                const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+                const response = await fetch(
+                    `${API_BASE}/api/mock-interview/questions?type=${type}`
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch questions (${response.status})`);
+                }
+
+                const data = await response.json();
+
+                if (!data.questions || !Array.isArray(data.questions) || data.questions.length === 0) {
+                    throw new Error('No questions returned from API');
+                }
+
+                setQuestions(data.questions);
+
+                // Track mock interview start
+                if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+                    window.gtag('event', 'mock_interview_start');
+                }
+
+                // ALWAYS generate a fresh sessionId for new interviews (prevents answer contamination)
+                const finalSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+                // Store in sessionStorage ONLY (cleared on tab close)
+                sessionStorage.setItem('jsp_mock_session_id', finalSessionId);
+
+                // Clear any stale localStorage entry
+                localStorage.removeItem('jsp_mock_session_id');
+
+                setSessionId(finalSessionId);
+                sessionIdRef.current = finalSessionId;
+
+                console.log(`[MOCK] Loaded ${data.questions.length} ${type} questions, sessionId: ${finalSessionId}`);
+            } catch (err) {
+                console.error('[MOCK] Question fetch failed:', err);
+                setQuestionsError(err.message);
+            } finally {
+                setQuestionsLoading(false);
+            }
+        };
+
+        fetchQuestions();
+    }, [type, elig.loading, elig.canStartMock, elig.reason, elig.isGuest]);
+
+    // Session timer
+    useEffect(() => {
+        timerRef.current = setInterval(() => {
+            setTimeRemaining(prev => {
+                if (prev <= 0) {
+                    clearInterval(timerRef.current);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timerRef.current);
+    }, []);
+
+    // Recording timer
+    useEffect(() => {
+        if (isRecording) {
+            recordingTimerRef.current = setInterval(() => {
+                setRecordingTime(prev => prev + 1);
+            }, 1000);
+        } else {
+            clearInterval(recordingTimerRef.current);
+        }
+
+        return () => clearInterval(recordingTimerRef.current);
+    }, [isRecording]);
+
+    // Timer auto-submit when hits 0
+    useEffect(() => {
+        if (timeRemaining === 0) {
+            console.log('[MOCK] Timer hit 0, checking for answer');
+
+            // Stop recording if active
+            if (isRecording) {
+                stopRecording();
+            }
+
+            // Auto-submit ONLY if we have a valid answer
+            const hasAnswer = (inputMode === "type" && typedAnswer.trim()) || (inputMode === "voice" && audioBlob);
+
+            if (hasAnswer) {
+                handleSubmit();
+            }
+            // If no answer, do nothing - user must submit to proceed
+        }
+    }, [timeRemaining]);
+
+    // Overall interview timer expiry: Auto-submit current answer and finalize
+    useEffect(() => {
+        if (timeRemaining === 0 && questions.length > 0 && sessionId) {
+            console.log('[MOCK] Overall interview timer expired, finalizing');
+
+            const finalizeInterview = async () => {
+                // Check if there's a current in-progress answer
+                const hasCurrentAnswer = (inputMode === "type" && typedAnswer.trim()) || (inputMode === "voice" && audioBlob);
+
+                if (hasCurrentAnswer) {
+                    console.log('[MOCK] Auto-submitting current answer before finalize');
+                    // Stop recording if active
+                    if (isRecording) {
+                        stopRecording();
+                    }
+                    // Submit the current answer (await to ensure it completes)
+                    await submitAnswer();
+                }
+
+                // Navigate to summary with the current sessionId
+                const finalSessionId = sessionId || sessionStorage.getItem('jsp_mock_session_id') || localStorage.getItem('jsp_mock_session_id');
+                console.log(`[MOCK] Overall timer expired. Navigating to summary: /mock-interview/summary/${finalSessionId}`);
+                navigate(`/mock-interview/summary/${finalSessionId}`);
+            };
+
+            finalizeInterview();
+        }
+    }, [timeRemaining, questions.length, sessionId, inputMode, typedAnswer, audioBlob, isRecording]);
+
+    const formatTime = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')} `;
+    };
+
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            streamRef.current = stream;
+
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            audioChunksRef.current = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                setAudioBlob(blob);
+
+                // Stop all tracks
+                if (streamRef.current) {
+                    streamRef.current.getTracks().forEach(track => track.stop());
+                }
+            };
+
+            mediaRecorder.start();
+            setIsRecording(true);
+        } catch (err) {
+            console.error('[MOCK] Mic access failed:', err);
+            alert('Microphone access denied. Please enable microphone permissions.');
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+        }
+    };
+
+    const handleRecord = () => {
+        if (isRecording) {
+            stopRecording();
+        } else {
+            startRecording();
+        }
+    };
+
+    // Re-record: Stop current recording, reset timer, clear transcript
+    const handleReRecord = () => {
+        // Prevent if currently transcribing
+        if (isTranscribing) return;
+
+        // Stop recording if active
+        if (isRecording) {
+            stopRecording();
+        }
+
+        // Reset recording timer
+        setRecordingTime(0);
+
+        // Clear current answer data
+        setAudioBlob(null);
+        setTypedAnswer("");
+        setTranscript("");
+
+        // Start fresh recording immediately
+        startRecording();
+    };
+
+    const submitAnswer = async () => {
+        const hasTypedAnswer = inputMode === "type" && typedAnswer.trim();
+        const hasAudioAnswer = inputMode === "voice" && audioBlob;
+
+        if (!hasTypedAnswer && !hasAudioAnswer) {
+            return false;
+        }
+
+        console.log("SUBMIT PAYLOAD", {
+            sessionId: sessionIdRef.current || sessionId || sessionStorage.getItem('jsp_mock_session_id'),
+            questionId: currentQuestion.id || `q${currentQuestionIndex + 1}`,
+            type,
+            hasAudio: !!audioBlob,
+            hasTranscript: !!typedAnswer
+        });
+
+        setSubmitting(true);
+
+        try {
+            let response;
+
+            // SECURITY GUARD: Ensure sessionId exists
+            const activeSessionId = sessionIdRef.current || sessionId || sessionStorage.getItem('jsp_mock_session_id');
+            if (!activeSessionId) {
+                console.error('[MOCK] CRITICAL: Missing sessionId during submit. Aborting.');
+                alert('Session Error: Could not verify session ID. Please restart the interview.');
+                setSubmitting(false);
+                return false;
+            }
+
+            // DUPLICATE PREVENTION: Check if this question was already submitted
+            const questionKey = `${activeSessionId}_${currentQuestion.id || `q${currentQuestionIndex + 1}`}`;
+            if (submittedQuestionsRef.current.has(questionKey)) {
+                console.log('[MOCK] Question already submitted, skipping duplicate submission');
+                setSubmitting(false);
+                return true; // Return success to allow navigation
+            }
+
+            // Get auth token for Authorization header
+            const { data: sessionData } = await supabase.auth.getSession();
+            const token = sessionData?.session?.access_token;
+
+            if (inputMode === "type") {
+                // Send JSON for text answers
+                const payload = {
+                    sessionId: activeSessionId,
+                    questionId: currentQuestion.id || `q${currentQuestionIndex + 1}`,
+                    questionText: currentQuestion.text,
+                    answer: typedAnswer,
+                    type: type
+                };
+                console.log('[MOCK] Sending JSON payload:', payload);
+
+                response = await fetch(
+                    `${import.meta.env.VITE_API_BASE_URL || ''}/api/mock-interview/answer`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        },
+                        body: JSON.stringify(payload),
+                        credentials: 'include'
+                    }
+                );
+            } else {
+                // Send FormData for audio answers
+                // Build transcript text from available sources
+                const finalAnswerText = typedAnswer || transcript || '';
+
+                // Validate that we have transcript text
+                if (!finalAnswerText.trim()) {
+                    console.error('[MOCK] Voice submission blocked: no transcript available');
+                    alert('Please wait for transcription to complete before submitting.');
+                    setSubmitting(false);
+                    return false;
+                }
+
+                const formData = new FormData();
+                formData.append('session_id', activeSessionId);
+                formData.append('question_id', currentQuestion.id || `q${currentQuestionIndex + 1}`);
+                formData.append('questionText', currentQuestion.text);
+                formData.append('type', type);
+                formData.append('answer_text', finalAnswerText);
+                formData.append('audioFile', audioBlob, 'answer.webm');
+                console.log('[MOCK] Sending audio via FormData with transcript:', finalAnswerText.substring(0, 50) + '...');
+
+                response = await fetch(
+                    `${import.meta.env.VITE_API_BASE_URL || ''}/api/mock-interview/answer`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        },
+                        body: formData,
+                        credentials: 'include'
+                    }
+                );
+            }
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('[MOCK] Backend error response:', errorText);
+
+                // SPECIFIC ERROR HANDLING
+                if (errorText.includes('AUTH_REQUIRED') || response.status === 401) {
+                    alert('Please sign in to submit your answers.');
+                    navigate('/signin');
+                    return false;
+                }
+
+                if (errorText.includes('FREE_LIMIT_REACHED') || errorText.includes('Upgrade')) {
+                    alert('Your free mock interview is complete. Upgrade to continue.');
+                    navigate('/pricing');
+                    return false;
+                }
+
+                throw new Error(`Submission failed: ${response.status} - ${errorText}`);
+            }
+
+            const result = await response.json();
+            console.log('[MOCK] Answer submitted successfully:', result);
+
+            // Handle FREE_LIMIT_REACHED from backend
+            if (result.status === 'FREE_LIMIT_REACHED') {
+                console.log('[MOCK] Free limit reached, redirecting to pricing');
+                alert('Your free mock interview is complete. Upgrade to continue practicing.');
+                navigate('/pricing');
+                return false;
+            }
+
+            // Mark this question as submitted
+            submittedQuestionsRef.current.add(questionKey);
+
+            return true;
+        } catch (err) {
+            console.error('[MOCK] Answer submission failed:', err);
+            alert('Failed to submit answer. Please try again.');
+            return false;
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleSubmit = async () => {
+        // Validate we have an answer
+        const hasTypedAnswer = inputMode === "type" && typedAnswer.trim();
+        const hasAudioAnswer = inputMode === "voice" && audioBlob;
+
+        if (!hasTypedAnswer && !hasAudioAnswer) {
+            alert('Please record or type your answer before submitting.');
+            return;
+        }
+
+        // Stop recording if still active
+        if (isRecording) {
+            stopRecording();
+        }
+
+        // Submit answer to backend
+        console.log('[MOCK] Submitting answer to backend:', { sessionId, inputMode, hasTypedAnswer, hasAudioAnswer });
+        const success = await submitAnswer();
+
+        if (!success) {
+            // submitAnswer already showed an error alert
+            return;
+        }
+
+        if (currentQuestionIndex < totalQuestions - 1) {
+            // Move to next question
+            setCurrentQuestionIndex(prev => prev + 1);
+            setRecordingTime(0);
+            setAudioBlob(null);
+            setTypedAnswer("");
+            setInputMode("voice"); // Reset to voice mode
+        } else {
+            // Complete interview - navigate to summary
+            console.log(`[MOCK] Session Complete. Navigating to summary: /mock-interview/summary/${sessionId}`);
+            // Force a small delay or ensure state is flushed if needed (React batching usually handles this)
+            navigate(`/mock-interview/summary/${sessionId}`);
+        }
+    };
+
+    // Skip functionality removed - users must submit answers to proceed
+
+    // TTS: Play question audio
+    const playQuestionAudio = async () => {
+        if (!currentQuestion?.text) return;
+
+        try {
+            const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8080';
+            const response = await fetch(`${API_BASE}/voice/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: currentQuestion.text,
+                    voice: 'alloy' // Sarah Jenkins voice
+                })
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                questionAudioRef.current.src = url;
+                questionAudioRef.current.play();
+            }
+        } catch (err) {
+            console.error('[MOCK] TTS failed:', err);
+        }
+    };
+
+    // Auto-play question on load
+    useEffect(() => {
+        if (currentQuestion) {
+            playQuestionAudio();
+        }
+
+        return () => {
+            // Cleanup audio on unmount
+            questionAudioRef.current.pause();
+        };
+    }, [currentQuestionIndex, currentQuestion]);
+
+    // ✅ RENDER BRANCHES AFTER HOOKS
+    if (elig.loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-slate-50">
+                <div className="text-center">
+                    <span className="material-symbols-outlined animate-spin text-4xl text-primary mb-4">progress_activity</span>
+                    <p className="text-slate-600 font-medium">Checking eligibility...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (elig.reason === "AUTH_REQUIRED" || elig.isGuest) {
+        return <MockInterviewGate />;
+    }
+
+    if (elig.canStartMock === false) {
+        return <Navigate to="/pricing" replace />;
+    }
+
+    const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
+
+    return (
+        <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col">
+            <AppHeader />
+
+            <main className="flex-1 w-full max-w-[1024px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
+                {/* Loading State */}
+                {questionsLoading && (
+                    <div className="flex-1 flex items-center justify-center">
+                        <div className="text-center">
+                            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+                            <p className="text-slate-600 dark:text-slate-400">Loading interview questions...</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Error State */}
+                {questionsError && !questionsLoading && (
+                    <div className="flex-1 flex items-center justify-center">
+                        <div className="max-w-md w-full bg-white dark:bg-[#1A222C] rounded-xl border border-red-200 dark:border-red-900/30 p-8 text-center">
+                            <span className="material-symbols-outlined text-red-500 text-5xl mb-4">error</span>
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Unable to Load Questions</h2>
+                            <p className="text-slate-600 dark:text-slate-400 mb-6">{questionsError}</p>
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="px-6 py-3 bg-primary hover:bg-blue-700 text-white font-bold rounded-lg transition-colors"
+                            >
+                                Retry
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Main Content - Only show if questions loaded */}
+                {!questionsLoading && !questionsError && questions.length > 0 && (
+                    <>
+                        {/* Session Status Bar */}
+                        <div className="w-full flex flex-col md:flex-row gap-4 items-start md:items-center justify-between bg-white dark:bg-[#1A222C] p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+                            <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
+                                <div className="flex items-center gap-2 px-2.5 py-1 bg-primary/10 rounded-lg shrink-0">
+                                    <span className="material-symbols-outlined text-primary text-[18px]">bolt</span>
+                                    <span className="text-primary text-xs font-bold uppercase tracking-wide">{sessionLabel}</span>
+                                </div>
+                                <div className="hidden md:block h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+                                <div className="flex flex-col gap-1 w-full max-w-[200px]">
+                                    <div className="flex justify-between items-center text-xs font-medium text-slate-600 dark:text-slate-400 gap-3">
+                                        <span>Question {currentQuestionIndex + 1} of {totalQuestions}</span>
+                                        <span className="text-slate-500 dark:text-slate-500">•</span>
+                                        <span>{Math.round(progress)}%</span>
+                                    </div>
+                                    <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                        <div className="h-full bg-primary rounded-full transition-all duration-300" style={{ width: `${progress}% ` }}></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-slate-100 dark:border-slate-800 pt-3 md:pt-0">
+                                <div className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-slate-600 dark:text-slate-400">timer</span>
+                                    <span className="font-mono font-medium text-slate-900 dark:text-white">{formatTime(timeRemaining)} remaining</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-lg border border-amber-100 dark:border-amber-900/30">
+                                    <span className="material-symbols-outlined text-[16px]">warning</span>
+                                    <span className="text-xs font-semibold uppercase">Evaluation Mode</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Main Interview Card */}
+                        <div className="w-full bg-white dark:bg-[#1A222C] rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col md:flex-row min-h-[400px]">
+                            {/* Left Column: Interviewer Panel */}
+                            <div className="w-full md:w-[280px] bg-slate-50 dark:bg-[#111921] border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-6 flex flex-row md:flex-col items-center md:items-start gap-4 shrink-0">
+                                <div className="relative">
+                                    <img
+                                        src={interviewerAvatar}
+                                        alt="Sarah Jenkins"
+                                        className="size-16 md:size-24 rounded-full border-2 border-white dark:border-slate-800 shadow-sm object-cover object-center"
+                                        style={{ objectPosition: 'center center' }}
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.style.display = 'none';
+                                            e.target.nextElementSibling.style.display = 'flex';
+                                        }}
+                                    />
+                                    {/* Fallback if image fails */}
+                                    <div className="size-16 md:size-24 rounded-full bg-slate-300 dark:bg-slate-700 border-2 border-white dark:border-slate-800 shadow-sm items-center justify-center absolute inset-0 hidden">
+                                        <span className="material-symbols-outlined text-slate-500 text-4xl">person</span>
+                                    </div>
+                                    <div className="absolute bottom-0 right-0 md:bottom-1 md:right-1 size-4 bg-green-500 border-2 border-white dark:border-[#111921] rounded-full"></div>
+                                </div>
+                                <div className="flex flex-col items-start">
+                                    <h3 className="text-base md:text-lg font-bold text-slate-900 dark:text-white leading-tight">Sarah Jenkins</h3>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">Hiring Manager</p>
+                                    <div className="mt-3 md:mt-6 flex items-center gap-2 px-2 py-1 bg-white dark:bg-[#1A222C] border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-600 dark:text-slate-400">
+                                        <span className="material-symbols-outlined text-[14px]">lock</span>
+                                        <span>Voice: Default</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right Column: Question Panel */}
+                            <div className="flex-1 p-6 md:p-10 flex flex-col justify-between">
+                                <div>
+                                    <div className="flex flex-wrap gap-2 mb-6">
+                                        <span className="px-2.5 py-1 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-bold uppercase tracking-wider">{currentQuestion.category}</span>
+                                        <span className="px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Difficulty: {currentQuestion.difficulty}</span>
+                                    </div>
+                                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white leading-tight md:leading-snug">
+                                        "{currentQuestion.text}"
+                                    </h1>
+
+                                    {/* Repeat Question Button */}
+                                    <button
+                                        onClick={playQuestionAudio}
+                                        className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-[18px]">volume_up</span>
+                                        Repeat Question
+                                    </button>
+                                </div>
+                                <div className="mt-8 p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900/30 flex gap-3 items-start">
+                                    <span className="material-symbols-outlined text-primary mt-0.5">lightbulb</span>
+                                    <div className="text-sm text-slate-700 dark:text-slate-300">
+                                        <span className="font-semibold text-slate-900 dark:text-white">Hint:</span> {currentQuestion.hint}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Answer Recording Area */}
+                        <div className="w-full bg-white dark:bg-[#1A222C] rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 flex flex-col items-center gap-6">
+                            {inputMode === "voice" ? (
+                                // Voice Recording Mode
+                                <div className="flex flex-col items-center gap-4 w-full">
+                                    <VoiceRecorder
+                                        onTranscript={handleTranscriptValue}
+                                        onStateChange={({ recording, transcribing }) => {
+                                            setIsRecording(recording);
+                                            setIsTranscribing(transcribing);
+                                        }}
+                                        renderButton={({ startRecording, stopRecording, recording, transcribing }) => (
+                                            <>
+                                                <div className="text-4xl md:text-5xl font-mono font-bold text-slate-900 dark:text-white tabular-nums tracking-tight">
+                                                    {formatTime(recordingTime)}
+                                                </div>
+                                                {recording && (
+                                                    <span className="text-xs font-medium text-red-500 flex items-center gap-1 animate-pulse">
+                                                        <span className="size-2 rounded-full bg-red-500"></span> Recording
+                                                    </span>
+                                                )}
+                                                {transcribing && (
+                                                    <span className="text-xs font-medium text-primary flex items-center gap-1">
+                                                        <div className="size-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                                                        Transcribing...
+                                                    </span>
+                                                )}
+                                                <div className="relative group">
+                                                    <button
+                                                        onClick={recording ? stopRecording : startRecording}
+                                                        disabled={transcribing}
+                                                        className={`relative z-10 size-20 md:size-24 ${recording ? 'bg-red-500 hover:bg-red-600' : 'bg-primary hover:bg-blue-700'} active:scale-95 transition-all rounded-full flex items-center justify-center shadow-lg hover:shadow-xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed`}
+                                                    >
+                                                        <span className="material-symbols-outlined text-white text-[40px] md:text-[48px]">
+                                                            {recording ? 'stop' : 'mic'}
+                                                        </span>
+                                                    </button>
+                                                    {recording && (
+                                                        <div className="absolute inset-0 rounded-full bg-red-500 opacity-20 animate-ping"></div>
+                                                    )}
+                                                </div>
+                                            </>
+                                        )}
+                                    />
+
+                                    {/* Transcript Box - Always visible when there's content */}
+                                    {(typedAnswer || isTranscribing) && (
+                                        <div className="w-full max-w-2xl mt-4">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Your Answer</h4>
+                                                {isTranscribing && (
+                                                    <span className="text-xs text-primary flex items-center gap-1">
+                                                        <div className="size-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                                                        Transcribing...
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="w-full p-4 min-h-[100px] border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white text-sm leading-relaxed">
+                                                {typedAnswer || <span className="text-slate-400 italic">Your transcribed text will appear here...</span>}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Re-record button (only show if we have a recording) */}
+                                    {(audioBlob || typedAnswer) && (
+                                        <button
+                                            onClick={handleReRecord}
+                                            disabled={isTranscribing}
+                                            className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary flex items-center gap-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <span className="material-symbols-outlined text-[18px]">refresh</span>
+                                            Re-record
+                                        </button>
+                                    )}
+
+                                    <button
+                                        onClick={() => setInputMode("type")}
+                                        className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary underline decoration-dotted underline-offset-4 transition-colors"
+                                    >
+                                        Type answer instead
+                                    </button>
+                                </div>
+                            ) : (
+                                // Type Answer Mode
+                                <div className="w-full flex flex-col gap-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Type Your Answer</h3>
+                                        <button
+                                            onClick={() => setInputMode("voice")}
+                                            className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary flex items-center gap-1"
+                                        >
+                                            <span className="material-symbols-outlined text-[18px]">mic</span>
+                                            Switch to voice
+                                        </button>
+                                    </div>
+                                    <textarea
+                                        value={typedAnswer}
+                                        onChange={(e) => {
+                                            setTypedAnswer(e.target.value);
+                                            setTypedEdited(true); // Mark as manually edited
+                                        }}
+                                        placeholder="Type your answer here..."
+                                        className="w-full min-h-[200px] p-4 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-y"
+                                        autoFocus
+                                    />
+                                </div>
+                            )}
+
+                            {/* Action Footer */}
+                            <div className="w-full flex justify-center gap-4 mt-4 pt-6 border-t border-slate-100 dark:border-slate-800">
+                                <button
+                                    onClick={handleSubmit}
+                                    disabled={(!typedAnswer.trim() && !audioBlob) || submitting || isTranscribing}
+                                    className="w-full md:w-auto px-6 py-2.5 rounded-lg text-sm font-bold text-white bg-primary hover:bg-blue-700 transition-colors shadow-sm hover:shadow flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {submitting ? (
+                                        <>
+                                            <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                            Submitting...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Submit Answer
+                                            <span className="material-symbols-outlined text-[18px] group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </>
+                )}
+            </main>
+        </div>
+    );
+}
