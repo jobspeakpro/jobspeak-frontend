@@ -5,7 +5,7 @@ import { supabase } from "../../lib/supabaseClient.js";
 import { apiClient } from "../../utils/apiClient.js";
 import { normalizeMockSummary } from "../../utils/apiNormalizers.js";
 
-import { requestServerTTS, playAudioFromServer, speakBrowserTTS } from "../../utils/ttsClient.js";
+import { requestServerTTS, playAudioFromServer, speakBrowserTTS, stopAllTTS } from "../../utils/ttsClient.js";
 import AppHeader from "../../components/AppHeader.jsx";
 import TTSSampleButton from "../../components/TTSSampleButton.jsx";
 
@@ -98,10 +98,13 @@ function QuestionAudioPlayer({ text, label, voiceId, playbackRate, onPlay, isCur
         setStatus('LOADING');
         setTtsStatus({ mode: "server", message: "Generating voice..." });
 
+        // CRITICAL: Stop all TTS before starting new playback
+        stopAllTTS();
+
         // Try SERVER TTS first
         const server = await requestServerTTS({ text, voiceId, speed: playbackRate });
 
-        if (server.ok) {
+        if (server.ok && (server.audioBase64 || server.audioUrl)) {
             // Play using the shared helper (or existing logic if preferred, but helper is cleaner for audio element)
             // Existing component logic uses a ref audio element, so let's stick to that for React consistency,
             // but we can use the helper's play capability or just set src depending on what it returns.
@@ -110,14 +113,14 @@ function QuestionAudioPlayer({ text, label, voiceId, playbackRate, onPlay, isCur
             // We will integrate the data from `server` into the existing audioRef logic for consistency with the rest of the component features (speed control, etc).
 
             try {
-                const url = server.audioUrl || (server.audioBase64 ? `data:audio/mp3;base64,${server.audioBase64}` : null);
-                if (!url) throw new Error("No audio URL");
+                const url = server.audioUrl || `data:audio/mp3;base64,${server.audioBase64}`;
 
                 audioRef.current.src = url;
                 audioRef.current.playbackRate = playbackRate;
                 await audioRef.current.play();
                 setStatus('PLAYING');
                 setTtsStatus({ mode: "server", message: "" });
+                return; // CRITICAL: Exit early to prevent fallback
             } catch (err) {
                 console.warn("Server playback failed, falling back", err);
                 // Fall through to browser
@@ -127,21 +130,19 @@ function QuestionAudioPlayer({ text, label, voiceId, playbackRate, onPlay, isCur
             // Fall through to browser
         }
 
-        // If status is still LOADING, it means server failed or playback failed.
-        if (status === 'LOADING') { // We check status because it might have changed if successful
-            // FALLBACK: Browser TTS
-            setTtsStatus({ mode: "browser", message: "Using browser voice" });
+        // ONLY reach here if server failed - use browser TTS
+        // FALLBACK: Browser TTS
+        setTtsStatus({ mode: "browser", message: "Using browser voice" });
 
-            // Browser TTS is fire-and-forget in terms of "loading", but "speaking" is a state.
-            setStatus('PLAYING');
+        // Browser TTS is fire-and-forget in terms of "loading", but "speaking" is a state.
+        setStatus('PLAYING');
 
-            await speakBrowserTTS({ text, rate: playbackRate });
+        await speakBrowserTTS({ text, rate: playbackRate });
 
-            // When browser finishes (speakBrowserTTS resolves on end), we reset
-            setStatus('IDLE');
-            setTtsStatus({ mode: "server", message: "" });
-            onPlay(null);
-        }
+        // When browser finishes (speakBrowserTTS resolves on end), we reset
+        setStatus('IDLE');
+        setTtsStatus({ mode: "server", message: "" });
+        onPlay(null);
     };
 
     return (

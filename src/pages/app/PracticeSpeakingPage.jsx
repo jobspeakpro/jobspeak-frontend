@@ -6,7 +6,7 @@ import InlineError from "../../components/InlineError.jsx";
 import PaywallModal from "../../components/PaywallModal.jsx";
 import { usePracticeSession } from "../../hooks/usePracticeSession.js";
 import { getUserKey } from "../../utils/userKey.js";
-import { requestServerTTS, playAudioFromServer, speakBrowserTTS } from "../../utils/ttsClient.js";
+import { requestServerTTS, playAudioFromServer, speakBrowserTTS, stopAllTTS } from "../../utils/ttsClient.js";
 import PracticeTour from "../../components/PracticeTour.jsx";
 import OnboardingWizard from "../../components/OnboardingWizard.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
@@ -511,6 +511,9 @@ export default function PracticeSpeakingPage() {
     }
 
     const textToPlay = questionText || "Tell me about yourself";
+
+    // CRITICAL: Stop all TTS before starting new playback
+    stopAllTTS();
     setTtsStatus({ mode: "server", message: "Generating voice..." });
 
     // Try SERVER TTS first
@@ -521,10 +524,9 @@ export default function PracticeSpeakingPage() {
       return;
     }
 
-    if (server.ok) {
+    if (server.ok && (server.audioBase64 || server.audioUrl)) {
       try {
-        const url = server.audioUrl || (server.audioBase64 ? `data:audio/mp3;base64,${server.audioBase64}` : null);
-        if (!url) throw new Error("No audio URL");
+        const url = server.audioUrl || `data:audio/mp3;base64,${server.audioBase64}`;
 
         const a = questionAudioRef.current;
         if (!a) return;
@@ -545,14 +547,15 @@ export default function PracticeSpeakingPage() {
           setQuestionIsPlaying(true);
           setTtsStatus({ mode: "server", message: "" });
         }
+        return; // CRITICAL: Exit early to prevent fallback
       } catch (err) {
         console.warn("Server playback failed, falling back", err);
         // Fall through to browser
       }
     }
 
-    // If we're still here, server failed - use browser TTS
-    if (token === questionPlayTokenRef.current && !questionIsPlaying) {
+    // ONLY reach here if server failed - use browser TTS
+    if (token === questionPlayTokenRef.current) {
       setTtsStatus({ mode: "browser", message: "Using browser voice" });
       setQuestionIsPlaying(true);
 
@@ -602,10 +605,9 @@ export default function PracticeSpeakingPage() {
       return;
     }
 
-    if (server.ok) {
+    if (server.ok && (server.audioBase64 || server.audioUrl)) {
       try {
-        const url = server.audioUrl || (server.audioBase64 ? `data:audio/mp3;base64,${server.audioBase64}` : null);
-        if (!url) throw new Error("No audio URL");
+        const url = server.audioUrl || `data:audio/mp3;base64,${server.audioBase64}`;
 
         const a = guidanceAudioRef.current;
         if (!a) return;
@@ -626,14 +628,15 @@ export default function PracticeSpeakingPage() {
           setGuidanceIsPlaying(true);
           setTtsStatus({ mode: "server", message: "" });
         }
+        return; // CRITICAL: Exit early to prevent fallback
       } catch (err) {
         console.warn("Guidance playback failed, falling back", err);
         // Fall through to browser
       }
     }
 
-    // If we're still here, server failed - use browser TTS
-    if (token === guidancePlayTokenRef.current && !guidanceIsPlaying) {
+    // ONLY reach here if server failed - use browser TTS
+    if (token === guidancePlayTokenRef.current) {
       setTtsStatus({ mode: "browser", message: "Using browser voice" });
       setGuidanceIsPlaying(true);
 

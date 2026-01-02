@@ -1,5 +1,22 @@
 // src/utils/ttsClient.js
 
+// Global helper to stop all TTS playback (both server audio and browser speech)
+export function stopAllTTS() {
+    try {
+        window.speechSynthesis?.cancel();
+    } catch (e) {
+        // Ignore errors
+    }
+    try {
+        if (window.__jsp_audio) {
+            window.__jsp_audio.pause();
+            window.__jsp_audio.currentTime = 0;
+        }
+    } catch (e) {
+        // Ignore errors
+    }
+}
+
 export async function requestServerTTS({ text, voiceId, speed = 1 }) {
     const res = await fetch("/api/tts", {
         method: "POST",
@@ -72,7 +89,13 @@ export function speakBrowserTTS({ text, preferredVoiceName = null, rate = 1, pit
 
 export function playAudioFromServer({ audioBase64, audioUrl }) {
     return new Promise((resolve) => {
+        // CRITICAL: Stop all TTS before playing server audio
+        stopAllTTS();
+
         const audio = new Audio();
+
+        // Store in global reference for stopAllTTS to access
+        window.__jsp_audio = audio;
 
         audio.onended = () => resolve({ ok: true, mode: "server" });
         audio.onerror = () => resolve({ ok: false, mode: "server", error: "audio_playback_failed" });
