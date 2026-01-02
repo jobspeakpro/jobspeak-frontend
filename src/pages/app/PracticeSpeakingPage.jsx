@@ -947,124 +947,124 @@ export default function PracticeSpeakingPage() {
           </div>
         </div>
 
-        {/* Guidance Card */}
-        {/* Note: In expanded view, we use the detailed results block above */}
-        {/* Placeholder state logic managed inside Guidance Results */}
-        {loading ? (
-          <div className="w-full flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : result && !result.error ? (() => {
-          // -- ROBUST DATA MAPPING --
+        {/* Guidance Card - Constrained Width */}
+        <div className="w-full max-w-[1100px] mx-auto">
+          {/* Note: In expanded view, we use the detailed results block above */}
+          {/* Placeholder state logic managed inside Guidance Results */}
+          {loading ? (
+            <div className="w-full flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : result && !result.error ? (() => {
+            // -- ROBUST DATA MAPPING --
 
-          // Check if backend actually returned the extended analysis fields
-          // -- ROBUST DATA MAPPING --
+            // Check if backend actually returned the extended analysis fields
+            // -- ROBUST DATA MAPPING --
 
-          // Check if backend actually returned the extended analysis fields
-          // Handle varied shapes: result.analysis, result.guidance, or flat result
-          const analysisObj = result?.analysis ?? result?.guidance ?? result ?? {};
+            // Check if backend actually returned the extended analysis fields
+            // Handle varied shapes: result.analysis, result.guidance, or flat result
+            const analysisObj = result?.analysis ?? result?.guidance ?? result ?? {};
 
-          // PROFANITY CHECK (Frontend)
-          const PROFANITY_LIST = ["fuck", "shit", "bitch", "asshole", "damn", "crap", "bastard", "dick", "pussy", "cock", "slut"];
-          const containsProfanity = (str) => {
-            if (!str) return false;
-            const lower = str.toLowerCase();
-            return PROFANITY_LIST.some(word => new RegExp(`\\b${word}\\b`, 'i').test(lower));
-          };
-          const hasProfanity = result?.metadata?.professionalism?.flagged || containsProfanity(text);
+            // PROFANITY CHECK (Frontend)
+            const PROFANITY_LIST = ["fuck", "shit", "bitch", "asshole", "damn", "crap", "bastard", "dick", "pussy", "cock", "slut"];
+            const containsProfanity = (str) => {
+              if (!str) return false;
+              const lower = str.toLowerCase();
+              return PROFANITY_LIST.some(word => new RegExp(`\\b${word}\\b`, 'i').test(lower));
+            };
+            const hasProfanity = result?.metadata?.professionalism?.flagged || containsProfanity(text);
 
-          const score = analysisObj?.score ?? null;
+            const score = analysisObj?.score ?? null;
 
-          // COMPREHENSIVE FALLBACK CHAINS for all feedback fields
-          const whatWorkedRaw = analysisObj?.whatWorked ?? analysisObj?.strengths ?? [];
+            // COMPREHENSIVE FALLBACK CHAINS for all feedback fields
+            const whatWorkedRaw = analysisObj?.whatWorked ?? analysisObj?.strengths ?? [];
 
-          const improveNextRaw =
-            analysisObj?.improvements ??
-            analysisObj?.improveNext ??
-            analysisObj?.feedback?.improvements ??
-            analysisObj?.feedback?.weaknesses ??
-            analysisObj?.summary?.improvements ??
-            result?.improvements ??
-            [];
+            const improveNextRaw =
+              analysisObj?.improvements ??
+              analysisObj?.improveNext ??
+              analysisObj?.feedback?.improvements ??
+              analysisObj?.feedback?.weaknesses ??
+              analysisObj?.summary?.improvements ??
+              result?.improvements ??
+              [];
 
-          const hiringManagerHeard =
-            analysisObj?.interpretation ??
-            analysisObj?.hiringManagerHeard ??
-            analysisObj?.hmHeard ??
-            analysisObj?.feedback?.interpretation ??
-            analysisObj?.feedback?.whatHiringManagerHeard ??
-            analysisObj?.summary?.interpretation ??
-            result?.interpretation ??
-            "";
+            const hiringManagerHeard =
+              analysisObj?.interpretation ??
+              analysisObj?.hiringManagerHeard ??
+              analysisObj?.hmHeard ??
+              analysisObj?.feedback?.interpretation ??
+              analysisObj?.feedback?.whatHiringManagerHeard ??
+              analysisObj?.summary?.interpretation ??
+              result?.interpretation ??
+              "";
 
-          const vocabRaw =
-            analysisObj?.vocabulary ??
-            analysisObj?.vocab ??
-            analysisObj?.feedback?.vocabulary ??
-            analysisObj?.feedback?.vocab ??
-            analysisObj?.summary?.vocabulary ??
-            result?.vocabulary ??
-            [];
+            const vocabRaw =
+              analysisObj?.vocabulary ??
+              analysisObj?.vocab ??
+              analysisObj?.feedback?.vocabulary ??
+              analysisObj?.feedback?.vocab ??
+              analysisObj?.summary?.vocabulary ??
+              result?.vocabulary ??
+              [];
 
-          // Helper to clean bullets - DEFENSIVE
-          const cleanList = (raw) => {
-            const safeRaw = safeArray(raw); // Use defensive helper
-            if (safeRaw.length > 0 && typeof safeRaw[0] === 'string') return safeRaw;
-            if (typeof raw === "string") return raw.split(/\n/).map(s => s.replace(/^[-•]\s*/, "").trim()).filter(Boolean);
-            return [];
-          };
+            // Helper to clean bullets - DEFENSIVE
+            const cleanList = (raw) => {
+              const safeRaw = safeArray(raw); // Use defensive helper
+              if (safeRaw.length > 0 && typeof safeRaw[0] === 'string') return safeRaw;
+              if (typeof raw === "string") return raw.split(/\n/).map(s => s.replace(/^[-•]\s*/, "").trim()).filter(Boolean);
+              return [];
+            };
 
-          let whatWorked = cleanList(whatWorkedRaw);
-          const improveNext = cleanList(improveNextRaw);
+            let whatWorked = cleanList(whatWorkedRaw);
+            const improveNext = cleanList(improveNextRaw);
 
-          // PROFANITY OVERRIDE
-          if (hasProfanity) {
-            // Replace praise with neutral statement
-            whatWorked = ["You responded quickly under pressure."];
-            // Ensure no misleading praise in improveNext if any (though usually Improve is specific)
-            // We keep Improve Next actionable as per requirements
-          }
+            // PROFANITY OVERRIDE
+            if (hasProfanity) {
+              // Replace praise with neutral statement
+              whatWorked = ["You responded quickly under pressure."];
+              // Ensure no misleading praise in improveNext if any (though usually Improve is specific)
+              // We keep Improve Next actionable as per requirements
+            }
 
-          // Limited to 2 cards - DEFENSIVE
-          const vocabulary = safeArray(vocabRaw).slice(0, 2);
+            // Limited to 2 cards - DEFENSIVE
+            const vocabulary = safeArray(vocabRaw).slice(0, 2);
 
-          // Improved Answer / Clearer Rewrite
-          const improvedAnswerText =
-            analysisObj?.clearerRewrite ??
-            analysisObj?.improved ??
-            analysisObj?.improvedAnswer ??
-            analysisObj?.rewrite ??
-            analysisObj?.betterAnswer ??
-            analysisObj?.feedback?.clearerRewrite ??
-            analysisObj?.feedback?.rewrite ??
-            analysisObj?.summary?.rewrite ??
-            result?.clearerRewrite ??
-            result?.improved ??
-            "";
+            // Improved Answer / Clearer Rewrite
+            const improvedAnswerText =
+              analysisObj?.clearerRewrite ??
+              analysisObj?.improved ??
+              analysisObj?.improvedAnswer ??
+              analysisObj?.rewrite ??
+              analysisObj?.betterAnswer ??
+              analysisObj?.feedback?.clearerRewrite ??
+              analysisObj?.feedback?.rewrite ??
+              analysisObj?.summary?.rewrite ??
+              result?.clearerRewrite ??
+              result?.improved ??
+              "";
 
-          // DEFENSIVE: Extract audio URL for clearer rewrite
-          const clearerRewriteAudioUrl =
-            analysisObj?.clearerRewriteAudioUrl ??
-            analysisObj?.clearerRewrite?.audioUrl ??
-            analysisObj?.audioUrl ??
-            analysisObj?.feedback?.clearerRewriteAudioUrl ??
-            analysisObj?.feedback?.audioUrl ??
-            result?.clearerRewriteAudioUrl ??
-            result?.audioUrl ??
-            null;
+            // DEFENSIVE: Extract audio URL for clearer rewrite
+            const clearerRewriteAudioUrl =
+              analysisObj?.clearerRewriteAudioUrl ??
+              analysisObj?.clearerRewrite?.audioUrl ??
+              analysisObj?.audioUrl ??
+              analysisObj?.feedback?.clearerRewriteAudioUrl ??
+              analysisObj?.feedback?.audioUrl ??
+              result?.clearerRewriteAudioUrl ??
+              result?.audioUrl ??
+              null;
 
-          // DEBUG: Log what we extracted
-          console.log("[PRACTICE] Extracted feedback:", {
-            score,
-            whatWorked: whatWorked.length,
-            improveNext: improveNext.length,
-            hiringManagerHeard: hiringManagerHeard ? "present" : "missing",
-            vocabulary: vocabulary.length,
-            improvedAnswerText: improvedAnswerText ? "present" : "missing"
-          });
+            // DEBUG: Log what we extracted
+            console.log("[PRACTICE] Extracted feedback:", {
+              score,
+              whatWorked: whatWorked.length,
+              improveNext: improveNext.length,
+              hiringManagerHeard: hiringManagerHeard ? "present" : "missing",
+              vocabulary: vocabulary.length,
+              improvedAnswerText: improvedAnswerText ? "present" : "missing"
+            });
 
-          return (
-            <div className="w-full max-w-[1100px] mx-auto px-4">
+            return (
               <div className="w-full flex flex-col gap-6 animate-fade-in">
 
                 {/* Profanity Warning Banner */}
@@ -1352,78 +1352,78 @@ export default function PracticeSpeakingPage() {
                 </div>
 
               </div>
-            </div>
-          );
-        })() : result?.error ? (
+            );
+          })() : result?.error ? (
 
-          <InlineError
-            title="Something went wrong"
-            message={result.error}
-          />
-        ) : (
-          /* Placeholder State - Render "Guidance" header but empty content */
-          <div data-tour="guidance" className="w-full bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-6 md:p-8 shadow-sm opacity-60">
-            <div className="flex items-start gap-4 mb-6">
-              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-primary">
-                <span className="material-symbols-outlined text-2xl">school</span>
+            <InlineError
+              title="Something went wrong"
+              message={result.error}
+            />
+          ) : (
+            /* Placeholder State - Render "Guidance" header but empty content */
+            <div data-tour="guidance" className="w-full bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-6 md:p-8 shadow-sm opacity-60">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-primary">
+                  <span className="material-symbols-outlined text-2xl">school</span>
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold text-text-main dark:text-white">Guidance</h4>
+                  <p className="text-text-secondary dark:text-gray-400 text-sm mt-1">Submit an answer to see detailed feedback.</p>
+                </div>
               </div>
-              <div>
-                <h4 className="text-lg font-bold text-text-main dark:text-white">Guidance</h4>
-                <p className="text-text-secondary dark:text-gray-400 text-sm mt-1">Submit an answer to see detailed feedback.</p>
+            </div>
+          )}
+
+          {/* Mock Interview CTA */}
+          <div className="w-full max-w-lg mx-auto mt-6 p-6 bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-[#1A222C] rounded-xl border border-purple-200 dark:border-purple-900/30 shadow-sm">
+            <div className="flex items-start gap-4">
+              <div className="size-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                <span className="material-symbols-outlined text-purple-600 dark:text-purple-400 text-2xl">video_call</span>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Ready for a full mock interview?</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                  Practice builds skills. Mock interviews test readiness.
+                </p>
+                <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-4">
+                  <span className="material-symbols-outlined text-sm">lock</span>
+                  <span>Available with Pro</span>
+                </div>
+                <button
+                  onClick={() => {
+                    if (isPro) {
+                      setShowMockSelection(true);
+                    } else {
+                      // Show paywall
+                      setPaywallSource("mock_interview_cta");
+                      setShowPaywall(true);
+                    }
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors text-sm"
+                >
+                  <span className="material-symbols-outlined text-lg">play_arrow</span>
+                  Start mock interview
+                </button>
               </div>
             </div>
           </div>
-        )}
 
-        {/* Mock Interview CTA */}
-        <div className="w-full max-w-lg mx-auto mt-6 p-6 bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-[#1A222C] rounded-xl border border-purple-200 dark:border-purple-900/30 shadow-sm">
-          <div className="flex items-start gap-4">
-            <div className="size-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-              <span className="material-symbols-outlined text-purple-600 dark:text-purple-400 text-2xl">video_call</span>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Ready for a full mock interview?</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                Practice builds skills. Mock interviews test readiness.
-              </p>
-              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-4">
-                <span className="material-symbols-outlined text-sm">lock</span>
-                <span>Available with Pro</span>
+          {/* Free Plan Info Card */}
+          {!isPro && (
+            <div data-tour="free-banner" className="w-full max-w-lg mx-auto mt-2 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-800 flex gap-4 items-start">
+              <span className="material-symbols-outlined text-slate-400 mt-0.5">info</span>
+              <div className="flex-1">
+                <p className="text-sm text-text-secondary dark:text-slate-400 leading-relaxed">
+                  You've used <span className="font-medium text-text-main dark:text-slate-200">{usage.used} of {usage.limit === Infinity ? "∞" : usage.limit}</span> free practice questions for today. You can continue tomorrow or upgrade for unlimited practice.
+                </p>
+                <a className="inline-block mt-2 text-sm font-semibold text-primary hover:underline" href="#" onClick={(e) => { e.preventDefault(); navigate("/pricing"); }}>
+                  View upgrade options
+                </a>
               </div>
-              <button
-                onClick={() => {
-                  if (isPro) {
-                    setShowMockSelection(true);
-                  } else {
-                    // Show paywall
-                    setPaywallSource("mock_interview_cta");
-                    setShowPaywall(true);
-                  }
-                }}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors text-sm"
-              >
-                <span className="material-symbols-outlined text-lg">play_arrow</span>
-                Start mock interview
-              </button>
             </div>
-          </div>
+          )}
+
         </div>
-
-        {/* Free Plan Info Card */}
-        {!isPro && (
-          <div data-tour="free-banner" className="w-full max-w-lg mx-auto mt-2 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-800 flex gap-4 items-start">
-            <span className="material-symbols-outlined text-slate-400 mt-0.5">info</span>
-            <div className="flex-1">
-              <p className="text-sm text-text-secondary dark:text-slate-400 leading-relaxed">
-                You've used <span className="font-medium text-text-main dark:text-slate-200">{usage.used} of {usage.limit === Infinity ? "∞" : usage.limit}</span> free practice questions for today. You can continue tomorrow or upgrade for unlimited practice.
-              </p>
-              <a className="inline-block mt-2 text-sm font-semibold text-primary hover:underline" href="#" onClick={(e) => { e.preventDefault(); navigate("/pricing"); }}>
-                View upgrade options
-              </a>
-            </div>
-          </div>
-        )}
-
 
         {/* Footer */}
         <footer className="py-6 text-center">
