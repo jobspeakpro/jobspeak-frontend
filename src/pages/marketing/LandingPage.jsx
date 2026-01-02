@@ -18,7 +18,11 @@ export default function LandingPage() {
   useEffect(() => {
     if (isMobileMenuOpen) {
       console.log("OVERLAY_MOUNT", isMobileMenuOpen);
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
     }
+    return () => { document.body.style.overflow = ""; };
   }, [isMobileMenuOpen]);
 
   // Handle anchor scrolling for #pricing
@@ -211,8 +215,6 @@ export default function LandingPage() {
             <button
               className="md:hidden p-2 text-slate-600 hover:text-primary transition-colors relative z-50 pointer-events-auto"
               onClick={() => {
-                console.log("HAMBURGER_CLICK");
-                alert("HAMBURGER_CLICK");
                 setIsMobileMenuOpen(true);
               }}
               aria-label="Open menu"
@@ -231,11 +233,6 @@ export default function LandingPage() {
           style={{ zIndex: 99999, position: 'fixed', top: 0, left: 0, width: '100%', height: '100%' }}
           data-testid="mobile-menu-overlay"
         >
-          {/* Debug log for render */}
-          {console.log("MOBILE MENU: OVERLAY_MOUNT")}
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-            <h1 style={{ color: 'white', fontSize: '2rem', fontWeight: 'bold', background: 'red', padding: '1rem' }}>MENU OPEN (DEBUG)</h1>
-          </div>
           <div className="flex flex-col h-full">
             <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-100">
               <span className="text-lg font-bold text-slate-900">Menu</span>

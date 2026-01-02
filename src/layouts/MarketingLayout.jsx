@@ -18,9 +18,19 @@ export default function MarketingLayout({ children }) {
   }, [isMobileMenuOpen]);
 
   // Close menu on route change
+  // Close menu on route change & Lock scroll
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [isMobileMenuOpen]);
 
   return (
     <div className="marketing-root bg-white text-slate-900 font-display overflow-x-hidden">
@@ -86,8 +96,6 @@ export default function MarketingLayout({ children }) {
             </div>
             <button
               onClick={() => {
-                console.log("HAMBURGER_CLICK");
-                alert("HAMBURGER_CLICK");
                 setIsMobileMenuOpen(true);
               }}
               className="md:hidden p-2 text-slate-600 hover:text-slate-900 transition-colors relative z-50 pointer-events-auto"
@@ -111,10 +119,6 @@ export default function MarketingLayout({ children }) {
               style={{ zIndex: 99999, position: 'fixed', top: 0, left: 0, width: '100%', height: '100%' }}
               data-testid="mobile-menu-overlay"
             >
-              <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                <h1 style={{ color: 'white', fontSize: '2rem', fontWeight: 'bold', background: 'red', padding: '1rem' }}>MENU OPEN (DEBUG)</h1>
-              </div>
-              {console.log("MOBILE MENU: Layout Overlay Rendering")}
               <div className="flex flex-col h-full">
                 <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-100">
                   <span className="text-lg font-bold text-slate-900">Menu</span>

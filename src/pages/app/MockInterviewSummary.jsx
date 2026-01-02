@@ -4,7 +4,8 @@ import { useAuth } from "../../context/AuthContext.jsx";
 import { supabase } from "../../lib/supabaseClient.js";
 import { apiClient } from "../../utils/apiClient.js";
 import { normalizeMockSummary } from "../../utils/apiNormalizers.js";
-import { fetchTtsBlobUrl, triggerBrowserFallback } from "../../utils/ttsHelper.js";
+
+import { requestServerTTS, playAudioFromServer, speakBrowserTTS } from "../../utils/ttsClient.js";
 import AppHeader from "../../components/AppHeader.jsx";
 import TTSSampleButton from "../../components/TTSSampleButton.jsx";
 
@@ -65,106 +66,102 @@ function QuestionAudioPlayer({ text, label, voiceId, playbackRate, onPlay, isCur
         }
     }, [playbackRate]);
 
+    // State for tts status feedback
+    const [ttsStatus, setTtsStatus] = useState({ mode: "server", message: "" });
+
+    // Reset status on play change
+    useEffect(() => {
+        if (!isCurrentlyPlaying && status !== 'PLAYING') {
+            setTtsStatus({ mode: "server", message: "" });
+        }
+    }, [isCurrentlyPlaying, status]);
+
     const handlePlayClick = async () => {
         // CASE 1: PLAYING -> PAUSE
         if (status === 'PLAYING') {
             audioRef.current.pause();
             setStatus('IDLE');
+            window.speechSynthesis.cancel();
             onPlay(null);
             return;
         }
 
         // CASE 2: LOADING -> CANCEL
         if (status === 'LOADING') {
-            if (abortControllerRef.current) abortControllerRef.current.abort();
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
             setStatus('IDLE');
+            setTtsStatus({ mode: "server", message: "" });
             return;
         }
 
         // CASE 3: IDLE/ERROR -> START PLAYING
         onPlay(text); // Notify parent to stop others
         setStatus('LOADING');
+        setTtsStatus({ mode: "server", message: "Generating voice..." });
 
-        // Reuse existing URL if available
-        if (audioUrl) {
+        // Try SERVER TTS first
+        const server = await requestServerTTS({ text, voiceId, speed: playbackRate });
+
+        if (server.ok) {
+            // Play using the shared helper (or existing logic if preferred, but helper is cleaner for audio element)
+            // Existing component logic uses a ref audio element, so let's stick to that for React consistency,
+            // but we can use the helper's play capability or just set src depending on what it returns.
+            // USER REQUEST says: "const played = await playAudioFromServer(server);"
+            // however, this component has complex state (LOADING/PLAYING) and event listeners.
+            // We will integrate the data from `server` into the existing audioRef logic for consistency with the rest of the component features (speed control, etc).
+
             try {
+                const url = server.audioUrl || (server.audioBase64 ? `data:audio/mp3;base64,${server.audioBase64}` : null);
+                if (!url) throw new Error("No audio URL");
+
+                audioRef.current.src = url;
                 audioRef.current.playbackRate = playbackRate;
                 await audioRef.current.play();
                 setStatus('PLAYING');
+                setTtsStatus({ mode: "server", message: "" });
             } catch (err) {
-                console.error("Replay error:", err);
-                setStatus('ERROR');
-                onPlay(null);
+                console.warn("Server playback failed, falling back", err);
+                // Fall through to browser
             }
-            return;
+        } else {
+            console.warn("Server TTS failed", server.error);
+            // Fall through to browser
         }
 
-        // Fetch New Audio
-        abortControllerRef.current = new AbortController();
-        timeoutRef.current = setTimeout(() => {
-            if (abortControllerRef.current) abortControllerRef.current.abort();
-            setStatus('ERROR');
-            if (onError) onError();
-            onPlay(null);
-        }, 15000);
+        // If status is still LOADING, it means server failed or playback failed.
+        if (status === 'LOADING') { // We check status because it might have changed if successful
+            // FALLBACK: Browser TTS
+            setTtsStatus({ mode: "browser", message: "Using browser voice" });
 
-        try {
-            const result = await fetchTtsBlobUrl({ text, voiceId, speed: playbackRate });
-            clearTimeout(timeoutRef.current);
-
-            if (result.error) {
-                throw new Error(result.error);
-            }
-
-            // Revoke old blob URL before setting new one
-            if (audioUrlRef.current && audioUrlRef.current !== result.url) {
-                URL.revokeObjectURL(audioUrlRef.current);
-            }
-
-            // Update both ref and state
-            audioUrlRef.current = result.url;
-            setAudioUrl(result.url);
-
-            audioRef.current.src = result.url;
-            audioRef.current.playbackRate = playbackRate;
-            await audioRef.current.play();
+            // Browser TTS is fire-and-forget in terms of "loading", but "speaking" is a state.
             setStatus('PLAYING');
 
-        } catch (err) {
-            clearTimeout(timeoutRef.current);
-            if (err.name !== 'AbortError') {
-                console.warn('API TTS failed, trying fallback...', err);
+            await speakBrowserTTS({ text, rate: playbackRate });
 
-                // Fallback attempt
-                const fallbackSuccess = triggerBrowserFallback(text, voiceId, playbackRate);
-                if (fallbackSuccess) {
-                    setStatus('IDLE'); // Browser TTS is fire-and-forget, so we assume it plays.
-                    if (onFallback) onFallback();
-                } else {
-                    setStatus('ERROR');
-                    if (onError) onError();
-                }
-            } else {
-                setStatus('IDLE'); // Cancelled cleanly
-            }
+            // When browser finishes (speakBrowserTTS resolves on end), we reset
+            setStatus('IDLE');
+            setTtsStatus({ mode: "server", message: "" });
             onPlay(null);
         }
     };
 
     return (
-        <button
-            onClick={handlePlayClick}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${status === 'ERROR'
-                ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                : 'bg-primary hover:bg-blue-700 text-white'
-                }`}
-        >
-            <span className="material-symbols-outlined text-[20px]">
-                {status === 'LOADING' ? 'hourglass_empty' : status === 'PLAYING' ? 'pause' : 'play_arrow'}
-            </span>
-            {status === 'LOADING' ? 'Loading...' : status === 'PLAYING' ? 'Pause' : label || 'Play'}
-        </button>
+        <>
+            <button
+                onClick={handlePlayClick}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${status === 'ERROR'
+                    ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                    : 'bg-primary hover:bg-blue-700 text-white'
+                    }`}
+            >
+                <span className="material-symbols-outlined text-[20px]">
+                    {status === 'LOADING' ? 'hourglass_empty' : status === 'PLAYING' ? 'pause' : 'play_arrow'}
+                </span>
+                {status === 'LOADING' ? 'Loading...' : status === 'PLAYING' ? 'Pause' : label || 'Play'}
+            </button>
+            {ttsStatus?.mode === "browser" && ttsStatus?.message && status === 'PLAYING' && (
+                <div className="text-xs text-slate-500 mt-1 opacity-80">{ttsStatus.message}</div>
+            )}
+        </>
     );
 }
 
@@ -523,6 +520,22 @@ export default function MockInterviewSummary() {
     useEffect(() => {
         fetchSummary();
     }, [id]);
+
+    // Voice loading guard (user requirement specific)
+    useEffect(() => {
+        if (!("speechSynthesis" in window)) return;
+        const synth = window.speechSynthesis;
+
+        // triggers population in many browsers
+        synth.getVoices();
+
+        const onVoices = () => synth.getVoices();
+        synth.onvoiceschanged = onVoices;
+
+        return () => {
+            synth.onvoiceschanged = null;
+        };
+    }, []);
 
     // Check mock interview limit status on mount
     useEffect(() => {
