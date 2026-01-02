@@ -623,7 +623,7 @@ export default function PracticeSpeakingPage() {
       {/* Use shared header */}
       <AppHeader />
 
-      <main className="flex-grow flex flex-col items-center justify-start py-8 px-4 md:px-6">
+      <main className="flex-grow flex flex-col items-center justify-start py-8 px-4 md:px-6 pb-20">
         <div className="w-full max-w-[800px] flex flex-col gap-8">
           {/* Title and subtitle */}
           <div className="text-center space-y-2 pt-4">
@@ -637,8 +637,8 @@ export default function PracticeSpeakingPage() {
               <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
                 <div className="flex items-start justify-between gap-4 mb-3">
                   {/* Category badge removed */}
-                  {/* Question Audio Controls - FLEX NOWRAP FIX */}
-                  <div className="flex items-center gap-2 flex-nowrap whitespace-nowrap justify-end overflow-x-auto">
+                  {/* Question Audio Controls - Mobile Responsive */}
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
                     <button
                       type="button"
                       onClick={handlePlayQuestion}
@@ -683,7 +683,7 @@ export default function PracticeSpeakingPage() {
                       type="button"
                       data-tour="next-question"
                       onClick={handleTryAnotherQuestion}
-                      className="inline-flex items-center gap-1 px-3 py-1 ml-2 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white text-xs font-bold transition-all border border-white/30 shadow-sm"
+                      className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white text-xs font-bold transition-all border border-white/30 shadow-sm"
                     >
                       <span>Next question</span>
                       <span className="material-symbols-outlined text-sm">arrow_forward</span>

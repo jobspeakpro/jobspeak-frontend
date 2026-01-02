@@ -6,7 +6,7 @@ import MarketingLayout from "../../layouts/MarketingLayout.jsx";
 export default function TermsPage() {
   return (
     <MarketingLayout>
-      <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
+      <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           {/* SIDEBAR */}
           <aside className="hidden lg:block lg:col-span-3 relative">

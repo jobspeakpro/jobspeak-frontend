@@ -6,7 +6,7 @@ import MarketingLayout from "../../layouts/MarketingLayout.jsx";
 export default function PrivacyPage() {
   return (
     <MarketingLayout>
-      <div className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+      <div className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 lg:py-12 pb-20">
         <div className="flex flex-col lg:flex-row gap-12">
           {/* SIDEBAR */}
           <aside className="hidden lg:block w-64 shrink-0">

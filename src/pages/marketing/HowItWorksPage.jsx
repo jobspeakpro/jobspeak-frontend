@@ -9,7 +9,7 @@ export default function HowItWorksPage() {
   return (
     <MarketingLayout>
       {/* Keep ONLY inner content from Stitch (no header/footer/scripts/styles) */}
-      <main className="flex-1 flex flex-col items-center py-10 px-6 md:px-10 lg:px-40">
+      <main className="flex-1 flex flex-col items-center py-10 px-6 md:px-10 lg:px-40 pb-20">
         <div className="flex flex-col max-w-[960px] w-full gap-16">
           <section className="text-center flex flex-col items-center gap-6">
             <div className="flex flex-col gap-4 max-w-2xl">
