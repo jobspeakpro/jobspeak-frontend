@@ -714,55 +714,62 @@ export default function PracticeSpeakingPage() {
                     <p className="text-white/90 text-sm md:text-base mt-2 font-medium">{currentQuestion?.hint ?? ""}</p>
                   </div>
 
-                  {/* Audio Controls */}
-                  <div className="flex items-center gap-2 flex-wrap justify-end shrink-0">
-                    <button
-                      type="button"
-                      onClick={handlePlayQuestion}
-                      className="inline-flex items-center justify-center size-8 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white transition-all"
-                      title={questionIsPlaying ? "Pause" : "Play question"}
-                    >
-                      <span className="material-symbols-outlined text-lg">
-                        {questionIsPlaying ? "pause" : "play_arrow"}
-                      </span>
-                    </button>
-                    <label className="inline-flex items-center gap-1.5 text-white/90 text-xs cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={questionAutoplay}
-                        onChange={(e) => setQuestionAutoplay(e.target.checked)}
-                        className="size-3.5 rounded border-white/30 bg-white/20 checked:bg-primary focus:ring-2 focus:ring-white/50"
-                      />
-                      <span>Autoplay</span>
-                    </label>
-                    <select
-                      value={String(questionSpeed)}
-                      onChange={(e) => setQuestionSpeed(Number(e.target.value))}
-                      className="h-7 rounded-lg border border-white/30 bg-white/20 backdrop-blur-sm text-white text-xs px-2 focus:outline-none focus:ring-2 focus:ring-white/50 min-w-[70px]"
-                    >
-                      {SPEEDS.map(s => (
-                        <option key={s.value} value={String(s.value)} style={{ background: "#1e293b", color: "white" }}>{s.label}</option>
-                      ))}
-                    </select>
-                    <select
-                      data-tour="voice-select"
-                      value={questionVoiceId}
-                      onChange={(e) => setQuestionVoiceId(e.target.value)}
-                      className="h-7 rounded-lg border border-white/30 bg-white/20 backdrop-blur-sm text-white text-xs px-2 focus:outline-none focus:ring-2 focus:ring-white/50 min-w-[140px]"
-                    >
-                      {QUESTION_VOICES.map(v => (
-                        <option key={v.id} value={v.id} style={{ background: "#1e293b", color: "white" }}>{v.label}</option>
-                      ))}
-                    </select>
+                  {/* Audio Controls - Responsive Toolbar */}
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    {/* Left cluster: Play + Autoplay */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handlePlayQuestion}
+                        className="inline-flex items-center justify-center size-8 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white transition-all"
+                        title={questionIsPlaying ? "Pause" : "Play question"}
+                      >
+                        <span className="material-symbols-outlined text-lg">
+                          {questionIsPlaying ? "pause" : "play_arrow"}
+                        </span>
+                      </button>
+                      <label className="inline-flex items-center gap-1.5 text-white/90 text-xs cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={questionAutoplay}
+                          onChange={(e) => setQuestionAutoplay(e.target.checked)}
+                          className="size-3.5 rounded border-white/30 bg-white/20 checked:bg-primary focus:ring-2 focus:ring-white/50"
+                        />
+                        <span>Autoplay</span>
+                      </label>
+                    </div>
 
-                    {/* TTS Status Feedback */}
-                    {ttsStatus?.mode === "browser" && ttsStatus?.message && (
-                      <div className="text-xs text-white/80 px-2 py-1 bg-white/10 rounded">
-                        {ttsStatus.message}
-                      </div>
-                    )}
+                    {/* Middle cluster: Speed + Voice */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <select
+                        value={String(questionSpeed)}
+                        onChange={(e) => setQuestionSpeed(Number(e.target.value))}
+                        className="h-7 rounded-lg border border-white/30 bg-white/20 backdrop-blur-sm text-white text-xs px-2 focus:outline-none focus:ring-2 focus:ring-white/50 min-w-[70px]"
+                      >
+                        {SPEEDS.map(s => (
+                          <option key={s.value} value={String(s.value)} style={{ background: "#1e293b", color: "white" }}>{s.label}</option>
+                        ))}
+                      </select>
+                      <select
+                        data-tour="voice-select"
+                        value={questionVoiceId}
+                        onChange={(e) => setQuestionVoiceId(e.target.value)}
+                        className="h-7 rounded-lg border border-white/30 bg-white/20 backdrop-blur-sm text-white text-xs px-2 focus:outline-none focus:ring-2 focus:ring-white/50 min-w-[140px]"
+                      >
+                        {QUESTION_VOICES.map(v => (
+                          <option key={v.id} value={v.id} style={{ background: "#1e293b", color: "white" }}>{v.label}</option>
+                        ))}
+                      </select>
 
-                    {/* Next Question Button */}
+                      {/* TTS Status Feedback */}
+                      {ttsStatus?.mode === "browser" && ttsStatus?.message && (
+                        <div className="text-xs text-white/80 px-2 py-1 bg-white/10 rounded">
+                          {ttsStatus.message}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right cluster: Next Question */}
                     <button
                       type="button"
                       data-tour="next-question"
@@ -1051,292 +1058,294 @@ export default function PracticeSpeakingPage() {
           });
 
           return (
-            <div className="w-full flex flex-col gap-6 animate-fade-in">
+            <div className="w-full max-w-[1100px] mx-auto px-4">
+              <div className="w-full flex flex-col gap-6 animate-fade-in">
 
-              {/* Profanity Warning Banner */}
-              {hasProfanity && (
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
-                  <span className="material-symbols-outlined text-amber-600 dark:text-amber-500 mt-0.5">warning</span>
-                  <div>
-                    <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400">Professionalism Alert</h4>
-                    <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                      We rewrote this professionally because the original contained unprofessional language.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* 1. Transcript Accordion */}
-              <div className="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-0 shadow-sm overflow-hidden">
-                <button
-                  onClick={() => setIsTranscriptOpen(!isTranscriptOpen)}
-                  className="w-full flex items-center justify-between p-6 bg-slate-50/50 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors"
-                >
-                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">YOUR ANSWER (TRANSCRIPT)</h3>
-                  <span className={`material-symbols-outlined text-slate-400 transition-transform duration-200 ${isTranscriptOpen ? "rotate-180" : ""}`}>expand_more</span>
-                </button>
-                {isTranscriptOpen && (
-                  <div className="p-6 pt-0 border-t border-slate-100 dark:border-slate-800">
-                    <p className="text-text-main dark:text-gray-300 leading-relaxed text-sm md:text-base mt-4 break-words [overflow-wrap:anywhere]">
-                      {text}
-                    </p>
+                {/* Profanity Warning Banner */}
+                {hasProfanity && (
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
+                    <span className="material-symbols-outlined text-amber-600 dark:text-amber-500 mt-0.5">warning</span>
+                    <div>
+                      <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400">Professionalism Alert</h4>
+                      <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                        We rewrote this professionally because the original contained unprofessional language.
+                      </p>
+                    </div>
                   </div>
                 )}
-              </div>
 
-              {/* 2. Score Block */}
-              {typeof score === "number" && (
-                <div className="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                  <div className="flex items-center gap-4 p-6">
-                    <div className="relative size-16 flex items-center justify-center rounded-full border-4 border-primary/20 text-primary font-bold text-xl">
-                      {score}
+                {/* 1. Transcript Accordion */}
+                <div className="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-0 shadow-sm overflow-hidden">
+                  <button
+                    onClick={() => setIsTranscriptOpen(!isTranscriptOpen)}
+                    className="w-full flex items-center justify-between p-6 bg-slate-50/50 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors"
+                  >
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">YOUR ANSWER (TRANSCRIPT)</h3>
+                    <span className={`material-symbols-outlined text-slate-400 transition-transform duration-200 ${isTranscriptOpen ? "rotate-180" : ""}`}>expand_more</span>
+                  </button>
+                  {isTranscriptOpen && (
+                    <div className="p-6 pt-0 border-t border-slate-100 dark:border-slate-800">
+                      <p className="text-text-main dark:text-gray-300 leading-relaxed text-sm md:text-base mt-4 break-words [overflow-wrap:anywhere]">
+                        {text}
+                      </p>
                     </div>
-                    <div>
-                      <h4 className="font-bold text-lg text-text-main dark:text-white">Okay, let's look at this.</h4>
-                      <p className="text-sm text-text-secondary dark:text-gray-400">Score: {score}/100</p>
+                  )}
+                </div>
+
+                {/* 2. Score Block */}
+                {typeof score === "number" && (
+                  <div className="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-4 p-6">
+                      <div className="relative size-16 flex items-center justify-center rounded-full border-4 border-primary/20 text-primary font-bold text-xl">
+                        {score}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-lg text-text-main dark:text-white">Okay, let's look at this.</h4>
+                        <p className="text-sm text-text-secondary dark:text-gray-400">Score: {score}/100</p>
+                      </div>
                     </div>
                   </div>
+                )}
+
+                {/* 3. Feedback Columns - ALWAYS VISIBLE */}
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* What Worked */}
+                  <div className="bg-green-50 dark:bg-green-900/10 rounded-xl p-6 border border-green-100 dark:border-green-900/30">
+                    <h4 className="font-bold text-green-800 dark:text-green-400 mb-4 flex items-center gap-2">
+                      <span className="material-symbols-outlined">check_circle</span>
+                      What you did well
+                    </h4>
+                    {whatWorked.length > 0 ? (
+                      <ul className="space-y-3">
+                        {whatWorked.map((item, i) => (
+                          <li key={i} className="text-sm text-text-main dark:text-gray-300 flex gap-2 items-start break-words [overflow-wrap:anywhere]">
+                            <span className="text-green-500 mt-0.5 flex-shrink-0">•</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-slate-500 italic">This feedback will appear once analysis completes.</p>
+                    )}
+                  </div>
+
+                  {/* Improve Next */}
+                  <div className="bg-amber-50 dark:bg-amber-900/10 rounded-xl p-6 border border-amber-100 dark:border-amber-900/30">
+                    <h4 className="font-bold text-amber-800 dark:text-amber-400 mb-4 flex items-center gap-2">
+                      <span className="material-symbols-outlined">lightbulb</span>
+                      Tips for next time
+                    </h4>
+                    {improveNext.length > 0 ? (
+                      <ul className="space-y-3">
+                        {improveNext.map((item, i) => (
+                          <li key={i} className="text-sm text-text-main dark:text-gray-300 flex gap-2 items-start break-words [overflow-wrap:anywhere]">
+                            <span className="text-amber-500 mt-0.5 flex-shrink-0">•</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-slate-500 italic">This feedback will appear once analysis completes.</p>
+                    )}
+                  </div>
                 </div>
-              )}
 
-              {/* 3. Feedback Columns - ALWAYS VISIBLE */}
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* What Worked */}
-                <div className="bg-green-50 dark:bg-green-900/10 rounded-xl p-6 border border-green-100 dark:border-green-900/30">
-                  <h4 className="font-bold text-green-800 dark:text-green-400 mb-4 flex items-center gap-2">
-                    <span className="material-symbols-outlined">check_circle</span>
-                    What you did well
+                {/* 4. Hiring Manager Box - ALWAYS VISIBLE */}
+                <div className="bg-purple-50 dark:bg-purple-900/10 rounded-xl p-6 border border-purple-100 dark:border-purple-900/30">
+                  <h4 className="font-bold text-purple-800 dark:text-purple-400 mb-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined">psychology</span>
+                    How you came across
                   </h4>
-                  {whatWorked.length > 0 ? (
-                    <ul className="space-y-3">
-                      {whatWorked.map((item, i) => (
-                        <li key={i} className="text-sm text-text-main dark:text-gray-300 flex gap-2 items-start break-words [overflow-wrap:anywhere]">
-                          <span className="text-green-500 mt-0.5 flex-shrink-0">•</span>
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-slate-500 italic">This feedback will appear once analysis completes.</p>
-                  )}
+                  <p className="text-purple-900 dark:text-purple-200 italic text-sm leading-relaxed">
+                    "{hiringManagerHeard ? hiringManagerHeard.replace(/seems junior/gi, "signals early-career level") : "This feedback will appear once analysis completes."}"
+                  </p>
                 </div>
 
-                {/* Improve Next */}
-                <div className="bg-amber-50 dark:bg-amber-900/10 rounded-xl p-6 border border-amber-100 dark:border-amber-900/30">
-                  <h4 className="font-bold text-amber-800 dark:text-amber-400 mb-4 flex items-center gap-2">
-                    <span className="material-symbols-outlined">lightbulb</span>
-                    Tips for next time
-                  </h4>
-                  {improveNext.length > 0 ? (
-                    <ul className="space-y-3">
-                      {improveNext.map((item, i) => (
-                        <li key={i} className="text-sm text-text-main dark:text-gray-300 flex gap-2 items-start break-words [overflow-wrap:anywhere]">
-                          <span className="text-amber-500 mt-0.5 flex-shrink-0">•</span>
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-slate-500 italic">This feedback will appear once analysis completes.</p>
-                  )}
-                </div>
-              </div>
-
-              {/* 4. Hiring Manager Box - ALWAYS VISIBLE */}
-              <div className="bg-purple-50 dark:bg-purple-900/10 rounded-xl p-6 border border-purple-100 dark:border-purple-900/30">
-                <h4 className="font-bold text-purple-800 dark:text-purple-400 mb-2 flex items-center gap-2">
-                  <span className="material-symbols-outlined">psychology</span>
-                  How you came across
-                </h4>
-                <p className="text-purple-900 dark:text-purple-200 italic text-sm leading-relaxed">
-                  "{hiringManagerHeard ? hiringManagerHeard.replace(/seems junior/gi, "signals early-career level") : "This feedback will appear once analysis completes."}"
-                </p>
-              </div>
 
 
+                {/* 6. Vocabulary Section - Show exactly 2 words */}
+                {vocabulary.length > 0 && (
+                  <div className="w-full bg-slate-50 dark:bg-slate-800/50 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
+                    <h4 className="font-bold text-slate-700 dark:text-slate-300 mb-6 flex items-center gap-2">
+                      <span className="material-symbols-outlined">book_2</span>
+                      Vocabulary to level up your answer
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {vocabulary.slice(0, 2).map((item, i) => {
+                        const word = item.word ?? item.term ?? item.vocab ?? "";
+                        const definition = stripHtml(item.definition ?? item.meaning ?? "");
+                        const example = stripHtml(item.usage ?? item.example ?? item.sentence ?? "");
+                        const partOfSpeech = item.partOfSpeech ?? item.pos ?? "";
+                        const ipa = item.ipa ?? item.phonetic ?? "";
 
-              {/* 6. Vocabulary Section - Show exactly 2 words */}
-              {vocabulary.length > 0 && (
-                <div className="w-full bg-slate-50 dark:bg-slate-800/50 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
-                  <h4 className="font-bold text-slate-700 dark:text-slate-300 mb-6 flex items-center gap-2">
-                    <span className="material-symbols-outlined">book_2</span>
-                    Vocabulary to level up your answer
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {vocabulary.slice(0, 2).map((item, i) => {
-                      const word = item.word ?? item.term ?? item.vocab ?? "";
-                      const definition = stripHtml(item.definition ?? item.meaning ?? "");
-                      const example = stripHtml(item.usage ?? item.example ?? item.sentence ?? "");
-                      const partOfSpeech = item.partOfSpeech ?? item.pos ?? "";
-                      const ipa = item.ipa ?? item.phonetic ?? "";
+                        // Only render if we have both word and definition
+                        if (!word || !definition) return null;
 
-                      // Only render if we have both word and definition
-                      if (!word || !definition) return null;
+                        return (
+                          <div key={i} className="bg-white dark:bg-slate-800 p-5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm text-left h-full flex flex-col gap-2">
+                            {/* Row 1: Word + Part of Speech */}
+                            <div className="flex items-baseline gap-2 mb-1">
+                              <h5 className="font-bold text-xl dark:text-white text-left text-slate-900">{word}</h5>
+                              {partOfSpeech && (
+                                <span className="text-sm text-slate-500 dark:text-slate-400 italic">
+                                  ({partOfSpeech.toLowerCase()})
+                                </span>
+                              )}
+                            </div>
 
-                      return (
-                        <div key={i} className="bg-white dark:bg-slate-800 p-5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm text-left h-full flex flex-col gap-2">
-                          {/* Row 1: Word + Part of Speech */}
-                          <div className="flex items-baseline gap-2 mb-1">
-                            <h5 className="font-bold text-xl dark:text-white text-left text-slate-900">{word}</h5>
-                            {partOfSpeech && (
-                              <span className="text-sm text-slate-500 dark:text-slate-400 italic">
-                                ({partOfSpeech.toLowerCase()})
-                              </span>
+                            {/* Row 2: IPA Phonetic + US Button (only if IPA exists) */}
+                            {ipa && (
+                              <div className="flex items-center gap-3 mb-2">
+                                <span className="text-sm font-mono text-slate-500 dark:text-slate-400">{ipa}</span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!word) return;
+                                    fetchTtsBlobUrl({
+                                      text: word,
+                                      voiceId: questionVoiceId,
+                                      speed: 1.0,
+                                      locale: "en-US"
+                                    }).then(({ url }) => {
+                                      if (url) {
+                                        const audio = new Audio(url);
+                                        audio.play().catch(e => console.error("Vocab play error", e));
+                                      }
+                                    });
+                                  }}
+                                  className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase transition-colors tracking-wide"
+                                  title="Play US pronunciation"
+                                >
+                                  <span className="material-symbols-outlined text-[14px]">volume_up</span>
+                                  US
+                                </button>
+                              </div>
+                            )}
+
+                            {/* Row 3: Definition */}
+                            <div className="text-sm text-slate-700 dark:text-slate-300 leading-snug">
+                              <span className="font-semibold text-slate-900 dark:text-white">Definition:</span> {definition}
+                            </div>
+
+                            {/* Row 4: Example Usage */}
+                            {example && (
+                              <div className="text-sm text-slate-600 dark:text-slate-400 italic">
+                                <span className="font-medium not-italic text-slate-500">Example:</span> "{example}"
+                              </div>
                             )}
                           </div>
-
-                          {/* Row 2: IPA Phonetic + US Button (only if IPA exists) */}
-                          {ipa && (
-                            <div className="flex items-center gap-3 mb-2">
-                              <span className="text-sm font-mono text-slate-500 dark:text-slate-400">{ipa}</span>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (!word) return;
-                                  fetchTtsBlobUrl({
-                                    text: word,
-                                    voiceId: questionVoiceId,
-                                    speed: 1.0,
-                                    locale: "en-US"
-                                  }).then(({ url }) => {
-                                    if (url) {
-                                      const audio = new Audio(url);
-                                      audio.play().catch(e => console.error("Vocab play error", e));
-                                    }
-                                  });
-                                }}
-                                className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase transition-colors tracking-wide"
-                                title="Play US pronunciation"
-                              >
-                                <span className="material-symbols-outlined text-[14px]">volume_up</span>
-                                US
-                              </button>
-                            </div>
-                          )}
-
-                          {/* Row 3: Definition */}
-                          <div className="text-sm text-slate-700 dark:text-slate-300 leading-snug">
-                            <span className="font-semibold text-slate-900 dark:text-white">Definition:</span> {definition}
-                          </div>
-
-                          {/* Row 4: Example Usage */}
-                          {example && (
-                            <div className="text-sm text-slate-600 dark:text-slate-400 italic">
-                              <span className="font-medium not-italic text-slate-500">Example:</span> "{example}"
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* 5. Guidance (Improved Answer) - ALWAYS VISIBLE */}
-              <div className="w-full bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/30 p-6 shadow-sm">
-                <h4 className="font-bold text-blue-800 dark:text-blue-400 mb-3 flex items-center gap-2">
-                  <span className="material-symbols-outlined">auto_awesome</span>
-                  Here's a clearer way to say this:
-                </h4>
-                {/* Question Display */}
-                <div className="flex flex-col gap-3">
-                  <h2 className="text-2xl md:text-3xl font-bold text-text-main dark:text-white leading-tight">
-                    {currentQuestion.question}
-                  </h2>
-
-                  {/* Personalization Indicator */}
-                  {profileContext && (profileContext.job_title || profileContext.industry || profileContext.seniority) && (
-                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                      <span className="material-symbols-outlined text-[16px]">person</span>
-                      <span>
-                        Personalized for:
-                        {profileContext.job_title && <span className="font-medium text-slate-700 dark:text-slate-300"> {profileContext.job_title}</span>}
-                        {profileContext.industry && <> • {profileContext.industry}</>}
-                        {profileContext.seniority && <> • {profileContext.seniority}</>}
-                      </span>
-                    </div>
-                  )}
-
-                  {currentQuestion.hint && (
-                    <p className="text-sm text-text-secondary dark:text-gray-400 italic">
-                      💡 {currentQuestion.hint}
-                    </p>
-                  )}
-                </div>
-                {improvedAnswerText ? (
-                  <div className="relative">
-                    {/* Audio Controls - Always show if text exists */}
-                    <div
-                      className="text-text-main dark:text-gray-200 leading-relaxed mb-4 break-words [overflow-wrap:anywhere]"
-                      dangerouslySetInnerHTML={{ __html: renderImprovedAnswerHtml(improvedAnswerText, vocabulary) }}
-                    />
-
-                    <div className="mt-4 flex items-center gap-3 flex-wrap">
-                      <button
-                        type="button"
-                        disabled={!improvedAnswerText}
-                        onClick={handlePlayGuidance}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800/50 text-blue-700 dark:text-blue-300 text-sm font-medium transition-all shadow-sm flex-shrink-0 disabled:opacity-50"
-                      >
-                        <span className="material-symbols-outlined text-lg">
-                          {guidanceIsPlaying ? "pause" : "play_arrow"}
-                        </span>
-                        <span>{guidanceIsPlaying ? "Pause" : "Play audio"}</span>
-                      </button>
-
-                      <select
-                        value={guidanceSpeed}
-                        onChange={(e) => setGuidanceSpeed(parseFloat(e.target.value))}
-                        onClick={(e) => e.stopPropagation()}
-                        className="h-[34px] rounded-lg border border-blue-200 dark:border-blue-800/50 bg-white dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-sm px-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/60 transition-colors"
-                      >
-                        <option value={0.8}>0.8×</option>
-                        <option value={1.0}>1.0×</option>
-                        <option value={1.2}>1.2×</option>
-                        <option value={1.5}>1.5×</option>
-                      </select>
+                        );
+                      })}
                     </div>
                   </div>
-                ) : (
-                  <p className="text-sm text-slate-500 italic mt-4">This feedback will appear once analysis completes.</p>
                 )}
-                {/* Guidance Audio Element */}
-                <audio
-                  ref={guidanceAudioRef}
-                  onPlay={() => setGuidanceIsPlaying(true)}
-                  onPause={() => setGuidanceIsPlaying(false)}
-                  onEnded={() => setGuidanceIsPlaying(false)}
-                  onError={(e) => {
-                    console.error("Guidance audio error", e);
-                    setGuidanceIsPlaying(false);
-                  }}
-                  style={{ display: "none" }}
-                />
+
+                {/* 5. Guidance (Improved Answer) - ALWAYS VISIBLE */}
+                <div className="w-full bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/30 p-6 shadow-sm">
+                  <h4 className="font-bold text-blue-800 dark:text-blue-400 mb-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined">auto_awesome</span>
+                    Here's a clearer way to say this:
+                  </h4>
+                  {/* Question Display */}
+                  <div className="flex flex-col gap-3">
+                    <h2 className="text-2xl md:text-3xl font-bold text-text-main dark:text-white leading-tight">
+                      {currentQuestion.question}
+                    </h2>
+
+                    {/* Personalization Indicator */}
+                    {profileContext && (profileContext.job_title || profileContext.industry || profileContext.seniority) && (
+                      <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                        <span className="material-symbols-outlined text-[16px]">person</span>
+                        <span>
+                          Personalized for:
+                          {profileContext.job_title && <span className="font-medium text-slate-700 dark:text-slate-300"> {profileContext.job_title}</span>}
+                          {profileContext.industry && <> • {profileContext.industry}</>}
+                          {profileContext.seniority && <> • {profileContext.seniority}</>}
+                        </span>
+                      </div>
+                    )}
+
+                    {currentQuestion.hint && (
+                      <p className="text-sm text-text-secondary dark:text-gray-400 italic">
+                        💡 {currentQuestion.hint}
+                      </p>
+                    )}
+                  </div>
+                  {improvedAnswerText ? (
+                    <div className="relative">
+                      {/* Audio Controls - Always show if text exists */}
+                      <div
+                        className="text-text-main dark:text-gray-200 leading-relaxed mb-4 break-words [overflow-wrap:anywhere]"
+                        dangerouslySetInnerHTML={{ __html: renderImprovedAnswerHtml(improvedAnswerText, vocabulary) }}
+                      />
+
+                      <div className="mt-4 flex items-center gap-3 flex-wrap">
+                        <button
+                          type="button"
+                          disabled={!improvedAnswerText}
+                          onClick={handlePlayGuidance}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800/50 text-blue-700 dark:text-blue-300 text-sm font-medium transition-all shadow-sm flex-shrink-0 disabled:opacity-50"
+                        >
+                          <span className="material-symbols-outlined text-lg">
+                            {guidanceIsPlaying ? "pause" : "play_arrow"}
+                          </span>
+                          <span>{guidanceIsPlaying ? "Pause" : "Play audio"}</span>
+                        </button>
+
+                        <select
+                          value={guidanceSpeed}
+                          onChange={(e) => setGuidanceSpeed(parseFloat(e.target.value))}
+                          onClick={(e) => e.stopPropagation()}
+                          className="h-[34px] rounded-lg border border-blue-200 dark:border-blue-800/50 bg-white dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-sm px-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/60 transition-colors"
+                        >
+                          <option value={0.8}>0.8×</option>
+                          <option value={1.0}>1.0×</option>
+                          <option value={1.2}>1.2×</option>
+                          <option value={1.5}>1.5×</option>
+                        </select>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-500 italic mt-4">This feedback will appear once analysis completes.</p>
+                  )}
+                  {/* Guidance Audio Element */}
+                  <audio
+                    ref={guidanceAudioRef}
+                    onPlay={() => setGuidanceIsPlaying(true)}
+                    onPause={() => setGuidanceIsPlaying(false)}
+                    onEnded={() => setGuidanceIsPlaying(false)}
+                    onError={(e) => {
+                      console.error("Guidance audio error", e);
+                      setGuidanceIsPlaying(false);
+                    }}
+                    style={{ display: "none" }}
+                  />
+                </div>
+
+                {/* Placeholder for Mock Interview Modal is not here, it's a separate component or route */}
+
+                {/* Action Buttons */}
+                <div className="w-full flex flex-col sm:flex-row gap-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={handlePracticeAgain}
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold rounded-lg border-2 border-slate-200 dark:border-slate-700 transition-all shadow-sm"
+                  >
+                    <span className="material-symbols-outlined">refresh</span>
+                    <span>Practice Again</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleTryAnotherQuestion}
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-lg transition-all shadow-md"
+                  >
+                    <span>Next Question</span>
+                    <span className="material-symbols-outlined">arrow_forward</span>
+                  </button>
+                </div>
+
               </div>
-
-              {/* Placeholder for Mock Interview Modal is not here, it's a separate component or route */}
-
-              {/* Action Buttons */}
-              <div className="w-full flex flex-col sm:flex-row gap-3 mt-6">
-                <button
-                  type="button"
-                  onClick={handlePracticeAgain}
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold rounded-lg border-2 border-slate-200 dark:border-slate-700 transition-all shadow-sm"
-                >
-                  <span className="material-symbols-outlined">refresh</span>
-                  <span>Practice Again</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleTryAnotherQuestion}
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-lg transition-all shadow-md"
-                >
-                  <span>Next Question</span>
-                  <span className="material-symbols-outlined">arrow_forward</span>
-                </button>
-              </div>
-
             </div>
           );
         })() : result?.error ? (
@@ -1440,11 +1449,13 @@ export default function PracticeSpeakingPage() {
       }
 
       {/* Fallback Toast */}
-      {fallbackToast && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium animate-in fade-in slide-in-from-bottom-4">
-          Using browser voice fallback.
-        </div>
-      )}
+      {
+        fallbackToast && (
+          <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium animate-in fade-in slide-in-from-bottom-4">
+            Using browser voice fallback.
+          </div>
+        )
+      }
 
       {/* TTS Error Toast */}
       {
