@@ -194,7 +194,7 @@ export function usePracticeSession({ profileContext } = {}) {
   }, [currentQuestion]);
 
   // Fetch free attempts from backend API (for display only, not gating)
-  const fetchFreeAttempts = async () => {
+  const fetchFreeAttempts = async ({ silent = false } = {}) => {
     if (isPro) {
       setFreeImproveUsage({ count: 0, limit: 3 });
       setUsage({ used: 0, limit: 3, remaining: 3, blocked: false });
@@ -233,9 +233,12 @@ export function usePracticeSession({ profileContext } = {}) {
           });
         }
       }
+
+      // If we successfully fetched usage, we know server is available
+      setServerUnavailable(false);
     } catch (err) {
       console.error("Error fetching free attempts:", err);
-      if (isNetworkError(err)) {
+      if (!silent && isNetworkError(err)) {
         setServerUnavailable(true);
       }
     }
@@ -413,7 +416,11 @@ export function usePracticeSession({ profileContext } = {}) {
         }
 
         // Refresh free attempts from backend after successful submission (for display only)
-        fetchFreeAttempts();
+        // Silent update to avoid "Backend unavailable" if usage service is flaky but answer succeeded
+        fetchFreeAttempts({ silent: true });
+
+        // Explicitly clear server unavailable since we just had a success
+        setServerUnavailable(false);
 
         // Session is saved by the /api/practice/answer endpoint now
         // No need for separate /api/sessions call

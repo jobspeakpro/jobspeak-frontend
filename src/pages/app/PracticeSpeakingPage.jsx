@@ -433,6 +433,28 @@ export default function PracticeSpeakingPage() {
     loadContext();
   }, [user, onboardingComplete]); // reload if onboarding finishes
 
+  // SYNC: Use backend-provided audio URL if avail (optimization)
+  // This avoids a second fetch if the backend already generated usage
+  useEffect(() => {
+    if (result) {
+      if (result.clearerRewriteAudioUrl) {
+        // Use provided URL
+        setGuidanceAudioUrl(result.clearerRewriteAudioUrl);
+        guidanceAudioUrlRef.current = result.clearerRewriteAudioUrl;
+
+        // Pre-load into audio element
+        if (guidanceAudioRef.current) {
+          guidanceAudioRef.current.src = result.clearerRewriteAudioUrl;
+          guidanceAudioRef.current.playbackRate = guidanceSpeed;
+        }
+      } else {
+        // Clear if not provided (so we generate on-the-fly)
+        setGuidanceAudioUrl(null);
+        guidanceAudioUrlRef.current = null;
+      }
+    }
+  }, [result]);
+
   // Handler for question audio - centralized with proper blob URL management
   const handlePlayQuestion = useCallback(async (options = {}) => {
     const { forceRegenerate = false } = options;
@@ -853,7 +875,7 @@ export default function PracticeSpeakingPage() {
 
         {/* Guidance Card */}
         {/* Note: In expanded view, we use the detailed results block above */}
-        {/* Placeholder state logic managed inside          {/* Guidance Results */}
+        {/* Placeholder state logic managed inside Guidance Results */}
         {loading ? (
           <div className="w-full flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -1312,140 +1334,49 @@ export default function PracticeSpeakingPage() {
         </div>
 
         {/* Free Plan Info Card */}
-        {
-          !isPro && (
-            <div data-tour="free-banner" className="w-full max-w-lg mx-auto mt-2 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-800 flex gap-4 items-start">
-              <span className="material-symbols-outlined text-slate-400 mt-0.5">info</span>
-              <div className="flex-1">
-                <p className="text-sm text-text-secondary dark:text-slate-400 leading-relaxed">
-                  You've used <span className="font-medium text-text-main dark:text-slate-200">{usage.used} of {usage.limit === Infinity ? "∞" : usage.limit}</span> free practice questions for today. You can continue tomorrow or upgrade for unlimited practice.
-                </p>
-                <a className="inline-block mt-2 text-sm font-semibold text-primary hover:underline" href="#" onClick={(e) => { e.preventDefault(); navigate("/pricing"); }}>
-                  View upgrade options
-                </a>
-              </div>
+        {!isPro && (
+          <div data-tour="free-banner" className="w-full max-w-lg mx-auto mt-2 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-800 flex gap-4 items-start">
+            <span className="material-symbols-outlined text-slate-400 mt-0.5">info</span>
+            <div className="flex-1">
+              <p className="text-sm text-text-secondary dark:text-slate-400 leading-relaxed">
+                You've used <span className="font-medium text-text-main dark:text-slate-200">{usage.used} of {usage.limit === Infinity ? "∞" : usage.limit}</span> free practice questions for today. You can continue tomorrow or upgrade for unlimited practice.
+              </p>
+              <a className="inline-block mt-2 text-sm font-semibold text-primary hover:underline" href="#" onClick={(e) => { e.preventDefault(); navigate("/pricing"); }}>
+                View upgrade options
+              </a>
             </div>
-          )
-        }
-    </div >
-      </main >
-
-    {/* Footer */ }
-    < footer className = "py-6 text-center" >
-      <p className="text-slate-400 dark:text-slate-600 text-sm flex items-center justify-center gap-2">
-        <span className="material-symbols-outlined text-lg">lock</span>
-        Practice is private. You're here to learn, not perform.
-      </p>
-      </footer >
-
-    {/* Notification Toast */ }
-  {
-    showNotificationToast && (
-      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3 shadow-lg max-w-md">
-        <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">notifications</span>
-          <div>
-            <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">Notifications coming soon</p>
           </div>
-          <button
-            onClick={() => setShowNotificationToast(false)}
-            className="ml-auto text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
-          >
-            <span className="material-symbols-outlined text-sm">close</span>
-          </button>
-        </div>
-      </div>
-    )
-  }
+        )}
 
-  {/* Fix Button Toast */ }
-  {
-    showFixToast && (
-      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-3 shadow-lg max-w-md">
-        <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-amber-600 dark:text-amber-400">info</span>
-          <div>
-            <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">Backend unavailable</p>
-            <p className="text-xs text-amber-700 dark:text-amber-300">We can't reach our servers right now. Please check your connection and try again.</p>
-          </div>
-          <button
-            onClick={() => setShowFixToast(false)}
-            className="ml-auto text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200"
-          >
-            <span className="material-symbols-outlined text-sm">close</span>
-          </button>
-        </div>
-      </div>
-    )
-  }
 
-  {/* Paywall Modal */ }
-  {
-    showPaywall && (
-      <PaywallModal
-        onClose={() => {
-          setShowPaywall(false);
-          setShowUpgradeModal(false);
-          setPaywallSource(null);
-        }}
-        onNotNow={() => {
-          setShowPaywall(false);
-          setShowUpgradeModal(false);
-          setPaywallSource(null);
-        }}
-      />
-    )
-  }
+        {/* Footer */}
+        <footer className="py-6 text-center">
+          <p className="text-slate-400 dark:text-slate-600 text-sm flex items-center justify-center gap-2">
+            <span className="material-symbols-outlined text-lg">lock</span>
+            Practice is private. You're here to learn, not perform.
+          </p>
+        </footer>
+      </main>
 
-  {/* Mock Interview Selection Modal */ }
-  {
-    showMockSelection && (
-      <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in p-4">
-        <div className="w-full max-w-lg bg-white dark:bg-surface-dark rounded-xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
-          <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-black/20">
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <span className="material-symbols-outlined text-purple-600">video_call</span>
-              Choose Interview Style
-            </h3>
-            <button
-              onClick={() => setShowMockSelection(false)}
-              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1"
-            >
-              <span className="material-symbols-outlined">close</span>
-            </button>
-          </div>
-          <div className="p-6 grid gap-4">
-            <button
-              onClick={() => navigate('/mock-interview?type=short')}
-              className="flex items-start gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-purple-400 hover:ring-1 hover:ring-purple-400/50 bg-white dark:bg-slate-800/50 hover:bg-purple-50 dark:hover:bg-slate-800 transition-all text-left group"
-            >
-              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg group-hover:bg-purple-200 dark:group-hover:bg-purple-800/50 transition-colors shadow-sm">
-                <span className="material-symbols-outlined text-2xl">bolt</span>
-              </div>
+      {/* Notification Toast */}
+      {
+        showNotificationToast && (
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3 shadow-lg">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">notifications</span>
               <div>
-                <h4 className="font-bold text-slate-900 dark:text-white mb-1 group-hover:text-purple-700 dark:group-hover:text-purple-300">Quick Warmup</h4>
-                <p className="text-sm text-slate-500 dark:text-slate-400">5 questions • ~15 mins</p>
-                <p className="text-xs text-slate-400 mt-2">Perfect for a quick daily check-in.</p>
+                <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">Notifications coming soon</p>
               </div>
-            </button>
-            <button
-              onClick={() => navigate('/mock-interview?type=long')}
-              className="flex items-start gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-400 hover:ring-1 hover:ring-blue-400/50 bg-white dark:bg-slate-800/50 hover:bg-blue-50 dark:hover:bg-slate-800 transition-all text-left group"
-            >
-              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg group-hover:bg-blue-200 dark:group-hover:bg-blue-800/50 transition-colors shadow-sm">
-                <span className="material-symbols-outlined text-2xl">tactic</span>
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-900 dark:text-white mb-1 group-hover:text-blue-700 dark:group-hover:text-blue-300">Deep Dive</h4>
-                <p className="text-sm text-slate-500 dark:text-slate-400">10-12 questions • ~45 mins</p>
-                <p className="text-xs text-slate-400 mt-2">Full simulation of a real interview flow.</p>
-              </div>
-            </button>
+              <button
+                onClick={() => setShowNotificationToast(false)}
+                className="ml-auto text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+              >
+                ✕
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
-    )
-  }
-    </div >
+        )
+      }
+    </div>
   );
 }
