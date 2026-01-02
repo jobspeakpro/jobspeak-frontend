@@ -1,11 +1,26 @@
 // src/layouts/MarketingLayout.jsx
 import React from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useState, useEffect } from "react";
 
 export default function MarketingLayout({ children }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthed, logout } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Debug overlay mount
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      console.log("OVERLAY_MOUNT (Layout)", isMobileMenuOpen);
+    }
+  }, [isMobileMenuOpen]);
+
+  // Close menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
 
   return (
     <div className="marketing-root bg-white text-slate-900 font-display overflow-x-hidden">
@@ -69,8 +84,121 @@ export default function MarketingLayout({ children }) {
                 <span className="truncate">Start Practicing</span>
               </button>
             </div>
+            <button
+              onClick={() => {
+                console.log("HAMBURGER_CLICK");
+                alert("HAMBURGER_CLICK");
+                setIsMobileMenuOpen(true);
+              }}
+              className="md:hidden p-2 text-slate-600 hover:text-slate-900 transition-colors relative z-50 pointer-events-auto"
+              aria-label="Open menu"
+              data-testid="hamburger-btn"
+            >
+              <div className="flex flex-col gap-[5px] w-6">
+                <span className="w-full h-0.5 bg-current rounded-full" />
+                <span className="w-full h-0.5 bg-current rounded-full" />
+                <span className="w-full h-0.5 bg-current rounded-full" />
+              </div>
+            </button>
           </div>
         </header>
+
+        {/* Mobile Menu Overlay */}
+        {
+          isMobileMenuOpen && (
+            <div
+              className="fixed inset-0 bg-white text-slate-900 md:hidden flex flex-col"
+              style={{ zIndex: 99999, position: 'fixed', top: 0, left: 0, width: '100%', height: '100%' }}
+              data-testid="mobile-menu-overlay"
+            >
+              <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                <h1 style={{ color: 'white', fontSize: '2rem', fontWeight: 'bold', background: 'red', padding: '1rem' }}>MENU OPEN (DEBUG)</h1>
+              </div>
+              {console.log("MOBILE MENU: Layout Overlay Rendering")}
+              <div className="flex flex-col h-full">
+                <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-100">
+                  <span className="text-lg font-bold text-slate-900">Menu</span>
+                  <button
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-2 text-slate-600 hover:text-slate-900"
+                    aria-label="Close menu"
+                  >
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
+                </div>
+                <nav className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-4">
+                  <Link
+                    to="/start"
+                    className="block p-4 rounded-xl bg-blue-50 text-blue-700 font-bold text-lg"
+                  >
+                    Start Practicing
+                  </Link>
+                  <Link
+                    to="/how-it-works"
+                    className="block p-4 rounded-xl hover:bg-slate-50 text-slate-700 font-medium border border-transparent hover:border-slate-200 transition-all font-display"
+                  >
+                    How It Works
+                  </Link>
+                  <Link
+                    to="/pricing"
+                    className="block p-4 rounded-xl hover:bg-slate-50 text-slate-700 font-medium border border-transparent hover:border-slate-200 transition-all font-display"
+                  >
+                    Pricing
+                  </Link>
+                  <Link
+                    to="/help"
+                    className="block p-4 rounded-xl hover:bg-slate-50 text-slate-700 font-medium border border-transparent hover:border-slate-200 transition-all font-display"
+                  >
+                    Support / Help
+                  </Link>
+                  <Link
+                    to="/contact"
+                    className="block p-4 rounded-xl hover:bg-slate-50 text-slate-700 font-medium border border-transparent hover:border-slate-200 transition-all font-display"
+                  >
+                    Contact Us
+                  </Link>
+
+                  <div className="border-t border-slate-100 my-2"></div>
+
+                  {isAuthed ? (
+                    <>
+                      <Link
+                        to="/dashboard"
+                        className="block p-4 rounded-xl hover:bg-slate-50 text-slate-700 font-medium border border-transparent hover:border-slate-200 transition-all font-display"
+                      >
+                        Dashboard
+                      </Link>
+                      <button
+                        onClick={() => {
+                          logout();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="w-full text-left block p-4 rounded-xl hover:bg-red-50 text-red-600 font-medium border border-transparent hover:border-red-100 transition-all font-display"
+                      >
+                        Sign Out
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        to="/signin"
+                        className="block p-4 rounded-xl hover:bg-slate-50 text-slate-700 font-medium border border-transparent hover:border-slate-200 transition-all font-display"
+                      >
+                        Sign In
+                      </Link>
+                      <Link
+                        to="/signup" // Note: Check if /signup exists or should be /signin
+                        className="block p-4 rounded-xl hover:bg-slate-50 text-slate-700 font-medium border border-transparent hover:border-slate-200 transition-all font-display"
+                      >
+                        Create Account
+                      </Link>
+                    </>
+                  )}
+                </nav>
+              </div>
+            </div>
+          )
+        }
 
         {/* MAIN CONTENT */}
         <main className="flex-1">
@@ -183,8 +311,8 @@ export default function MarketingLayout({ children }) {
             </div>
           </div>
         </footer>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }
 

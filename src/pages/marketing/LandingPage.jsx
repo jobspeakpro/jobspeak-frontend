@@ -10,7 +10,16 @@ export default function LandingPage() {
   const { refreshProStatus } = usePro();
   const { isAuthed, logout } = useAuth();
   const [toast, setToast] = useState(null); // 'success' | 'canceled' | null
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   const hasTrackedStripeReturn = useRef(false);
+
+  // Debug overlay mount
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      console.log("OVERLAY_MOUNT", isMobileMenuOpen);
+    }
+  }, [isMobileMenuOpen]);
 
   // Handle anchor scrolling for #pricing
   useEffect(() => {
@@ -199,12 +208,125 @@ export default function LandingPage() {
                 </Link>
               </>
             )}
-            <button className="md:hidden p-2 text-slate-600">
+            <button
+              className="md:hidden p-2 text-slate-600 hover:text-primary transition-colors relative z-50 pointer-events-auto"
+              onClick={() => {
+                console.log("HAMBURGER_CLICK");
+                alert("HAMBURGER_CLICK");
+                setIsMobileMenuOpen(true);
+              }}
+              aria-label="Open menu"
+              data-testid="hamburger-btn"
+            >
               <span className="material-symbols-outlined">menu</span>
             </button>
           </div>
         </div>
       </header>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-white text-slate-900 md:hidden flex flex-col"
+          style={{ zIndex: 99999, position: 'fixed', top: 0, left: 0, width: '100%', height: '100%' }}
+          data-testid="mobile-menu-overlay"
+        >
+          {/* Debug log for render */}
+          {console.log("MOBILE MENU: OVERLAY_MOUNT")}
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+            <h1 style={{ color: 'white', fontSize: '2rem', fontWeight: 'bold', background: 'red', padding: '1rem' }}>MENU OPEN (DEBUG)</h1>
+          </div>
+          <div className="flex flex-col h-full">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-100">
+              <span className="text-lg font-bold text-slate-900">Menu</span>
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2 text-slate-600 hover:text-slate-900"
+                aria-label="Close menu"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <nav className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-4">
+              <Link
+                to="/interview"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block p-4 rounded-xl bg-primary/5 text-primary font-bold text-lg"
+              >
+                Start Practicing
+              </Link>
+              <Link
+                to="/how-it-works"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block p-4 rounded-xl hover:bg-slate-50 text-slate-700 font-medium border border-transparent hover:border-slate-200 transition-all font-display"
+              >
+                How It Works
+              </Link>
+              <Link
+                to="/pricing"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block p-4 rounded-xl hover:bg-slate-50 text-slate-700 font-medium border border-transparent hover:border-slate-200 transition-all font-display"
+              >
+                Pricing
+              </Link>
+              <Link
+                to="/support"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block p-4 rounded-xl hover:bg-slate-50 text-slate-700 font-medium border border-transparent hover:border-slate-200 transition-all font-display"
+              >
+                Support / Help
+              </Link>
+              <Link
+                to="/contact"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block p-4 rounded-xl hover:bg-slate-50 text-slate-700 font-medium border border-transparent hover:border-slate-200 transition-all font-display"
+              >
+                Contact Us
+              </Link>
+
+              <div className="border-t border-slate-100 my-2"></div>
+
+              {isAuthed ? (
+                <>
+                  <Link
+                    to="/dashboard"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block p-4 rounded-xl hover:bg-slate-50 text-slate-700 font-medium border border-transparent hover:border-slate-200 transition-all font-display"
+                  >
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full text-left block p-4 rounded-xl hover:bg-red-50 text-red-600 font-medium border border-transparent hover:border-red-100 transition-all font-display"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/signin"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block p-4 rounded-xl hover:bg-slate-50 text-slate-700 font-medium border border-transparent hover:border-slate-200 transition-all font-display"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    to="/signup"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block p-4 rounded-xl hover:bg-slate-50 text-slate-700 font-medium border border-transparent hover:border-slate-200 transition-all font-display"
+                  >
+                    Create Account
+                  </Link>
+                </>
+              )}
+            </nav>
+          </div>
+        </div>
+      )}
 
       <main className="flex flex-col">
         <section className="relative overflow-hidden bg-white py-16 lg:py-24">

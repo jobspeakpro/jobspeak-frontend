@@ -7,6 +7,7 @@ import { usePro } from "../contexts/ProContext.jsx";
 import { getUserKey } from "../utils/userKey.js";
 import { isBlocked } from "../utils/usage.js";
 import { gaEvent } from "../utils/ga.js";
+import { checkContentSafety, getBlockedResult } from "../utils/professionalismGate.js";
 
 // Practice questions array
 const practiceQuestions = [
@@ -119,7 +120,7 @@ export function usePracticeSession({ profileContext } = {}) {
 
     try {
       setLoadingPersonalized(true);
-      const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+      const API_BASE = '';
 
       const params = new URLSearchParams({
         jobTitle: profileContext.job_title || '',
@@ -377,9 +378,33 @@ export function usePracticeSession({ profileContext } = {}) {
     gaEvent("practice_submit", { page: "practice" });
     setError("");
     setResult(null);
+    setResult(null);
     setLoading(true);
 
     try {
+      // 1. PROFESSIONALISM GATE (Client-Side Check)
+      const safetyCheck = checkContentSafety(text);
+      if (!safetyCheck.safe) {
+        console.warn("[Content Safety] Unsafe content detected:", safetyCheck.reasons);
+
+        // Simulate network delay for realism (and to prevent instant flash)
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        const blockedResult = getBlockedResult(currentQuestion?.question || "Question", safetyCheck);
+        setResult(blockedResult);
+
+        // Count usage to prevent abuse
+        const currentQId = currentQuestion?.id || currentQuestion?.question?.substring(0, 20);
+        if (currentQId && lastConsumedQuestionIdRef.current !== currentQId) {
+          lastConsumedQuestionIdRef.current = currentQId;
+          setPracticeQuestionsUsed(prev => prev + 1);
+        }
+        fetchFreeAttempts({ silent: true });
+
+        setLoading(false);
+        return; // STOP HERE
+      }
+
       try {
         const sessionId = `practice_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 

@@ -4,13 +4,14 @@ import { useAuth } from "../../context/AuthContext.jsx";
 import { supabase } from "../../lib/supabaseClient.js";
 import { apiClient } from "../../utils/apiClient.js";
 import { normalizeMockSummary } from "../../utils/apiNormalizers.js";
-import { fetchTtsBlobUrl } from "../../utils/ttsHelper.js";
+import { fetchTtsBlobUrl, triggerBrowserFallback } from "../../utils/ttsHelper.js";
 import AppHeader from "../../components/AppHeader.jsx";
 import TTSSampleButton from "../../components/TTSSampleButton.jsx";
 
 // Per-Question Audio Player Component (no speed controls, uses global settings)
 // Per-Question Audio Player Component (no speed controls, uses global settings)
-function QuestionAudioPlayer({ text, label, voiceId, playbackRate, onPlay, isCurrentlyPlaying }) {
+// Per-Question Audio Player Component (no speed controls, uses global settings)
+function QuestionAudioPlayer({ text, label, voiceId, playbackRate, onPlay, isCurrentlyPlaying, onError }) {
     const audioRef = useRef(new Audio());
     const audioUrlRef = useRef(null); // Track current blob URL for cleanup
     const abortControllerRef = useRef(null);
@@ -104,7 +105,7 @@ function QuestionAudioPlayer({ text, label, voiceId, playbackRate, onPlay, isCur
         timeoutRef.current = setTimeout(() => {
             if (abortControllerRef.current) abortControllerRef.current.abort();
             setStatus('ERROR');
-            alert('Audio generation timed out.');
+            if (onError) onError();
             onPlay(null);
         }, 15000);
 
@@ -133,9 +134,17 @@ function QuestionAudioPlayer({ text, label, voiceId, playbackRate, onPlay, isCur
         } catch (err) {
             clearTimeout(timeoutRef.current);
             if (err.name !== 'AbortError') {
-                console.error('Audio fetch error:', err);
-                setStatus('ERROR');
-                alert('Failed to load audio');
+                console.warn('API TTS failed, trying fallback...', err);
+
+                // Fallback attempt
+                const fallbackSuccess = triggerBrowserFallback(text, voiceId, playbackRate);
+                if (fallbackSuccess) {
+                    setStatus('IDLE'); // Browser TTS is fire-and-forget, so we assume it plays.
+                    if (onFallback) onFallback();
+                } else {
+                    setStatus('ERROR');
+                    if (onError) onError();
+                }
             } else {
                 setStatus('IDLE'); // Cancelled cleanly
             }
@@ -160,12 +169,14 @@ function QuestionAudioPlayer({ text, label, voiceId, playbackRate, onPlay, isCur
 }
 
 // Vocabulary Word Component with Pronunciation (uses global voice)
-function VocabWord({ word, ipa, definition, example, pos, voiceId, onPlay, isCurrentlyPlaying }) {
+// Vocabulary Word Component with Pronunciation (uses global voice)
+function VocabWord({ word, ipa, definition, example, pos, voiceId, onPlay, isCurrentlyPlaying, onError, onFallback }) {
     const audioRef = useRef(new Audio());
     const audioUrlRef = useRef(null); // Track current blob URL for cleanup
     const abortControllerRef = useRef(null);
     const timeoutRef = useRef(null);
     const [isLoading, setIsLoading] = useState(false);
+    // Parent manages toast via onError. But we need fallback logic here.
 
     useEffect(() => {
         const audio = audioRef.current;
@@ -208,7 +219,7 @@ function VocabWord({ word, ipa, definition, example, pos, voiceId, onPlay, isCur
         timeoutRef.current = setTimeout(() => {
             if (abortControllerRef.current) abortControllerRef.current.abort();
             setIsLoading(false);
-            alert('Pronunciation timed out');
+            if (onError) onError();
             onPlay(null);
         }, 15000);
 
@@ -218,9 +229,7 @@ function VocabWord({ word, ipa, definition, example, pos, voiceId, onPlay, isCur
             setIsLoading(false);
 
             if (result.error) {
-                console.error('Pronunciation TTS error:', result.error);
-                onPlay(null);
-                return;
+                throw new Error(result.error);
             }
 
             // Revoke old blob URL before setting new one
@@ -234,10 +243,16 @@ function VocabWord({ word, ipa, definition, example, pos, voiceId, onPlay, isCur
             audioRef.current.play();
         } catch (err) {
             clearTimeout(timeoutRef.current);
-            setIsLoading(false);
             if (err.name !== 'AbortError') {
-                console.error('Pronunciation error:', err);
+                console.warn('Pronunciation API failed, trying fallback...', err);
+                const fallbackSuccess = triggerBrowserFallback(word, voiceId);
+                if (fallbackSuccess) {
+                    if (onFallback) onFallback();
+                } else if (onError) {
+                    onError(err);
+                }
             }
+            setIsLoading(false);
             onPlay(null);
         }
     };
@@ -351,6 +366,23 @@ export default function MockInterviewSummary() {
     const [selectedVoice, setSelectedVoice] = useState('us_female_emma');
     const [playbackRate, setPlaybackRate] = useState(1.0);
     const [currentlyPlayingAudio, setCurrentlyPlayingAudio] = useState(null);
+    const [ttsErrorToast, setTtsErrorToast] = useState(false);
+    const [fallbackToast, setFallbackToast] = useState(false);
+
+    // Auto-dismiss toast
+    useEffect(() => {
+        if (ttsErrorToast) {
+            const timer = setTimeout(() => setTtsErrorToast(false), 4000);
+            return () => clearTimeout(timer);
+        }
+    }, [ttsErrorToast]);
+
+    useEffect(() => {
+        if (fallbackToast) {
+            const timer = setTimeout(() => setFallbackToast(false), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [fallbackToast]);
 
     // Voice options (same as Practice page)
     const voiceOptions = [
@@ -370,7 +402,8 @@ export default function MockInterviewSummary() {
 
         try {
             // DIRECT FETCH (bypass apiClient to prevent option handling issues)
-            const base = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:3000";
+            // Use relative path to leverage Vercel proxy
+            const base = "";
             const url = `${base}/api/mock-interview/summary?sessionId=${encodeURIComponent(id)}&t=${Date.now()}`;
 
             console.log("[SUMMARY] Fetching from:", url);
@@ -495,7 +528,8 @@ export default function MockInterviewSummary() {
     useEffect(() => {
         const checkMockLimit = async () => {
             try {
-                const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+                // Use relative path
+                const API_BASE = '';
                 const { data } = await supabase.auth.getSession();
                 const token = data?.session?.access_token;
 
@@ -734,7 +768,7 @@ export default function MockInterviewSummary() {
                                 summary.strengths.map((strength, index) => {
                                     const text = typeof strength === 'string' ? strength : (strength.title || strength.label || JSON.stringify(strength));
                                     return (
-                                        <li key={index} className="flex gap-3 text-sm text-slate-600 dark:text-slate-400">
+                                        <li key={index} className="flex gap-3 text-sm text-slate-600 dark:text-slate-400 break-words [overflow-wrap:anywhere]">
                                             <div className="size-1.5 rounded-full bg-green-500 mt-2 shrink-0"></div>
                                             <span>{text}</span>
                                         </li>
@@ -760,7 +794,7 @@ export default function MockInterviewSummary() {
                                 summary.improvements.map((improvement, index) => {
                                     const text = typeof improvement === 'string' ? improvement : (improvement.title || improvement.label || JSON.stringify(improvement));
                                     return (
-                                        <li key={index} className="flex gap-3 text-sm text-slate-600 dark:text-slate-400">
+                                        <li key={index} className="flex gap-3 text-sm text-slate-600 dark:text-slate-400 break-words [overflow-wrap:anywhere]">
                                             <div className="size-1.5 rounded-full bg-primary mt-2 shrink-0"></div>
                                             <span>{text}</span>
                                         </li>
@@ -783,7 +817,7 @@ export default function MockInterviewSummary() {
                             <span className="material-symbols-outlined text-blue-500">hearing</span>
                             What the Hiring Manager Likely Heard
                         </h4>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                        <p className="text-sm text-slate-600 dark:text-slate-400 break-words [overflow-wrap:anywhere]">
                             {summary.hiringManagerHeard}
                         </p>
                     </div>
@@ -958,6 +992,8 @@ export default function MockInterviewSummary() {
                                                 playbackRate={playbackRate}
                                                 onPlay={setCurrentlyPlayingAudio}
                                                 isCurrentlyPlaying={currentlyPlayingAudio === (q.strongerExample.text || '').replace(/<\/?u>/g, '')}
+                                                onError={() => setTtsErrorToast(true)}
+                                                onFallback={() => setFallbackToast(true)}
                                             />
                                         </div>
                                     )}
@@ -1005,6 +1041,8 @@ export default function MockInterviewSummary() {
                                                             voiceId={selectedVoice}
                                                             onPlay={setCurrentlyPlayingAudio}
                                                             isCurrentlyPlaying={currentlyPlayingAudio === v.word}
+                                                            onError={() => setTtsErrorToast(true)}
+                                                            onFallback={() => setFallbackToast(true)}
                                                         />
                                                     ))}
                                                 </div>
@@ -1051,6 +1089,31 @@ export default function MockInterviewSummary() {
 
 
             </main>
+
+            {/* Fallback Toast */}
+            {fallbackToast && (
+                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium animate-in fade-in slide-in-from-bottom-4">
+                    Using browser voice fallback.
+                </div>
+            )}
+
+            {/* TTS Error Toast */}
+            {ttsErrorToast && (
+                <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[100] bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 rounded-lg px-4 py-3 shadow-lg animate-in fade-in slide-in-from-top-5 duration-200 pointer-events-auto">
+                    <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-rose-600 dark:text-rose-400">volume_off</span>
+                        <div>
+                            <p className="text-sm font-semibold text-rose-900 dark:text-rose-200">Audio unavailable right now</p>
+                        </div>
+                        <button
+                            onClick={() => setTtsErrorToast(false)}
+                            className="ml-auto text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-200"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

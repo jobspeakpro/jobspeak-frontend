@@ -32,13 +32,8 @@ export class ApiError extends Error {
 export async function apiClient(endpoint, options = {}) {
   const { parseJson = true, ...fetchOptions } = options;
 
-  // Use base URL from env - REQUIRED in production
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
-
-  // Log error if missing in production
-  if (!API_BASE && import.meta.env.PROD) {
-    console.error("❌ VITE_API_BASE_URL is missing in production");
-  }
+  // Use relative paths to leverage Vercel proxy (avoid CORS)
+  const API_BASE = "";
 
   // Ensure endpoint starts with /
   const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;

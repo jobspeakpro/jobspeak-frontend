@@ -11,6 +11,7 @@ import PricingPage from "./components/PricingPage.jsx";
 import ProGuard from "./components/ProGuard.jsx";
 import Navigation from "./components/Navigation.jsx";
 import InlineError from "./components/InlineError.jsx";
+import DevDebugBanner from "./components/DevDebugBanner.jsx";
 import { usePro } from "./contexts/ProContext.jsx";
 import { isNetworkError } from "./utils/networkError.js";
 import { apiClient, ApiError } from "./utils/apiClient.js";
@@ -23,6 +24,28 @@ export default function App({ defaultTab = "interview" }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(defaultTab); // 'interview' | 'resume' | 'progress' | 'pricing'
+
+  // Hydrate voices on mount
+  useEffect(() => {
+    const hydrate = () => {
+      const voices = window.speechSynthesis?.getVoices() || [];
+      // Just accessing them ensures browser loads them
+      if (voices.length > 0) {
+        console.log(`[TTS] Voices hydrated: ${voices.length}`);
+      }
+    };
+
+    hydrate();
+    if (window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = hydrate;
+    }
+
+    return () => {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
+    };
+  }, []);
 
   // Simple free limits (front-end only for MVP)
   const [showPaywall, setShowPaywall] = useState(false);
@@ -52,7 +75,7 @@ export default function App({ defaultTab = "interview" }) {
 
   // Stripe banner
   const [banner, setBanner] = useState(null); // 'success' | 'canceled' | null
-  
+
   // Ref to track if GA events have been fired for this page load (prevent duplicates)
   const hasTrackedStripeReturn = useRef(false);
 
@@ -61,11 +84,11 @@ export default function App({ defaultTab = "interview" }) {
     try {
       const params = new URLSearchParams(window.location.search);
       const pathname = window.location.pathname.toLowerCase();
-      
+
       // Check query params
       const success = params.get("success");
       const canceled = params.get("canceled");
-      
+
       // Check pathname for success/cancel patterns
       const pathSuccess = pathname.includes("/success") || pathname.includes("/checkout/success");
       const pathCancel = pathname.includes("/cancel") || pathname.includes("/checkout/cancel");
@@ -74,59 +97,59 @@ export default function App({ defaultTab = "interview" }) {
         setBanner("success");
         // Immediately refresh Pro status
         refreshProStatus();
-        
+
         // Fire GA event for successful upgrade (once per return)
         if (!hasTrackedStripeReturn.current) {
           try {
             // Read period and source from localStorage (stored before redirect)
             const period = localStorage.getItem("jobspeak_upgrade_period") || "unknown";
             const source = localStorage.getItem("jobspeak_upgrade_source") || "unknown";
-            
+
             gaEvent("paywall_upgrade_success", {
               page: "practice",
               period: period,
               source: source,
             });
-            
+
             // Clean up localStorage after tracking
             localStorage.removeItem("jobspeak_upgrade_period");
             localStorage.removeItem("jobspeak_upgrade_source");
-            
+
             hasTrackedStripeReturn.current = true;
           } catch (err) {
             console.error("Error tracking upgrade success:", err);
           }
         }
-        
+
         // Clean up URL params
         const newUrl = window.location.pathname;
         window.history.replaceState({}, "", newUrl);
       } else if (canceled === "true" || pathCancel) {
         setBanner("canceled");
-        
+
         // Fire GA event for canceled upgrade (once per return)
         if (!hasTrackedStripeReturn.current) {
           try {
             // Read period and source from localStorage (stored before redirect)
             const period = localStorage.getItem("jobspeak_upgrade_period") || "unknown";
             const source = localStorage.getItem("jobspeak_upgrade_source") || "unknown";
-            
+
             gaEvent("paywall_upgrade_cancel", {
               page: "practice",
               period: period,
               source: source,
             });
-            
+
             // Clean up localStorage after tracking
             localStorage.removeItem("jobspeak_upgrade_period");
             localStorage.removeItem("jobspeak_upgrade_source");
-            
+
             hasTrackedStripeReturn.current = true;
           } catch (err) {
             console.error("Error tracking upgrade cancel:", err);
           }
         }
-        
+
         // Clean up URL params
         const newUrl = window.location.pathname;
         window.history.replaceState({}, "", newUrl);
@@ -237,7 +260,7 @@ export default function App({ defaultTab = "interview" }) {
           keysToDelete.push(key);
         }
       }
-      
+
       keysToDelete.forEach(key => {
         localStorage.removeItem(key);
         console.log("[Cleanup] Removed legacy free usage key:", key);
@@ -380,7 +403,7 @@ export default function App({ defaultTab = "interview" }) {
           body: { text },
         });
         setResult(data);
-        
+
         // Refresh usage after successful submission (includes free attempts)
         fetchUsage();
 
@@ -603,10 +626,10 @@ export default function App({ defaultTab = "interview" }) {
                 {activeTab === "interview"
                   ? "Speaking Practice"
                   : activeTab === "resume"
-                  ? "Resume Doctor"
-                  : activeTab === "progress"
-                  ? "Progress"
-                  : "Pricing"}
+                    ? "Resume Doctor"
+                    : activeTab === "progress"
+                      ? "Progress"
+                      : "Pricing"}
               </p>
               <div className="flex items-center gap-2">
                 <h1 className="text-sm md:text-base font-semibold text-slate-900">
@@ -759,77 +782,77 @@ export default function App({ defaultTab = "interview" }) {
                   <p className="text-[11px] font-semibold text-rose-500 mb-1">
                     Your Answer
                   </p>
-                    <p className="text-[11px] text-slate-500 mb-3">
+                  <p className="text-[11px] text-slate-500 mb-3">
                     Type or speak your answer. Aim for 45–90 seconds when spoken.
                   </p>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleImproveAnswer();
-                }}
-                className="flex flex-col gap-3 flex-1"
-              >
-                <div className="flex items-start gap-3">
-                    <VoiceRecorder 
-                      onTranscript={(transcript) => {
-                        setText(transcript);
-                        setError("");
-                      }} 
-                      onStateChange={({ recording, transcribing }) => {
-                        setIsRecording(recording);
-                        setIsTranscribing(transcribing);
-                        if (transcribing) setError("");
-                      }}
-                      onUpgradeNeeded={(source) => {
-                        // Mic always opens paywall when blocked
-                        setPaywallSource(source || "mic");
-                        setShowUpgradeModal(true);
-                      }}
-                      onAttemptsRefresh={() => fetchUsage()}
-                    />
-                  <div className="flex-1 text-[11px] text-slate-600">
-                    <div className="font-semibold text-slate-800 mb-1">
-                      {isRecording ? "Recording..." : isTranscribing ? "Transcribing..." : "Speak your answer"}
-                    </div>
-                    <div>
-                      {isRecording 
-                        ? "Click stop when finished"
-                        : isTranscribing
-                        ? "Processing your audio..."
-                        : "Click the mic to speak or type below."}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Transcript preview */}
-                {text && (
-                  <div className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700">
-                    <div className="font-semibold mb-1">
-                      {isTranscribing ? "Transcribing..." : "Preview:"}
-                    </div>
-                    <div className={isTranscribing ? "opacity-60" : ""}>
-                      {isTranscribing ? (
-                        <div className="flex items-center gap-2">
-                          <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-400 border-t-transparent"></span>
-                          <span>Processing audio...</span>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleImproveAnswer();
+                    }}
+                    className="flex flex-col gap-3 flex-1"
+                  >
+                    <div className="flex items-start gap-3">
+                      <VoiceRecorder
+                        onTranscript={(transcript) => {
+                          setText(transcript);
+                          setError("");
+                        }}
+                        onStateChange={({ recording, transcribing }) => {
+                          setIsRecording(recording);
+                          setIsTranscribing(transcribing);
+                          if (transcribing) setError("");
+                        }}
+                        onUpgradeNeeded={(source) => {
+                          // Mic always opens paywall when blocked
+                          setPaywallSource(source || "mic");
+                          setShowUpgradeModal(true);
+                        }}
+                        onAttemptsRefresh={() => fetchUsage()}
+                      />
+                      <div className="flex-1 text-[11px] text-slate-600">
+                        <div className="font-semibold text-slate-800 mb-1">
+                          {isRecording ? "Recording..." : isTranscribing ? "Transcribing..." : "Speak your answer"}
                         </div>
-                      ) : (
-                        <div className="line-clamp-2">{text}</div>
-                      )}
+                        <div>
+                          {isRecording
+                            ? "Click stop when finished"
+                            : isTranscribing
+                              ? "Processing your audio..."
+                              : "Click the mic to speak or type below."}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                )}
 
-                <textarea
-                  value={text}
-                  onChange={(e) => {
-                    setText(e.target.value);
-                    if (error) setError("");
-                  }}
-                  placeholder="Type your interview answer here..."
-                  disabled={isTranscribing}
-                  className="w-full flex-1 min-h-[140px] border border-rose-100 bg-rose-50 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-rose-400 disabled:opacity-60 disabled:cursor-not-allowed"
-                />
+                    {/* Transcript preview */}
+                    {text && (
+                      <div className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700">
+                        <div className="font-semibold mb-1">
+                          {isTranscribing ? "Transcribing..." : "Preview:"}
+                        </div>
+                        <div className={isTranscribing ? "opacity-60" : ""}>
+                          {isTranscribing ? (
+                            <div className="flex items-center gap-2">
+                              <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-400 border-t-transparent"></span>
+                              <span>Processing audio...</span>
+                            </div>
+                          ) : (
+                            <div className="line-clamp-2">{text}</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <textarea
+                      value={text}
+                      onChange={(e) => {
+                        setText(e.target.value);
+                        if (error) setError("");
+                      }}
+                      placeholder="Type your interview answer here..."
+                      disabled={isTranscribing}
+                      className="w-full flex-1 min-h-[140px] border border-rose-100 bg-rose-50 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-rose-400 disabled:opacity-60 disabled:cursor-not-allowed"
+                    />
                     <div className="flex flex-wrap gap-2 items-center">
                       <button
                         type="submit"
@@ -837,11 +860,11 @@ export default function App({ defaultTab = "interview" }) {
                         disabled={loading || isTranscribing || (typeof text !== "string" || !text.trim())}
                         className="inline-flex items-center px-4 py-2 rounded-full bg-rose-500 hover:bg-rose-600 text-white text-sm font-semibold shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition"
                       >
-                        {isTranscribing 
-                          ? "Transcribing..." 
-                          : loading 
-                          ? "Improving..." 
-                          : "✨ Improve my answer"}
+                        {isTranscribing
+                          ? "Transcribing..."
+                          : loading
+                            ? "Improving..."
+                            : "✨ Improve my answer"}
                       </button>
                     </div>
                     {error && (
@@ -850,10 +873,10 @@ export default function App({ defaultTab = "interview" }) {
                         onRetry={
                           error.includes("temporarily unavailable")
                             ? () => {
-                                setError("");
-                                setServerUnavailable(false);
-                                handleImproveAnswer();
-                              }
+                              setError("");
+                              setServerUnavailable(false);
+                              handleImproveAnswer();
+                            }
                             : undefined
                         }
                       />
@@ -1023,10 +1046,10 @@ export default function App({ defaultTab = "interview" }) {
                   onRetry={
                     resumeError.includes("temporarily unavailable")
                       ? () => {
-                          setResumeError("");
-                          setServerUnavailable(false);
-                          handleResumeSubmit(new Event("submit"));
-                        }
+                        setResumeError("");
+                        setServerUnavailable(false);
+                        handleResumeSubmit(new Event("submit"));
+                      }
                       : undefined
                   }
                 />
@@ -1199,7 +1222,9 @@ export default function App({ defaultTab = "interview" }) {
           source={paywallSource}
         />
       )}
+
+      {/* Dev Debug Banner */}
+      <DevDebugBanner />
     </div>
   );
 }
-

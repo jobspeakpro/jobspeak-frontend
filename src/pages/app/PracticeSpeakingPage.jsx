@@ -6,7 +6,7 @@ import InlineError from "../../components/InlineError.jsx";
 import PaywallModal from "../../components/PaywallModal.jsx";
 import { usePracticeSession } from "../../hooks/usePracticeSession.js";
 import { getUserKey } from "../../utils/userKey.js";
-import { fetchTtsBlobUrl, clearTtsCacheEntry } from "../../utils/ttsHelper.js";
+import { fetchTtsBlobUrl, clearTtsCacheEntry, triggerBrowserFallback } from "../../utils/ttsHelper.js";
 import PracticeTour from "../../components/PracticeTour.jsx";
 import OnboardingWizard from "../../components/OnboardingWizard.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
@@ -204,6 +204,8 @@ export default function PracticeSpeakingPage() {
   const [showMockSelection, setShowMockSelection] = useState(false);
   const [showNotificationToast, setShowNotificationToast] = useState(false);
   const [showFixToast, setShowFixToast] = useState(false);
+  const [ttsErrorToast, setTtsErrorToast] = useState(false); // Default error toast
+  const [fallbackToast, setFallbackToast] = useState(false); // "Using browser voice fallback"
 
   // --- EFFECTS ---
 
@@ -214,6 +216,22 @@ export default function PracticeSpeakingPage() {
       setShowPaywall(true);
     }
   }, [showUpgradeModal]);
+
+  // Auto-dismiss TTS error toast
+  useEffect(() => {
+    if (ttsErrorToast) {
+      const timer = setTimeout(() => setTtsErrorToast(false), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [ttsErrorToast]);
+
+  // Auto-dismiss Fallback toast
+  useEffect(() => {
+    if (fallbackToast) {
+      const timer = setTimeout(() => setFallbackToast(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [fallbackToast]);
 
   // ONBOARDING HANDLERS
   const showWizard = !onboardingComplete;
@@ -499,6 +517,18 @@ export default function PracticeSpeakingPage() {
 
       if (error || !url) {
         console.error("Question TTS error", error);
+        if (token === questionPlayTokenRef.current) {
+          setQuestionIsPlaying(false);
+          // Fallback Strategy
+          const fellBack = triggerBrowserFallback(textToPlay, questionVoiceId, questionSpeed);
+          if (fellBack) {
+            setFallbackToast(true);
+            // We don't set questionIsPlaying=true for browser TTS because it handles its own state mostly unseen
+            // But we could track it if we wanted. For now, just show toast.
+          } else {
+            setTtsErrorToast(true);
+          }
+        }
         return;
       }
 
@@ -573,6 +603,16 @@ export default function PracticeSpeakingPage() {
 
       if (error || !url) {
         console.error("Guidance TTS error", error);
+        if (token === guidancePlayTokenRef.current) {
+          setGuidanceIsPlaying(false);
+          // Fallback Strategy
+          const fellBack = triggerBrowserFallback(textToPlay, questionVoiceId, guidanceSpeed);
+          if (fellBack) {
+            setFallbackToast(true);
+          } else {
+            setTtsErrorToast(true);
+          }
+        }
         return;
       }
 
@@ -897,7 +937,7 @@ export default function PracticeSpeakingPage() {
             const lower = str.toLowerCase();
             return PROFANITY_LIST.some(word => new RegExp(`\\b${word}\\b`, 'i').test(lower));
           };
-          const hasProfanity = containsProfanity(text);
+          const hasProfanity = result?.metadata?.professionalism?.flagged || containsProfanity(text);
 
           const score = analysisObj?.score ?? null;
 
@@ -999,7 +1039,7 @@ export default function PracticeSpeakingPage() {
                   <div>
                     <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400">Professionalism Alert</h4>
                     <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                      Your response contains unprofessional language. Feedback focuses on professionalism first.
+                      We rewrote this professionally because the original contained unprofessional language.
                     </p>
                   </div>
                 </div>
@@ -1016,7 +1056,7 @@ export default function PracticeSpeakingPage() {
                 </button>
                 {isTranscriptOpen && (
                   <div className="p-6 pt-0 border-t border-slate-100 dark:border-slate-800">
-                    <p className="text-text-main dark:text-gray-300 leading-relaxed text-sm md:text-base mt-4">
+                    <p className="text-text-main dark:text-gray-300 leading-relaxed text-sm md:text-base mt-4 break-words [overflow-wrap:anywhere]">
                       {text}
                     </p>
                   </div>
@@ -1049,8 +1089,8 @@ export default function PracticeSpeakingPage() {
                   {whatWorked.length > 0 ? (
                     <ul className="space-y-3">
                       {whatWorked.map((item, i) => (
-                        <li key={i} className="text-sm text-text-main dark:text-gray-300 flex gap-2 items-start">
-                          <span className="text-green-500 mt-0.5">•</span>
+                        <li key={i} className="text-sm text-text-main dark:text-gray-300 flex gap-2 items-start break-words [overflow-wrap:anywhere]">
+                          <span className="text-green-500 mt-0.5 flex-shrink-0">•</span>
                           <span>{item}</span>
                         </li>
                       ))}
@@ -1069,8 +1109,8 @@ export default function PracticeSpeakingPage() {
                   {improveNext.length > 0 ? (
                     <ul className="space-y-3">
                       {improveNext.map((item, i) => (
-                        <li key={i} className="text-sm text-text-main dark:text-gray-300 flex gap-2 items-start">
-                          <span className="text-amber-500 mt-0.5">•</span>
+                        <li key={i} className="text-sm text-text-main dark:text-gray-300 flex gap-2 items-start break-words [overflow-wrap:anywhere]">
+                          <span className="text-amber-500 mt-0.5 flex-shrink-0">•</span>
                           <span>{item}</span>
                         </li>
                       ))}
@@ -1207,7 +1247,7 @@ export default function PracticeSpeakingPage() {
                   <div className="relative">
                     {/* Audio Controls - Always show if text exists */}
                     <div
-                      className="text-text-main dark:text-gray-200 leading-relaxed mb-4"
+                      className="text-text-main dark:text-gray-200 leading-relaxed mb-4 break-words [overflow-wrap:anywhere]"
                       dangerouslySetInnerHTML={{ __html: renderImprovedAnswerHtml(improvedAnswerText, vocabulary) }}
                     />
 
@@ -1377,6 +1417,33 @@ export default function PracticeSpeakingPage() {
           </div>
         )
       }
-    </div>
+
+      {/* Fallback Toast */}
+      {fallbackToast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium animate-in fade-in slide-in-from-bottom-4">
+          Using browser voice fallback.
+        </div>
+      )}
+
+      {/* TTS Error Toast */}
+      {
+        ttsErrorToast && (
+          <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[100] bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 rounded-lg px-4 py-3 shadow-lg animate-in fade-in slide-in-from-top-5 duration-200">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-rose-600 dark:text-rose-400">volume_off</span>
+              <div>
+                <p className="text-sm font-semibold text-rose-900 dark:text-rose-200">Audio unavailable right now</p>
+              </div>
+              <button
+                onClick={() => setTtsErrorToast(false)}
+                className="ml-auto text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-200"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )
+      }
+    </div >
   );
 }

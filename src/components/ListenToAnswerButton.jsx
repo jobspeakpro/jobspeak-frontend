@@ -31,7 +31,7 @@ async function fetchUsage() {
 const ListenToAnswerButton = forwardRef(function ListenToAnswerButton({ improvedText, onUpgradeNeeded }, ref) {
   const { isPro } = usePro();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [showToast, setShowToast] = useState(false);
   const [usage, setUsage] = useState({ used: 0, limit: 3, remaining: 3, blocked: false });
   const audioRef = useRef(null);
   const audioUrlRef = useRef(null);
@@ -42,6 +42,14 @@ const ListenToAnswerButton = forwardRef(function ListenToAnswerButton({ improved
       fetchUsage().then(setUsage);
     }
   }, [isPro]);
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => setShowToast(false), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
 
   // Clean up object URLs on unmount
   useEffect(() => {
@@ -77,7 +85,7 @@ const ListenToAnswerButton = forwardRef(function ListenToAnswerButton({ improved
 
     // Validate that text is non-empty before making request
     if (!textToSpeak || textToSpeak.trim().length === 0) {
-      setError("No text available to generate audio. Please generate an answer first.");
+      // no-op or log
       return;
     }
 
@@ -94,7 +102,7 @@ const ListenToAnswerButton = forwardRef(function ListenToAnswerButton({ improved
     }
 
     setIsLoading(true);
-    setError("");
+    setShowToast(false);
 
     // Always call the backend endpoint
     const endpoint = "/voice/generate";
@@ -151,7 +159,7 @@ const ListenToAnswerButton = forwardRef(function ListenToAnswerButton({ improved
 
         audio.play().catch((err) => {
           console.error("[TTS] Audio play error:", err);
-          setError("Tap the button again to play, or read the answer aloud to practice.");
+          setShowToast(true);
         });
       } else {
         // B) Else parse JSON and support audioUrl, url, or audio (base64)
@@ -195,7 +203,7 @@ const ListenToAnswerButton = forwardRef(function ListenToAnswerButton({ improved
 
         audio.play().catch((err) => {
           console.error("[TTS] Audio play error:", err);
-          setError("Tap the button again to play, or read the answer aloud to practice.");
+          setShowToast(true);
         });
       }
     } catch (err) {
@@ -220,16 +228,11 @@ const ListenToAnswerButton = forwardRef(function ListenToAnswerButton({ improved
       }
 
       if (isNetworkError(err)) {
-        setError("We're temporarily unavailable. Give us a moment and try again.");
+        setShowToast(true);
       } else if (err instanceof ApiError) {
-        const status = err.status;
-        const errorMsg = err.data?.error || err.message || "Unknown error";
-        console.error(`[TTS] HTTP ${status} error:`, errorMsg);
-        setError(`Audio generation failed (${status}). ${errorMsg}`);
+        setShowToast(true);
       } else {
-        setError(
-          `Audio generation failed: ${err?.message || "Unknown error"}. Check your connection and try again.`
-        );
+        setShowToast(true);
       }
     } finally {
       setIsLoading(false);
@@ -267,7 +270,22 @@ const ListenToAnswerButton = forwardRef(function ListenToAnswerButton({ improved
         )}
       </button>
 
-      {error && <p className="text-xs text-rose-600 max-w-md">{error}</p>}
+      {showToast && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[100] bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 rounded-lg px-4 py-3 shadow-lg animate-in fade-in slide-in-from-top-5 duration-200 pointer-events-auto">
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-rose-600 dark:text-rose-400">volume_off</span>
+            <div>
+              <p className="text-sm font-semibold text-rose-900 dark:text-rose-200">Audio unavailable right now</p>
+            </div>
+            <button
+              onClick={() => setShowToast(false)}
+              className="ml-auto text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-200"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

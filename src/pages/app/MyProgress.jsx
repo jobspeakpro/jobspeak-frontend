@@ -18,7 +18,7 @@ export default function MyProgress() {
       }
 
       try {
-        const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+        const API_BASE = '';
         const response = await fetch(`${API_BASE}/api/progress/summary`, {
           headers: {
             'Authorization': `Bearer ${user.access_token || ''}`,
