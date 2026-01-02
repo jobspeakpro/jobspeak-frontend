@@ -11,8 +11,8 @@ export default function MarketingLayout({ children }) {
     <div className="marketing-root bg-white text-slate-900 font-display overflow-x-hidden">
       <div className="relative flex min-h-screen w-full flex-col group/design-root">
         {/* HEADER */}
-        <header className="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 bg-white/95 backdrop-blur-sm px-6 py-4 lg:px-40">
-          <Link to="/" className="flex items-center gap-4">
+        <header className="sticky top-0 z-50 flex flex-wrap items-center justify-between border-b border-solid border-slate-200 bg-white/95 backdrop-blur-sm px-4 md:px-6 py-4 lg:px-40">
+          <Link to="/" className="flex items-center gap-4 mr-4">
             <div className="size-8 flex items-center justify-center rounded-full bg-blue-100 text-blue-600">
               <span
                 className="material-symbols-outlined"
@@ -25,7 +25,7 @@ export default function MarketingLayout({ children }) {
               JobSpeak Pro
             </h2>
           </Link>
-          <div className="flex flex-1 justify-end gap-8">
+          <div className="flex flex-1 justify-end gap-4 md:gap-8">
             <div className="hidden md:flex items-center gap-9">
               <Link
                 to="/how-it-works"
@@ -40,31 +40,31 @@ export default function MarketingLayout({ children }) {
                 Pricing
               </Link>
               <Link
-                to="/support"
+                to="/help"
                 className="text-slate-600 text-sm font-medium leading-normal hover:text-slate-900 transition-colors"
               >
                 Support
               </Link>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
               {isAuthed ? (
                 <Link
                   to="/dashboard"
-                  className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-6 bg-slate-100 text-slate-700 text-sm font-bold leading-normal tracking-[0.015em] hover:bg-slate-200 transition-colors"
+                  className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-4 md:px-6 bg-slate-100 text-slate-700 text-sm font-bold leading-normal tracking-[0.015em] hover:bg-slate-200 transition-colors"
                 >
                   <span className="truncate">Dashboard</span>
                 </Link>
               ) : (
                 <Link
                   to="/signin"
-                  className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-6 bg-slate-100 text-slate-700 text-sm font-bold leading-normal tracking-[0.015em] hover:bg-slate-200 transition-colors"
+                  className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-4 md:px-6 bg-slate-100 text-slate-700 text-sm font-bold leading-normal tracking-[0.015em] hover:bg-slate-200 transition-colors"
                 >
                   <span className="truncate">Sign In</span>
                 </Link>
               )}
-              <button 
+              <button
                 onClick={() => navigate("/start")}
-                className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-6 bg-blue-600 text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-blue-700 transition-colors shadow-sm"
+                className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-4 md:px-6 bg-blue-600 text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-blue-700 transition-colors shadow-sm"
               >
                 <span className="truncate">Start Practicing</span>
               </button>
@@ -132,7 +132,7 @@ export default function MarketingLayout({ children }) {
                 </h3>
                 <ul className="space-y-3">
                   <li>
-                    <Link to="/support" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
+                    <Link to="/help" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
                       Support
                     </Link>
                   </li>

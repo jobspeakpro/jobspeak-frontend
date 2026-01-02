@@ -51,7 +51,7 @@ export default function AvatarDropdown() {
         { label: "Sign in", onClick: () => navigate("/signin") },
         { label: "Create account", onClick: () => navigate("/signup") },
         { label: "Contact", onClick: () => navigate("/contact") },
-        { label: "Help / FAQ", onClick: () => window.open("https://help.jobspeakpro.com", "_blank") },
+        { label: "Help / FAQ", onClick: () => navigate("/help") },
     ];
 
     // Logged IN menu items
