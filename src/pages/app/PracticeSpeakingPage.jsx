@@ -693,7 +693,7 @@ export default function PracticeSpeakingPage() {
       <AppHeader />
 
       <main className="flex-grow flex flex-col items-center justify-start py-8 px-4 md:px-6 pb-20">
-        <div className="w-full max-w-[800px] flex flex-col gap-8">
+        <div className="w-full max-w-[900px] flex flex-col gap-8">
           {/* Title and subtitle */}
           <div className="text-center space-y-2 pt-4">
             <h1 className="text-text-main dark:text-white text-3xl md:text-4xl font-black leading-tight tracking-tight">Practice Speaking</h1>
