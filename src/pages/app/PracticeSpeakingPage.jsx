@@ -703,83 +703,89 @@ export default function PracticeSpeakingPage() {
           {/* Question Card */}
           <div className="w-full bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
             <div
-              className="relative w-full bg-cover bg-center min-h-[12rem] flex flex-col justify-end transition-all"
+              className="relative w-full bg-cover bg-center flex flex-col min-h-[400px] md:min-h-[450px]"
               style={{ backgroundImage: "linear-gradient(135deg, rgba(19, 109, 236, 0.8) 0%, rgba(16, 24, 34, 0.9) 100%), url('https://lh3.googleusercontent.com/aida-public/AB6AXuDuBe5ft9h7R5hRXjmGP00v19h7Hyg6FG-sBHO3a_wHZOqYyb1mwpub1Eh1XZ9AfTAiJ2Qfcs13PRgmLHiHZ9hDBzJTjWq8BNHbW6Mv2ZvrBKxT1yxaRAGW-cDTv-lzifrxJX68MCE0K9CAhcmPBKzxYuBhuzlDKewC7hVWviiKjqeBXaI9wC9d7NRJI6C26vmZ0yvqw_QX7D3bIoQIwixlQIeRWtOpGFgxI-E9kHlks3YCZ9Bufn_5yr66WTiOMharmAjYlI5iEkI9')" }}
             >
-              <div className="relative z-10 w-full p-6 md:p-8 flex flex-col gap-4">
-                <div className="flex flex-col-reverse md:flex-row md:items-start md:justify-between gap-4">
-                  {/* Text Content */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-white text-2xl md:text-3xl font-bold leading-snug drop-shadow-md">{questionText}</h3>
-                    <p className="text-white/90 text-sm md:text-base mt-2 font-medium">{currentQuestion?.hint ?? ""}</p>
-                  </div>
+              {/* Centered Question Content */}
+              <div className="flex-1 flex items-center justify-center p-6 md:p-8">
+                <div className="max-w-3xl w-full text-center">
+                  <h3 className="text-white text-2xl md:text-3xl lg:text-4xl font-bold leading-snug drop-shadow-md">
+                    {questionText}
+                  </h3>
+                  {currentQuestion?.hint && (
+                    <p className="text-white/90 text-sm md:text-base mt-4 font-medium">
+                      {currentQuestion.hint}
+                    </p>
+                  )}
+                </div>
+              </div>
 
-                  {/* Audio Controls - Responsive Toolbar */}
-                  <div className="flex items-center justify-between gap-3 flex-wrap">
-                    {/* Left cluster: Play + Autoplay */}
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={handlePlayQuestion}
-                        className="inline-flex items-center justify-center size-8 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white transition-all"
-                        title={questionIsPlaying ? "Pause" : "Play question"}
-                      >
-                        <span className="material-symbols-outlined text-lg">
-                          {questionIsPlaying ? "pause" : "play_arrow"}
-                        </span>
-                      </button>
-                      <label className="inline-flex items-center gap-1.5 text-white/90 text-xs cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={questionAutoplay}
-                          onChange={(e) => setQuestionAutoplay(e.target.checked)}
-                          className="size-3.5 rounded border-white/30 bg-white/20 checked:bg-primary focus:ring-2 focus:ring-white/50"
-                        />
-                        <span>Autoplay</span>
-                      </label>
-                    </div>
-
-                    {/* Middle cluster: Speed + Voice */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <select
-                        value={String(questionSpeed)}
-                        onChange={(e) => setQuestionSpeed(Number(e.target.value))}
-                        className="h-7 rounded-lg border border-white/30 bg-white/20 backdrop-blur-sm text-white text-xs px-2 focus:outline-none focus:ring-2 focus:ring-white/50 min-w-[70px]"
-                      >
-                        {SPEEDS.map(s => (
-                          <option key={s.value} value={String(s.value)} style={{ background: "#1e293b", color: "white" }}>{s.label}</option>
-                        ))}
-                      </select>
-                      <select
-                        data-tour="voice-select"
-                        value={questionVoiceId}
-                        onChange={(e) => setQuestionVoiceId(e.target.value)}
-                        className="h-7 rounded-lg border border-white/30 bg-white/20 backdrop-blur-sm text-white text-xs px-2 focus:outline-none focus:ring-2 focus:ring-white/50 min-w-[140px]"
-                      >
-                        {QUESTION_VOICES.map(v => (
-                          <option key={v.id} value={v.id} style={{ background: "#1e293b", color: "white" }}>{v.label}</option>
-                        ))}
-                      </select>
-
-                      {/* TTS Status Feedback */}
-                      {ttsStatus?.mode === "browser" && ttsStatus?.message && (
-                        <div className="text-xs text-white/80 px-2 py-1 bg-white/10 rounded">
-                          {ttsStatus.message}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Right cluster: Next Question */}
+              {/* Docked Control Bar at Bottom */}
+              <div className="relative z-10 w-full bg-black/20 backdrop-blur-sm border-t border-white/10 p-4 md:p-5">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  {/* Left: Play + Autoplay */}
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      data-tour="next-question"
-                      onClick={handleTryAnotherQuestion}
-                      className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white text-xs font-bold transition-all border border-white/30 shadow-sm"
+                      onClick={handlePlayQuestion}
+                      className="inline-flex items-center justify-center size-9 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white transition-all"
+                      title={questionIsPlaying ? "Pause" : "Play question"}
                     >
-                      <span>Next question</span>
-                      <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                      <span className="material-symbols-outlined text-lg">
+                        {questionIsPlaying ? "pause" : "play_arrow"}
+                      </span>
                     </button>
+                    <label className="inline-flex items-center gap-1.5 text-white/90 text-xs cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={questionAutoplay}
+                        onChange={(e) => setQuestionAutoplay(e.target.checked)}
+                        className="size-3.5 rounded border-white/30 bg-white/20 checked:bg-primary focus:ring-2 focus:ring-white/50"
+                      />
+                      <span>Autoplay</span>
+                    </label>
                   </div>
+
+                  {/* Middle: Speed + Voice */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <select
+                      value={String(questionSpeed)}
+                      onChange={(e) => setQuestionSpeed(Number(e.target.value))}
+                      className="h-8 rounded-lg border border-white/30 bg-white/20 backdrop-blur-sm text-white text-xs px-2 focus:outline-none focus:ring-2 focus:ring-white/50 min-w-[70px]"
+                    >
+                      {SPEEDS.map(s => (
+                        <option key={s.value} value={String(s.value)} style={{ background: "#1e293b", color: "white" }}>{s.label}</option>
+                      ))}
+                    </select>
+                    <select
+                      data-tour="voice-select"
+                      value={questionVoiceId}
+                      onChange={(e) => setQuestionVoiceId(e.target.value)}
+                      className="h-8 rounded-lg border border-white/30 bg-white/20 backdrop-blur-sm text-white text-xs px-2 focus:outline-none focus:ring-2 focus:ring-white/50 min-w-[140px]"
+                    >
+                      {QUESTION_VOICES.map(v => (
+                        <option key={v.id} value={v.id} style={{ background: "#1e293b", color: "white" }}>{v.label}</option>
+                      ))}
+                    </select>
+
+                    {/* TTS Status Feedback */}
+                    {ttsStatus?.mode === "browser" && ttsStatus?.message && (
+                      <div className="text-xs text-white/80 px-2 py-1 bg-white/10 rounded">
+                        {ttsStatus.message}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right: Next Question */}
+                  <button
+                    type="button"
+                    data-tour="next-question"
+                    onClick={handleTryAnotherQuestion}
+                    className="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white text-sm font-bold transition-all border border-white/30 shadow-sm"
+                  >
+                    <span>Next question</span>
+                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                  </button>
                 </div>
               </div>
             </div>
