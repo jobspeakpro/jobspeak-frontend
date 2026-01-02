@@ -6,7 +6,7 @@ import InlineError from "../../components/InlineError.jsx";
 import PaywallModal from "../../components/PaywallModal.jsx";
 import { usePracticeSession } from "../../hooks/usePracticeSession.js";
 import { getUserKey } from "../../utils/userKey.js";
-import { fetchTtsBlobUrl, clearTtsCacheEntry, triggerBrowserFallback } from "../../utils/ttsHelper.js";
+import { requestServerTTS, playAudioFromServer, speakBrowserTTS } from "../../utils/ttsClient.js";
 import PracticeTour from "../../components/PracticeTour.jsx";
 import OnboardingWizard from "../../components/OnboardingWizard.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
@@ -206,6 +206,7 @@ export default function PracticeSpeakingPage() {
   const [showFixToast, setShowFixToast] = useState(false);
   const [ttsErrorToast, setTtsErrorToast] = useState(false); // Default error toast
   const [fallbackToast, setFallbackToast] = useState(false); // "Using browser voice fallback"
+  const [ttsStatus, setTtsStatus] = useState({ mode: "server", message: "" }); // TTS status for UI feedback
 
   // --- EFFECTS ---
 
@@ -232,6 +233,16 @@ export default function PracticeSpeakingPage() {
       return () => clearTimeout(timer);
     }
   }, [fallbackToast]);
+
+  // Voice loading guard (prevent empty voice list)
+  useEffect(() => {
+    if (!("speechSynthesis" in window)) return;
+    const synth = window.speechSynthesis;
+    synth.getVoices();
+    const handler = () => synth.getVoices();
+    synth.onvoiceschanged = handler;
+    return () => { synth.onvoiceschanged = null; };
+  }, []);
 
   // ONBOARDING HANDLERS
   const showWizard = !onboardingComplete;
@@ -482,13 +493,13 @@ export default function PracticeSpeakingPage() {
     if (questionAudioUrl && !forceRegenerate) {
       if (questionIsPlaying) {
         questionAudioRef.current?.pause();
+        window.speechSynthesis.cancel(); // Stop browser TTS if active
         setQuestionIsPlaying(false);
       } else {
         try {
           if (questionAudioRef.current) {
             questionAudioRef.current.playbackRate = questionSpeed;
             await questionAudioRef.current.play();
-            // Only update state if token matches
             if (token === questionPlayTokenRef.current) setQuestionIsPlaying(true);
           }
         } catch (e) {
@@ -500,64 +511,57 @@ export default function PracticeSpeakingPage() {
     }
 
     const textToPlay = questionText || "Tell me about yourself";
+    setTtsStatus({ mode: "server", message: "Generating voice..." });
 
-    // Fetch New
-    try {
-      const { url, error } = await fetchTtsBlobUrl({
-        text: textToPlay,
-        voiceId: questionVoiceId,
-        speed: questionSpeed
-      });
+    // Try SERVER TTS first
+    const server = await requestServerTTS({ text: textToPlay, voiceId: questionVoiceId, speed: questionSpeed });
 
-      // Token Check: If request is stale, stop here. Do NOT invalid old URL.
-      if (token !== questionPlayTokenRef.current) {
-        if (url) URL.revokeObjectURL(url);
-        return;
-      }
+    // Token check: stop if request is stale
+    if (token !== questionPlayTokenRef.current) {
+      return;
+    }
 
-      if (error || !url) {
-        console.error("Question TTS error", error);
-        if (token === questionPlayTokenRef.current) {
-          setQuestionIsPlaying(false);
-          // Fallback Strategy
-          const fellBack = triggerBrowserFallback(textToPlay, questionVoiceId, questionSpeed);
-          if (fellBack) {
-            setFallbackToast(true);
-            // We don't set questionIsPlaying=true for browser TTS because it handles its own state mostly unseen
-            // But we could track it if we wanted. For now, just show toast.
-          } else {
-            setTtsErrorToast(true);
-          }
-        }
-        return;
-      }
-
-      const a = questionAudioRef.current;
-      if (!a) return;
-
-      // Revoke old blob URL before setting new one
-      if (questionAudioUrlRef.current && questionAudioUrlRef.current !== url) {
-        URL.revokeObjectURL(questionAudioUrlRef.current);
-      }
-
-      questionAudioUrlRef.current = url;
-      setQuestionAudioUrl(url);
-
-      a.src = url;
-      a.playbackRate = questionSpeed;
-
+    if (server.ok) {
       try {
+        const url = server.audioUrl || (server.audioBase64 ? `data:audio/mp3;base64,${server.audioBase64}` : null);
+        if (!url) throw new Error("No audio URL");
+
+        const a = questionAudioRef.current;
+        if (!a) return;
+
+        // Revoke old blob URL before setting new one
+        if (questionAudioUrlRef.current && questionAudioUrlRef.current !== url) {
+          URL.revokeObjectURL(questionAudioUrlRef.current);
+        }
+
+        questionAudioUrlRef.current = url;
+        setQuestionAudioUrl(url);
+
+        a.src = url;
+        a.playbackRate = questionSpeed;
+
         await a.play();
         if (token === questionPlayTokenRef.current) {
           setQuestionIsPlaying(true);
+          setTtsStatus({ mode: "server", message: "" });
         }
-      } catch (e) {
-        console.error("Play error", e);
-        if (token === questionPlayTokenRef.current) setQuestionIsPlaying(false);
+      } catch (err) {
+        console.warn("Server playback failed, falling back", err);
+        // Fall through to browser
       }
+    }
 
-    } catch (e) {
-      console.error("Fetch error", e);
+    // If we're still here, server failed - use browser TTS
+    if (token === questionPlayTokenRef.current && !questionIsPlaying) {
+      setTtsStatus({ mode: "browser", message: "Using browser voice" });
+      setQuestionIsPlaying(true);
+
+      await speakBrowserTTS({ text: textToPlay, rate: questionSpeed });
+
+      if (token === questionPlayTokenRef.current) {
+        setQuestionIsPlaying(false);
+        setTtsStatus({ mode: "server", message: "" });
+      }
     }
   }, [questionText, questionVoiceId, questionSpeed, questionAudioUrl, questionIsPlaying]);
 
@@ -572,6 +576,7 @@ export default function PracticeSpeakingPage() {
     if (guidanceAudioUrl) {
       if (guidanceIsPlaying) {
         guidanceAudioRef.current?.pause();
+        window.speechSynthesis.cancel(); // Stop browser TTS if active
         setGuidanceIsPlaying(false);
       } else {
         try {
@@ -588,57 +593,56 @@ export default function PracticeSpeakingPage() {
       return;
     }
 
-    // Fetch new
-    try {
-      const { url, error } = await fetchTtsBlobUrl({
-        text: textToPlay,
-        voiceId: questionVoiceId,
-        speed: guidanceSpeed
-      });
+    setTtsStatus({ mode: "server", message: "Generating voice..." });
 
-      if (token !== guidancePlayTokenRef.current) {
-        if (url) URL.revokeObjectURL(url);
-        return;
-      }
+    // Try SERVER TTS first
+    const server = await requestServerTTS({ text: textToPlay, voiceId: questionVoiceId, speed: guidanceSpeed });
 
-      if (error || !url) {
-        console.error("Guidance TTS error", error);
-        if (token === guidancePlayTokenRef.current) {
-          setGuidanceIsPlaying(false);
-          // Fallback Strategy
-          const fellBack = triggerBrowserFallback(textToPlay, questionVoiceId, guidanceSpeed);
-          if (fellBack) {
-            setFallbackToast(true);
-          } else {
-            setTtsErrorToast(true);
-          }
-        }
-        return;
-      }
+    if (token !== guidancePlayTokenRef.current) {
+      return;
+    }
 
-      const a = guidanceAudioRef.current;
-      if (!a) return;
-
-      // Revoke old blob URL before setting new one
-      if (guidanceAudioUrlRef.current && guidanceAudioUrlRef.current !== url) {
-        URL.revokeObjectURL(guidanceAudioUrlRef.current);
-      }
-
-      guidanceAudioUrlRef.current = url;
-      setGuidanceAudioUrl(url);
-
-      a.src = url;
-      a.playbackRate = guidanceSpeed;
-
+    if (server.ok) {
       try {
+        const url = server.audioUrl || (server.audioBase64 ? `data:audio/mp3;base64,${server.audioBase64}` : null);
+        if (!url) throw new Error("No audio URL");
+
+        const a = guidanceAudioRef.current;
+        if (!a) return;
+
+        // Revoke old blob URL before setting new one
+        if (guidanceAudioUrlRef.current && guidanceAudioUrlRef.current !== url) {
+          URL.revokeObjectURL(guidanceAudioUrlRef.current);
+        }
+
+        guidanceAudioUrlRef.current = url;
+        setGuidanceAudioUrl(url);
+
+        a.src = url;
+        a.playbackRate = guidanceSpeed;
+
         await a.play();
-        if (token === guidancePlayTokenRef.current) setGuidanceIsPlaying(true);
-      } catch (e) {
-        console.error("Guidance play error", e);
-        if (token === guidancePlayTokenRef.current) setGuidanceIsPlaying(false);
+        if (token === guidancePlayTokenRef.current) {
+          setGuidanceIsPlaying(true);
+          setTtsStatus({ mode: "server", message: "" });
+        }
+      } catch (err) {
+        console.warn("Guidance playback failed, falling back", err);
+        // Fall through to browser
       }
-    } catch (e) {
-      console.error("Guidance fetch error", e);
+    }
+
+    // If we're still here, server failed - use browser TTS
+    if (token === guidancePlayTokenRef.current && !guidanceIsPlaying) {
+      setTtsStatus({ mode: "browser", message: "Using browser voice" });
+      setGuidanceIsPlaying(true);
+
+      await speakBrowserTTS({ text: textToPlay, rate: guidanceSpeed });
+
+      if (token === guidancePlayTokenRef.current) {
+        setGuidanceIsPlaying(false);
+        setTtsStatus({ mode: "server", message: "" });
+      }
     }
   }, [improvedAnswerText, questionVoiceId, guidanceSpeed, guidanceAudioUrl, guidanceIsPlaying]);
 
@@ -748,6 +752,13 @@ export default function PracticeSpeakingPage() {
                       ))}
                     </select>
 
+                    {/* TTS Status Feedback */}
+                    {ttsStatus?.mode === "browser" && ttsStatus?.message && (
+                      <div className="text-xs text-white/80 px-2 py-1 bg-white/10 rounded">
+                        {ttsStatus.message}
+                      </div>
+                    )}
+
                     {/* Next Question Button */}
                     <button
                       type="button"
@@ -843,6 +854,13 @@ export default function PracticeSpeakingPage() {
                     <span>Type answer instead</span>
                   </button>
                 </div>
+
+                {/* Transcription Status Feedback */}
+                {isTranscribing && (
+                  <div className="text-sm text-slate-600 dark:text-slate-400 mt-3 animate-pulse">
+                    Transcribing… please wait
+                  </div>
+                )}
               </>
             ) : (
               <>
