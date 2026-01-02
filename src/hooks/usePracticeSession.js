@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { isNetworkError } from "../utils/networkError.js";
 import { apiClient, ApiError } from "../utils/apiClient.js";
+import { normalizePracticeFeedback } from "../utils/apiNormalizers.js";
 import { usePro } from "../contexts/ProContext.jsx";
 import { getUserKey } from "../utils/userKey.js";
 import { isBlocked } from "../utils/usage.js";
@@ -43,7 +44,7 @@ const practiceQuestions = [
   }
 ];
 
-export function usePracticeSession() {
+export function usePracticeSession({ profileContext } = {}) {
   const { isPro, refreshProStatus } = usePro();
 
   const [text, setText] = useState("");
@@ -61,15 +62,138 @@ export function usePracticeSession() {
   // Ref to track if GA events have been fired for this page load (prevent duplicates)
   const hasTrackedStripeReturn = useRef(false);
 
-  // Initialize with random question
-  const [currentQuestion, setCurrentQuestion] = useState(() => {
-    return practiceQuestions[Math.floor(Math.random() * practiceQuestions.length)];
+  // Track seen questions to avoid repetition (Last 20)
+  const [seenQuestionIds, setSeenQuestionIds] = useState(() => {
+    try {
+      const stored = localStorage.getItem("jsp_seen_questions");
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
   });
+
+  // CRITICAL: Separate counter for PRACTICE QUESTIONS ONLY (not STT, not onboarding)
+  // This is the counter that drives paywall gating
+  const [practiceQuestionsUsed, setPracticeQuestionsUsed] = useState(() => {
+    try {
+      const stored = localStorage.getItem("jsp_practice_questions_used");
+      return stored ? parseInt(stored, 10) : 0;
+    } catch { return 0; }
+  });
+
+  // Guard to prevent double-counting same question
+  const lastConsumedQuestionIdRef = useRef(null);
+
   const [questionNumber, setQuestionNumber] = useState(1);
 
-  const isPaywalled = !isPro && isBlocked(usage);
+  // Paywall logic based on PRACTICE QUESTIONS, not STT usage
+  const PRACTICE_QUESTION_LIMIT = 3;
+  const isPaywalled = !isPro && practiceQuestionsUsed >= PRACTICE_QUESTION_LIMIT;
 
-  // Fetch free attempts from backend API
+  // Save practice questions used to localStorage
+  useEffect(() => {
+    localStorage.setItem("jsp_practice_questions_used", String(practiceQuestionsUsed));
+  }, [practiceQuestionsUsed]);
+
+  // Save seen questions
+  useEffect(() => {
+    localStorage.setItem("jsp_seen_questions", JSON.stringify(seenQuestionIds));
+  }, [seenQuestionIds]);
+
+  // Helper to pick a random question excluding seen ones
+  const pickRandomQuestion = (excludeIds, questionPool = practiceQuestions) => {
+    // Generate simple hash/ID for static questions if they don't have one
+    const getQId = (q) => q.id || q.question.substring(0, 20);
+
+    const available = questionPool.filter(q => !excludeIds.includes(getQId(q)));
+    // If all seen, reset availability to all (minus current if separate) or just all
+    const pool = available.length > 0 ? available : questionPool;
+    return pool[Math.floor(Math.random() * pool.length)];
+  };
+
+  // Personalized questions state
+  const [personalizedQuestions, setPersonalizedQuestions] = useState(null);
+  const [loadingPersonalized, setLoadingPersonalized] = useState(false);
+
+  // Fetch personalized demo questions based on onboarding data
+  const fetchPersonalizedQuestions = async (profileContext) => {
+    if (!profileContext || loadingPersonalized) return;
+
+    try {
+      setLoadingPersonalized(true);
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+
+      const params = new URLSearchParams({
+        jobTitle: profileContext.job_title || '',
+        industry: profileContext.industry || '',
+        seniority: profileContext.seniority || '',
+        focusAreas: Array.isArray(profileContext.focus_areas)
+          ? profileContext.focus_areas.join(',')
+          : (profileContext.focus_areas || '')
+      });
+
+      const response = await fetch(`${API_BASE}/api/practice/demo-questions?${params}`);
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.questions && Array.isArray(data.questions) && data.questions.length > 0) {
+          // Cache in localStorage
+          localStorage.setItem('jsp_personalized_questions', JSON.stringify(data.questions));
+          setPersonalizedQuestions(data.questions);
+          console.log('[PERSONALIZATION] Loaded', data.questions.length, 'personalized questions');
+          return data.questions;
+        }
+      }
+    } catch (err) {
+      console.error('[PERSONALIZATION] Failed to fetch personalized questions:', err);
+    } finally {
+      setLoadingPersonalized(false);
+    }
+    return null;
+  };
+
+  // Load personalized questions from cache or fetch on mount
+  useEffect(() => {
+    // Try to load from cache first
+    try {
+      const cached = localStorage.getItem('jsp_personalized_questions');
+      if (cached) {
+        const questions = JSON.parse(cached);
+        if (Array.isArray(questions) && questions.length > 0) {
+          setPersonalizedQuestions(questions);
+          console.log('[PERSONALIZATION] Loaded from cache:', questions.length, 'questions');
+        }
+      }
+    } catch (err) {
+      console.error('[PERSONALIZATION] Cache load error:', err);
+    }
+
+    // Fetch fresh personalized questions if profileContext is available
+    if (profileContext && profileContext.job_title) {
+      fetchPersonalizedQuestions(profileContext);
+    }
+  }, [profileContext?.job_title, profileContext?.industry, profileContext?.seniority]);
+
+  // Use personalized questions if available, otherwise fall back to static
+  const activeQuestionPool = personalizedQuestions || practiceQuestions;
+
+  // Initialize with random question from active pool
+  const [currentQuestion, setCurrentQuestion] = useState(() => {
+    return pickRandomQuestion(seenQuestionIds, activeQuestionPool);
+  });
+
+  // Track current question when it changes
+  useEffect(() => {
+    if (!currentQuestion) return;
+    const qId = currentQuestion.id || currentQuestion.question.substring(0, 20);
+
+    setSeenQuestionIds(prev => {
+      const newDocs = prev.filter(id => id !== qId); // move to end
+      newDocs.push(qId);
+      if (newDocs.length > 20) newDocs.shift();
+      return newDocs;
+    });
+  }, [currentQuestion]);
+
+  // Fetch free attempts from backend API (for display only, not gating)
   const fetchFreeAttempts = async () => {
     if (isPro) {
       setFreeImproveUsage({ count: 0, limit: 3 });
@@ -110,10 +234,7 @@ export function usePracticeSession() {
         }
       }
     } catch (err) {
-      console.error('[FAIL-SOFT] /api/usage/today failed, using defaults:', err);
-      // FAIL-SOFT: Default to safe values if backend is down (MVP BLOCKER FIX)
-      setFreeImproveUsage({ count: 0, limit: 3 });
-      setUsage({ used: 0, limit: 3, remaining: 3, blocked: false });
+      console.error("Error fetching free attempts:", err);
       if (isNetworkError(err)) {
         setServerUnavailable(true);
       }
@@ -243,53 +364,70 @@ export function usePracticeSession() {
       return; // Return early - do NOT make API call when paywalled
     }
 
+    // DEFENSIVE GUARD: Validate input before proceeding
+    if (typeof text !== "string" || !text.trim()) {
+      setError("Record or type an answer first.");
+      setLoading(false);
+      return;
+    }
+
     gaEvent("practice_submit", { page: "practice" });
     setError("");
     setResult(null);
     setLoading(true);
 
-    if (typeof text !== "string" || !text.trim()) {
-      setError("Type or record your answer to begin.");
-      setLoading(false);
-      return;
-    }
-
     try {
       try {
-        const data = await apiClient("/ai/micro-demo", {
-          method: "POST",
-          body: { text },
-        });
-        setResult(data);
+        const sessionId = `practice_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-        // Refresh free attempts from backend after successful submission
+        const payload = {
+          sessionId,
+          questionId: currentQuestion?.id || `q_${Date.now()}`, // Ensure ID is present
+          questionText: currentQuestion?.question || currentQuestion?.prompt || currentQuestion?.text || "Practice Question",
+          answerText: text
+        };
+
+        // Inject profile context if available
+        if (profileContext) {
+          payload.jobTitle = profileContext.job_title;
+          payload.seniority = profileContext.seniority;
+          payload.focusAreas = profileContext.focus_areas;
+          payload.industry = profileContext.industry;
+          payload.difficulty = profileContext.difficulty;
+        }
+
+        const data = await apiClient("/api/practice/answer", {
+          method: "POST",
+          body: payload,
+        });
+        const normalized = normalizePracticeFeedback(data);
+        setResult(normalized);
+
+        // INCREMENT PRACTICE QUESTION COUNTER (only on successful answer submission)
+        // Guard against double-counting same question
+        const currentQId = currentQuestion?.id || currentQuestion?.question?.substring(0, 20);
+        if (currentQId && lastConsumedQuestionIdRef.current !== currentQId) {
+          lastConsumedQuestionIdRef.current = currentQId;
+          setPracticeQuestionsUsed(prev => prev + 1);
+          console.log("[PRACTICE] Question answered, count:", practiceQuestionsUsed + 1, "/", PRACTICE_QUESTION_LIMIT);
+        }
+
+        // Refresh free attempts from backend after successful submission (for display only)
         fetchFreeAttempts();
 
-        // Save session to backend
-        try {
-          const userKey = getUserKey();
-          const aiResponse = JSON.stringify(data);
-          await apiClient("/api/sessions", {
-            method: "POST",
-            body: {
-              userKey,
-              transcript: text,
-              aiResponse,
-              score: null,
-            },
-          });
-        } catch (saveErr) {
-          if (saveErr instanceof ApiError && saveErr.status === 402 && saveErr.data?.upgrade === true) {
-            // Update UI to reflect limit reached, but don't open modal
-            // Session save is non-critical - user should complete their current attempt
-            fetchFreeAttempts(); // Refresh to get latest from backend
-          } else {
-            console.error("Failed to save session:", saveErr);
-          }
-        }
+        // Session is saved by the /api/practice/answer endpoint now
+        // No need for separate /api/sessions call
       } catch (err) {
         // Refresh attempts from backend after failed call
         fetchFreeAttempts();
+
+        // Enhanced error logging for debugging
+        console.error("[Fix My Answer] API Error:", {
+          status: err.status,
+          message: err.message,
+          data: err.data,
+          stack: err.stack
+        });
 
         if (err instanceof ApiError && err.status === 402 && err.data?.upgrade === true) {
           setError("");
@@ -301,9 +439,17 @@ export function usePracticeSession() {
           return;
         }
 
+        // Log response body for debugging
+        if (err.status) {
+          console.error("[Fix My Answer] Response status:", err.status);
+        }
+        if (err.data) {
+          console.error("[Fix My Answer] Response body:", err.data);
+        }
+
         // Handle network errors (backend unreachable) - show toast
         if (isNetworkError(err)) {
-          console.error("Micro-demo network error:", err.message);
+          console.error("[Fix My Answer] Network error:", err.message);
           setLoading(false);
           const fixError = new Error("FIX_UNAVAILABLE");
           fixError.isFixUnavailable = true;
@@ -313,7 +459,7 @@ export function usePracticeSession() {
         // Handle 404 or other endpoint errors gracefully
         if (err instanceof ApiError && (err.status === 404 || err.status >= 500)) {
           // Don't set error - let the component show a toast instead
-          console.error("Micro-demo endpoint error:", err.status, err.message);
+          console.error("[Fix My Answer] Endpoint error:", err.status, err.message);
           setLoading(false);
           // Throw a special error to indicate we should show toast
           const fixError = new Error("FIX_UNAVAILABLE");
@@ -324,20 +470,21 @@ export function usePracticeSession() {
         // Handle JSON parse errors or other unexpected errors
         // Check if error is from JSON parsing
         if (err.message && (err.message.includes("JSON") || err.message.includes("parse") || err.message.includes("Unexpected token"))) {
-          console.error("Micro-demo parse error:", err.message);
+          console.error("[Fix My Answer] Parse error:", err.message);
           setLoading(false);
           const fixError = new Error("FIX_UNAVAILABLE");
           fixError.isFixUnavailable = true;
           throw fixError;
         }
 
-        console.error("Micro-demo error status:", err.status || err.message);
+        // Show non-blocking error message instead of crashing
+        console.error("[Fix My Answer] Unexpected error:", err.status || err.message);
         setError("Something went wrong. Try again in a moment.");
         setLoading(false);
         return;
       }
     } catch (err) {
-      console.error("Micro-demo error:", err);
+      console.error("[Fix My Answer] Outer catch error:", err);
       // Re-throw FIX_UNAVAILABLE errors to be handled by component
       if (err.isFixUnavailable) {
         throw err;
@@ -356,7 +503,7 @@ export function usePracticeSession() {
     }
   };
 
-  const improvedAnswerText = getImprovedAnswerText();
+  const improvedAnswerText = getImprovedAnswerTextHelper(result);
 
   const handleTryAnotherQuestion = () => {
     gaEvent("try_another_question_click", {
@@ -369,11 +516,8 @@ export function usePracticeSession() {
     setError("");
     setLoading(false);
 
-    // Load a new random question (avoid same question if possible)
-    let newQuestion;
-    do {
-      newQuestion = practiceQuestions[Math.floor(Math.random() * practiceQuestions.length)];
-    } while (newQuestion.question === currentQuestion.question && practiceQuestions.length > 1);
+    // Load a new random question from active pool (avoiding seen ones)
+    const newQuestion = pickRandomQuestion(seenQuestionIds, activeQuestionPool);
 
     setCurrentQuestion(newQuestion);
     setQuestionNumber(prev => prev + 1);
@@ -398,7 +542,12 @@ export function usePracticeSession() {
     serverUnavailable,
     setServerUnavailable,
     freeImproveUsage,
-    usage,
+    usage: {
+      used: practiceQuestionsUsed,
+      limit: PRACTICE_QUESTION_LIMIT,
+      remaining: Math.max(0, PRACTICE_QUESTION_LIMIT - practiceQuestionsUsed),
+      blocked: practiceQuestionsUsed >= PRACTICE_QUESTION_LIMIT
+    },
     currentQuestion,
     questionNumber,
     isPro,
@@ -412,3 +561,14 @@ export function usePracticeSession() {
   };
 }
 
+// Renamed helper to avoid conflict with var name if I used function hoisting but cleaner this way
+function getImprovedAnswerTextHelper(result) {
+  return (
+    result?.improved ??
+    result?.improvedAnswer ??
+    result?.message?.improved ??
+    result?.analysis?.improved ??
+    result?.guidance?.improved ??
+    ""
+  );
+}

@@ -38,59 +38,59 @@ export default function LandingPage() {
         if (refreshProStatus) {
           refreshProStatus();
         }
-        
+
         // Fire GA event for successful upgrade (once per return)
         if (!hasTrackedStripeReturn.current) {
           try {
             // Read period and source from localStorage (stored before redirect)
             const period = localStorage.getItem("jobspeak_upgrade_period") || "unknown";
             const source = localStorage.getItem("jobspeak_upgrade_source") || "unknown";
-            
+
             gaEvent("paywall_upgrade_success", {
               page: "landing",
               period: period,
               source: source,
             });
-            
+
             // Clean up localStorage after tracking
             localStorage.removeItem("jobspeak_upgrade_period");
             localStorage.removeItem("jobspeak_upgrade_source");
-            
+
             hasTrackedStripeReturn.current = true;
           } catch (err) {
             console.error("Error tracking upgrade success:", err);
           }
         }
-        
+
         // Clean up URL params
         const newUrl = window.location.pathname;
         window.history.replaceState({}, "", newUrl);
       } else if (canceled === "true") {
         setToast("canceled");
-        
+
         // Fire GA event for canceled upgrade (once per return)
         if (!hasTrackedStripeReturn.current) {
           try {
             // Read period and source from localStorage (stored before redirect)
             const period = localStorage.getItem("jobspeak_upgrade_period") || "unknown";
             const source = localStorage.getItem("jobspeak_upgrade_source") || "unknown";
-            
+
             gaEvent("paywall_upgrade_cancel", {
               page: "landing",
               period: period,
               source: source,
             });
-            
+
             // Clean up localStorage after tracking
             localStorage.removeItem("jobspeak_upgrade_period");
             localStorage.removeItem("jobspeak_upgrade_source");
-            
+
             hasTrackedStripeReturn.current = true;
           } catch (err) {
             console.error("Error tracking upgrade cancel:", err);
           }
         }
-        
+
         // Clean up URL params
         const newUrl = window.location.pathname;
         window.history.replaceState({}, "", newUrl);
@@ -169,29 +169,36 @@ export default function LandingPage() {
           </nav>
           <div className="flex items-center gap-4">
             {isAuthed ? (
-              <button
-                onClick={() => {
-                  logout();
-                  navigate("/signin");
-                }}
-                className="hidden sm:flex h-10 items-center justify-center rounded-lg bg-slate-100 px-4 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-200"
-              >
-                Sign Out
-              </button>
+              <>
+                <Link
+                  to="/dashboard"
+                  className="hidden sm:flex h-10 items-center justify-center rounded-lg bg-slate-100 px-4 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-200"
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  to="/interview"
+                  className="hidden sm:flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-bold text-white transition-colors hover:bg-blue-600"
+                >
+                  Start Practicing
+                </Link>
+              </>
             ) : (
-              <Link
-                to="/signin"
-                className="hidden sm:flex h-10 items-center justify-center rounded-lg bg-slate-100 px-4 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-200"
-              >
-                Sign In
-              </Link>
+              <>
+                <Link
+                  to="/signin"
+                  className="hidden sm:flex h-10 items-center justify-center rounded-lg bg-slate-100 px-4 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-200"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/interview"
+                  className="hidden sm:flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-bold text-white transition-colors hover:bg-blue-600"
+                >
+                  Start Practicing
+                </Link>
+              </>
             )}
-            <Link
-              to="/interview"
-              className="hidden sm:flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-bold text-white transition-colors hover:bg-blue-600"
-            >
-              Start Practicing
-            </Link>
             <button className="md:hidden p-2 text-slate-600">
               <span className="material-symbols-outlined">menu</span>
             </button>

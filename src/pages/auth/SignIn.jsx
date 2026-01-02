@@ -11,12 +11,12 @@ export default function SignIn() {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // Auto-dismiss toast
+  // Auto-dismiss toast - INCREASED TO 6000ms (+3000ms)
   useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => {
         setToast(null);
-      }, 3000);
+      }, 6000); // Changed from 3000 to 6000
       return () => clearTimeout(timer);
     }
   }, [toast]);
@@ -34,6 +34,10 @@ export default function SignIn() {
 
     try {
       await signin(email, password);
+      // Track successful sign in
+      if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+        window.gtag('event', 'sign_up');
+      }
       setToast("success");
       // Small delay to show toast before navigation
       setTimeout(() => {
@@ -50,12 +54,12 @@ export default function SignIn() {
       {/* Navbar */}
       <header className="w-full bg-white/80 dark:bg-[#101822]/90 backdrop-blur-md border-b border-[#f0f2f4] dark:border-slate-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <div className="w-8 h-8 flex items-center justify-center bg-primary/10 rounded-lg text-primary">
               <span className="material-symbols-outlined" style={{ fontSize: "24px" }}>record_voice_over</span>
             </div>
             <h1 className="text-xl font-bold tracking-tight text-[#111418] dark:text-white">JobSpeak Pro</h1>
-          </div>
+          </Link>
         </div>
       </header>
       {/* Main Content */}
@@ -81,7 +85,7 @@ export default function SignIn() {
             <div className="p-8 pt-6 flex flex-col gap-4">
               {/* Social Buttons */}
               <div className="flex flex-col gap-3">
-                <button 
+                <button
                   onClick={() => setToast("google")}
                   className="relative flex w-full items-center justify-center rounded-xl bg-[#f0f2f4] dark:bg-slate-800 hover:bg-[#e4e6e8] dark:hover:bg-slate-700 transition-colors h-12 px-4 text-[#111418] dark:text-white font-bold text-base tracking-[0.015em] border border-transparent focus:border-primary outline-none focus:ring-2 focus:ring-primary/20"
                 >
@@ -95,7 +99,7 @@ export default function SignIn() {
                   </span>
                   <span>Continue with Google</span>
                 </button>
-                <button 
+                <button
                   onClick={() => setToast("apple")}
                   className="relative flex w-full items-center justify-center rounded-xl bg-[#f0f2f4] dark:bg-slate-800 hover:bg-[#e4e6e8] dark:hover:bg-slate-700 transition-colors h-12 px-4 text-[#111418] dark:text-white font-bold text-base tracking-[0.015em] border border-transparent focus:border-primary outline-none focus:ring-2 focus:ring-primary/20"
                 >
@@ -122,11 +126,11 @@ export default function SignIn() {
                 )}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-[#111418] dark:text-slate-200" htmlFor="email">Email address</label>
-                  <input 
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 h-12 text-[#111418] dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" 
-                    id="email" 
-                    placeholder="name@example.com" 
-                    type="email" 
+                  <input
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 h-12 text-[#111418] dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                    id="email"
+                    placeholder="name@example.com"
+                    type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -137,17 +141,17 @@ export default function SignIn() {
                     Password
                     <a className="text-primary hover:text-blue-600 dark:hover:text-blue-400 font-normal text-xs" href="#" onClick={(e) => { e.preventDefault(); alert("Password reset not implemented yet"); }}>Forgot password?</a>
                   </label>
-                  <input 
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 h-12 text-[#111418] dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" 
-                    id="password" 
-                    placeholder="••••••••" 
-                    type="password" 
+                  <input
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 h-12 text-[#111418] dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                    id="password"
+                    placeholder="••••••••"
+                    type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
                 </div>
-                <button 
-                  className="mt-2 w-full rounded-xl bg-primary hover:bg-blue-600 text-white font-bold h-12 px-6 transition-transform active:scale-[0.98] shadow-lg shadow-blue-500/20 disabled:opacity-60 disabled:cursor-not-allowed" 
+                <button
+                  className="mt-2 w-full rounded-xl bg-primary hover:bg-blue-600 text-white font-bold h-12 px-6 transition-transform active:scale-[0.98] shadow-lg shadow-blue-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
                   type="submit"
                   disabled={loading}
                 >

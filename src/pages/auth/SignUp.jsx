@@ -1,23 +1,25 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { supabase } from "../../lib/supabaseClient.js";
 
 export default function SignUp() {
   const navigate = useNavigate();
   const { signup } = useAuth();
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
 
-  // Auto-dismiss toast
+  // Auto-dismiss toast - INCREASED TO 6000ms (+3000ms)
   useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => {
         setToast(null);
-      }, 3000);
+      }, 6000); // Changed from 3000 to 6000
       return () => clearTimeout(timer);
     }
   }, [toast]);
@@ -27,36 +29,106 @@ export default function SignUp() {
     setError("");
     setLoading(true);
 
-    if (!name || !email) {
-      setError("Please enter your name and email address");
+    if (!firstName || !email) {
+      setError("Please enter your first name and email address");
       setLoading(false);
       return;
     }
 
     try {
-      await signup(email, password);
+      const user = await signup(email, password);
+
+      // Write first name to profiles.display_name
+      if (user) {
+        try {
+          await supabase
+            .from('profiles')
+            .upsert({
+              id: user.id,
+              display_name: firstName.trim()
+            }, { onConflict: 'id' });
+        } catch (profileError) {
+          console.error('Profile update error:', profileError);
+          // Continue anyway - profile can be updated later
+        }
+      }
+
+      // Show email confirmation message - DO NOT auto-login
+      setShowEmailConfirmation(true);
       setToast("success");
-      // Small delay to show toast before navigation
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 500);
+      setLoading(false);
+
+      // Force sign out to ensure user is not logged in until confirmed
+      await supabase.auth.signOut();
     } catch (err) {
       setError(err.message || "Something went wrong. Please try again.");
       setLoading(false);
     }
   };
 
+  // If email confirmation is shown, display that instead of the form
+  if (showEmailConfirmation) {
+    return (
+      <div className="bg-background-light dark:bg-background-dark text-[#111418] font-display antialiased min-h-screen flex flex-col">
+        {/* Navbar */}
+        <header className="w-full bg-white/80 dark:bg-[#101822]/90 backdrop-blur-md border-b border-[#f0f2f4] dark:border-slate-800 sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 flex items-center justify-center bg-primary/10 rounded-lg text-primary">
+                <span className="material-symbols-outlined" style={{ fontSize: "24px" }}>record_voice_over</span>
+              </div>
+              <h1 className="text-xl font-bold tracking-tight text-[#111418] dark:text-white">JobSpeak Pro</h1>
+            </div>
+          </div>
+        </header>
+        {/* Email Confirmation Message */}
+        <main className="flex-grow flex items-center justify-center p-4 sm:p-8">
+          <div className="w-full max-w-[540px] flex flex-col gap-6">
+            <div className="bg-white dark:bg-[#1a222d] rounded-2xl shadow-xl dark:shadow-slate-900/20 border border-slate-100 dark:border-slate-800 overflow-hidden p-8">
+              <div className="text-center mb-6">
+                <div className="size-16 mx-auto mb-4 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-primary text-3xl">mail</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-[#111418] dark:text-white mb-3 tracking-tight">Check your email</h2>
+                <p className="text-[#617289] dark:text-slate-400 text-base font-normal leading-relaxed mb-2">
+                  We've sent a confirmation link to <span className="font-semibold text-[#111418] dark:text-white">{email}</span>
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Email will be sent from Supabase (noreply@supabase.io). If you don't see it, check spam or promotions.
+                </p>
+              </div>
+              <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 rounded-lg p-4 text-sm leading-relaxed border border-blue-100 dark:border-blue-800/50 mb-6">
+                <p className="font-semibold mb-2">Next steps:</p>
+                <ol className="list-decimal list-inside space-y-1">
+                  <li>Check your email inbox (and spam folder)</li>
+                  <li>Click the confirmation link</li>
+                  <li>Come back here to sign in</li>
+                </ol>
+              </div>
+              <Link
+                to="/signin"
+                className="w-full flex items-center justify-center rounded-xl bg-primary hover:bg-blue-600 text-white font-bold h-12 px-6 transition-colors shadow-lg shadow-blue-500/20"
+              >
+                Go to Sign In
+              </Link>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-background-light dark:bg-background-dark text-[#111418] font-display antialiased min-h-screen flex flex-col">
       {/* Navbar */}
       <header className="w-full bg-white/80 dark:bg-[#101822]/90 backdrop-blur-md border-b border-[#f0f2f4] dark:border-slate-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <div className="w-8 h-8 flex items-center justify-center bg-primary/10 rounded-lg text-primary">
               <span className="material-symbols-outlined" style={{ fontSize: "24px" }}>record_voice_over</span>
             </div>
             <h1 className="text-xl font-bold tracking-tight text-[#111418] dark:text-white">JobSpeak Pro</h1>
-          </div>
+          </Link>
         </div>
       </header>
       {/* Main Content */}
@@ -82,7 +154,7 @@ export default function SignUp() {
             <div className="p-8 pt-6 flex flex-col gap-4">
               {/* Social Buttons */}
               <div className="flex flex-col gap-3">
-                <button 
+                <button
                   onClick={() => setToast("google")}
                   className="relative flex w-full items-center justify-center rounded-xl bg-[#f0f2f4] dark:bg-slate-800 hover:bg-[#e4e6e8] dark:hover:bg-slate-700 transition-colors h-12 px-4 text-[#111418] dark:text-white font-bold text-base tracking-[0.015em] border border-transparent focus:border-primary outline-none focus:ring-2 focus:ring-primary/20"
                 >
@@ -96,7 +168,7 @@ export default function SignUp() {
                   </span>
                   <span>Continue with Google</span>
                 </button>
-                <button 
+                <button
                   onClick={() => setToast("apple")}
                   className="relative flex w-full items-center justify-center rounded-xl bg-[#f0f2f4] dark:bg-slate-800 hover:bg-[#e4e6e8] dark:hover:bg-slate-700 transition-colors h-12 px-4 text-[#111418] dark:text-white font-bold text-base tracking-[0.015em] border border-transparent focus:border-primary outline-none focus:ring-2 focus:ring-primary/20"
                 >
@@ -122,24 +194,24 @@ export default function SignUp() {
                   </div>
                 )}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-[#111418] dark:text-slate-200" htmlFor="name">Full name</label>
-                  <input 
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 h-12 text-[#111418] dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" 
-                    id="name" 
-                    placeholder="John Doe" 
-                    type="text" 
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                  <label className="text-sm font-medium text-[#111418] dark:text-slate-200" htmlFor="firstName">First name</label>
+                  <input
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 h-12 text-[#111418] dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                    id="firstName"
+                    placeholder="John"
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
                     required
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-[#111418] dark:text-slate-200" htmlFor="email">Email address</label>
-                  <input 
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 h-12 text-[#111418] dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" 
-                    id="email" 
-                    placeholder="name@example.com" 
-                    type="email" 
+                  <input
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 h-12 text-[#111418] dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                    id="email"
+                    placeholder="name@example.com"
+                    type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -149,17 +221,17 @@ export default function SignUp() {
                   <label className="text-sm font-medium text-[#111418] dark:text-slate-200" htmlFor="password">
                     Password
                   </label>
-                  <input 
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 h-12 text-[#111418] dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" 
-                    id="password" 
-                    placeholder="••••••••" 
-                    type="password" 
+                  <input
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 h-12 text-[#111418] dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                    id="password"
+                    placeholder="••••••••"
+                    type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
                 </div>
-                <button 
-                  className="mt-2 w-full rounded-xl bg-primary hover:bg-blue-600 text-white font-bold h-12 px-6 transition-transform active:scale-[0.98] shadow-lg shadow-blue-500/20 disabled:opacity-60 disabled:cursor-not-allowed" 
+                <button
+                  className="mt-2 w-full rounded-xl bg-primary hover:bg-blue-600 text-white font-bold h-12 px-6 transition-transform active:scale-[0.98] shadow-lg shadow-blue-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
                   type="submit"
                   disabled={loading}
                 >
@@ -260,4 +332,3 @@ export default function SignUp() {
     </div>
   );
 }
-

@@ -3,6 +3,12 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+console.log("Supabase Env Vars Present:", {
+  url: !!supabaseUrl,
+  key: !!supabaseAnonKey,
+  mode: import.meta.env.MODE
+});
+
 // Check if env vars are configured
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
 

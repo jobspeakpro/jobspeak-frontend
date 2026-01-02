@@ -14,12 +14,18 @@ import PrivacyPage from "./pages/marketing/PrivacyPage.jsx";
 import TermsPage from "./pages/marketing/TermsPage.jsx";
 import SignIn from "./pages/auth/SignIn.jsx";
 import SignUp from "./pages/auth/SignUp.jsx";
+import Callback from "./pages/auth/Callback.jsx";
 import ContactUs from "./pages/support/ContactUs.jsx";
+import HelpPage from "./pages/support/HelpPage.jsx";
 import Profile from "./pages/account/Profile.jsx";
 import Dashboard from "./pages/app/Dashboard.jsx";
 import MyProgress from "./pages/app/MyProgress.jsx";
 import PracticePage from "./components/PracticePage.jsx";
 import PracticeSpeakingPage from "./pages/app/PracticeSpeakingPage.jsx";
+import MockInterviewPage from "./pages/app/MockInterviewPage.jsx";
+import MockInterviewSession from "./pages/app/MockInterviewSession.jsx";
+import MockInterviewSummary from "./pages/app/MockInterviewSummary.jsx";
+import PracticeSummary from "./pages/app/PracticeSummary.jsx";
 import { ProProvider } from "./contexts/ProContext.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
@@ -38,57 +44,85 @@ function RouteLogger() {
   return null;
 }
 
+// Dev-only sanity ping to check backend connectivity
+function SanityPing() {
+  React.useEffect(() => {
+    // Only run in dev
+    if (import.meta.env.DEV) {
+      console.log("[Sanity] Pinging GET /health...");
+      fetch("/health")
+        .then((res) => {
+          console.log(`[Sanity] /health status: ${res.status}`);
+          // Don't parse JSON, just verify connection
+        })
+        .catch((err) => console.error("[Sanity] Connection failed:", err));
+    }
+  }, []);
+  return null;
+}
+
 // --- Sentry setup ---
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
+  environment: import.meta.env.MODE,
+  tracesSampleRate: 1.0,
 });
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <ErrorBoundary>
-      {!isSupabaseConfigured ? (
-        <SupabaseConfigError />
-      ) : (
-        <ProProvider>
-          <AuthProvider>
-            <BrowserRouter>
-              <RouteLogger />
-              <StripeCancelHandler />
-              <Routes>
-            {/* Marketing routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/pricing" element={<PricingPage />} />
-            <Route path="/upgrade" element={<UpgradePage />} />
-            <Route path="/how-it-works" element={<HowItWorksPage />} />
-            <Route path="/start" element={<StartPage />} />
-            <Route path="/support" element={<SupportPage />} />
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/contact" element={<ContactUs />} />
-            <Route path="/privacy" element={<PrivacyPage />} />
-            <Route path="/terms" element={<TermsPage />} />
-            
-            {/* App routes (practice pages) */}
-            <Route path="/practice" element={<PracticeSpeakingPage />} />
-            <Route path="/interview" element={<Navigate to="/practice" replace />} />
-            <Route path="/speaking" element={<Navigate to="/practice" replace />} />
-            {/* Legacy route (optional - keep temporarily) */}
-            <Route path="/practice-legacy" element={<PracticePage />} />
-            <Route path="/resume" element={<App defaultTab="resume" />} />
-            {/* /progress points to MyProgress page */}
-            <Route path="/progress" element={<ProtectedRoute><MyProgress /></ProtectedRoute>} />
-            {/* Preserve old App defaultTab="progress" behavior via /app/progress */}
-            <Route path="/app/progress" element={<App defaultTab="progress" />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            
-            {/* Catch-all: redirect to landing */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
-        </AuthProvider>
-      </ProProvider>
-      )}
-    </ErrorBoundary>
+    <Sentry.ErrorBoundary fallback={<p>Something went wrong.</p>}>
+      <ErrorBoundary>
+        {!isSupabaseConfigured ? (
+          <SupabaseConfigError />
+        ) : (
+          <ProProvider>
+            <AuthProvider>
+              <BrowserRouter>
+                <RouteLogger />
+                <SanityPing />
+                <StripeCancelHandler />
+                <Routes>
+                  {/* Marketing routes */}
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/pricing" element={<PricingPage />} />
+                  <Route path="/upgrade" element={<UpgradePage />} />
+                  <Route path="/how-it-works" element={<HowItWorksPage />} />
+                  <Route path="/start" element={<StartPage />} />
+                  <Route path="/support" element={<SupportPage />} />
+                  <Route path="/signin" element={<SignIn />} />
+                  <Route path="/signup" element={<SignUp />} />
+                  <Route path="/auth/callback" element={<Callback />} />
+                  <Route path="/contact" element={<ContactUs />} />
+                  <Route path="/help" element={<HelpPage />} />
+                  <Route path="/privacy" element={<PrivacyPage />} />
+                  <Route path="/terms" element={<TermsPage />} />
+
+                  {/* App routes (practice pages) */}
+                  <Route path="/practice" element={<PracticeSpeakingPage />} />
+                  <Route path="/interview" element={<Navigate to="/practice" replace />} />
+                  <Route path="/speaking" element={<Navigate to="/practice" replace />} />
+                  {/* Legacy route (optional - keep temporarily) */}
+                  <Route path="/practice-legacy" element={<PracticePage />} />
+                  <Route path="/resume" element={<App defaultTab="resume" />} />
+                  {/* /progress points to MyProgress page */}
+                  <Route path="/progress" element={<ProtectedRoute><MyProgress /></ProtectedRoute>} />
+                  {/* Preserve old App defaultTab="progress" behavior via /app/progress */}
+                  <Route path="/app/progress" element={<App defaultTab="progress" />} />
+                  <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                  <Route path="/mock-interview" element={<ProtectedRoute><MockInterviewPage /></ProtectedRoute>} />
+                  <Route path="/mock-interview/session" element={<ProtectedRoute><MockInterviewSession /></ProtectedRoute>} />
+                  <Route path="/mock-interview/summary/:id" element={<ProtectedRoute><MockInterviewSummary /></ProtectedRoute>} />
+                  <Route path="/practice/summary/:id" element={<ProtectedRoute><PracticeSummary /></ProtectedRoute>} />
+                  <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+
+                  {/* Catch-all: redirect to landing */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </BrowserRouter>
+            </AuthProvider>
+          </ProProvider>
+        )}
+      </ErrorBoundary>
+    </Sentry.ErrorBoundary>
   </React.StrictMode>
 );

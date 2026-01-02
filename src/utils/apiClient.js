@@ -31,22 +31,24 @@ export class ApiError extends Error {
  */
 export async function apiClient(endpoint, options = {}) {
   const { parseJson = true, ...fetchOptions } = options;
-  
-  // Block absolute URLs - all API calls must use relative paths
-  if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
-    throw new Error(
-      `Absolute URL blocked: ${endpoint}. ` +
-      `Use relative paths only (e.g., /api/billing/create-checkout-session). ` +
-      `Vite proxy (dev) or Vercel rewrites (production) handle routing to the backend.`
-    );
-  }
-  
-  // Ensure endpoint starts with / for relative paths
-  const url = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  
-  // Get persistent userKey for anonymous tracking
-  const userKey = getUserKey();
-  
+
+  // Use base URL from env if available (e.g. VITE_API_BASE_URL)
+  // Default to http://127.0.0.1:8080 for local development
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+
+  // Ensure endpoint starts with /
+  const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+
+  // Construct final URL (absolute in dev if env set, relative in prod)
+  const url = `${API_BASE}${path}`;
+
+  // Get current user from Supabase (if logged in)
+  const { supabase } = await import('../lib/supabaseClient.js');
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Get persistent userKey (prioritizes user.id if logged in, else guest key)
+  const userKey = getUserKey(user);
+
   // Default headers for JSON requests (unless body is FormData)
   const defaultHeaders = {
     'x-user-key': userKey, // Always include userKey header for all requests
@@ -60,20 +62,20 @@ export async function apiClient(endpoint, options = {}) {
       fetchOptions.body = JSON.stringify(fetchOptions.body);
     }
   }
-  
+
   // Merge headers (user-provided headers take precedence)
   const headers = {
     ...defaultHeaders,
     ...fetchOptions.headers,
   };
-  
+
   try {
     const response = await fetch(url, {
       credentials: "include", // Always include cookies for authentication
       ...fetchOptions,
       headers,
     });
-    
+
     // Parse JSON if requested
     if (parseJson) {
       let data;
@@ -92,7 +94,7 @@ export async function apiClient(endpoint, options = {}) {
         // If response is ok but not JSON, re-throw parse error
         throw parseError;
       }
-      
+
       if (!response.ok) {
         throw new ApiError(
           data.error || `Request failed with status ${response.status}`,
@@ -100,10 +102,10 @@ export async function apiClient(endpoint, options = {}) {
           data
         );
       }
-      
+
       return data;
     }
-    
+
     // Return response object for blob/text responses
     if (!response.ok) {
       const errorText = await response.text().catch(() => '');
@@ -113,14 +115,14 @@ export async function apiClient(endpoint, options = {}) {
         { errorText }
       );
     }
-    
+
     return response;
   } catch (error) {
     // Re-throw ApiError as-is
     if (error instanceof ApiError) {
       throw error;
     }
-    
+
     // Wrap network errors
     throw new ApiError(
       error.message || 'Network error',

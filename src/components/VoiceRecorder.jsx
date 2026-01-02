@@ -4,7 +4,6 @@ import { isNetworkError } from "../utils/networkError.js";
 import { apiClient, ApiError } from "../utils/apiClient.js";
 import { usePro } from "../contexts/ProContext.jsx";
 import { getUserKey } from "../utils/userKey.js";
-import { isBlocked } from "../utils/usage.js";
 import { gaEvent } from "../utils/ga.js";
 
 // Fetch usage from backend API
@@ -39,6 +38,10 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
   const [error, setError] = useState("");
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [usage, setUsage] = useState({ used: 0, limit: 3, remaining: 3, blocked: false });
+  // Timer State
+  const [timeLeft, setTimeLeft] = useState(60); // Default 60s limit
+  const timerRef = useRef(null);
+  const maxDuration = 60; // Hard limit in seconds
 
   // Load usage from backend on mount
   useEffect(() => {
@@ -59,33 +62,33 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
   }, [recording, transcribing, onStateChange]);
 
   const startRecording = async () => {
-    // Check usage FIRST - if blocked, open paywall modal and return early (do NOT start recording or make API call)
-    if (!isPro) {
-      // Fetch latest from backend to ensure accuracy
-      const currentUsage = await fetchUsage();
-      setUsage(currentUsage);
-      
-      // Block if blocked or remaining <= 0
-      if (isBlocked(currentUsage)) {
-        if (onUpgradeNeeded) {
-          // Gate at handler level: always open paywall when limit reached
-          onUpgradeNeeded("mic");
-        }
-        return; // Return early - do NOT start recording or make API call
-      }
-    }
+    // Usage check REMOVED: Frontend paywall must NEVER gate based on STT usage.
+    // Gating is now controlled solely by practiceQuestionsUsed in the parent component.
 
     setError("");
     setPermissionDenied(false);
     chunksRef.current = [];
-    
+
+    // Reset timer
+    setTimeLeft(maxDuration);
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          stopRecording(); // Auto-stop at 0
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
     // Generate attemptId on mic click (STT ONLY)
     attemptIdRef.current = crypto.randomUUID();
     console.log("[STT] Generated attemptId:", attemptIdRef.current);
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      
+
       // Choose mimeType in priority order
       let mimeType = null;
       if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
@@ -98,7 +101,7 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
         mimeType = "audio/ogg";
       }
       // Otherwise fallback with no mimeType (mimeType remains null)
-      
+
       mimeTypeRef.current = mimeType;
       const mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -129,11 +132,11 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
 
           const formData = new FormData();
           formData.append("audio", audioFile);
-          
+
           // Add userKey to FormData for compatibility (apiClient already sends it in header)
           const userKey = getUserKey();
           formData.append("userKey", userKey);
-          
+
           // Add attemptId to FormData (STT ONLY)
           if (attemptIdRef.current) {
             formData.append("attemptId", attemptIdRef.current);
@@ -160,7 +163,7 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
             // Safely parse response - don't assume it's always JSON
             let data = null;
             const contentType = response.headers.get("content-type") || "";
-            
+
             if (contentType.includes("application/json")) {
               try {
                 data = await response.json();
@@ -206,14 +209,16 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
             if (!isPro) {
               const currentUsage = await fetchUsage();
               setUsage(currentUsage);
-              console.log(`[STT] usage: ${currentUsage.used}/${currentUsage.limit === Infinity ? "∞" : currentUsage.limit}`);
+              // Note: STT usage is separate from practice question quota
+              // This is informational only - paywall gates on practice submissions
+              console.log(`[STT Daily Usage] ${currentUsage.used}/${currentUsage.limit === Infinity ? "∞" : currentUsage.limit} (informational only, not practice quota)`);
               // Notify parent to refresh its counter if callback provided
               if (onAttemptsRefresh) {
                 onAttemptsRefresh();
               }
             }
 
-            onTranscript(transcript);
+            onTranscript(transcript, audioBlob);
           } catch (err) {
             // Refresh usage from backend after failed STT (success OR 429)
             if (!isPro) {
@@ -224,7 +229,7 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
                 onAttemptsRefresh();
               }
             }
-            
+
             // Handle 429 (rate limit) - show paywall, stop flow, refresh usage
             if (err instanceof ApiError && err.status === 429) {
               setError("You've reached your daily limit. Upgrade to Pro for unlimited practice.");
@@ -233,14 +238,14 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
               }
               return; // Stop the flow - don't proceed to transcript-dependent steps
             }
-            
+
             // Handle 402 (upgrade needed)
             if (err instanceof ApiError && err.status === 402 && err.data?.upgrade === true && onUpgradeNeeded) {
               setError("You've reached your daily limit. Upgrade to Pro for unlimited practice.");
               onUpgradeNeeded("mic");
               return; // Stop the flow
             }
-            
+
             throw new Error(err.data?.error || err.message || "Transcription failed");
           }
         } catch (err) {
@@ -271,6 +276,11 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
   };
 
   const stopRecording = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
     if (mediaRecorderRef.current && recording) {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream.getTracks().forEach((t) => t.stop());
@@ -313,12 +323,14 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
             <span className="material-icons-outlined" style={{ fontSize: 32 }}>stop</span>
           </button>
         )}
-        
+
         {/* Recording indicator - always visible when recording */}
         {recording && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-100 border border-rose-200 shadow-sm">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-100 border border-rose-200 shadow-sm animate-in fade-in zoom-in duration-200">
             <span className="h-2.5 w-2.5 rounded-full bg-rose-500 animate-pulse"></span>
-            <span className="text-xs text-rose-700 font-bold">Recording…</span>
+            <span className="text-xs text-rose-700 font-bold tabular-nums">
+              Recording… {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+            </span>
           </div>
         )}
       </div>
@@ -326,7 +338,7 @@ export default function VoiceRecorder({ onTranscript, onStateChange, onUpgradeNe
       {transcribing && (
         <p className="text-[10px] text-slate-600 font-medium">Transcribing...</p>
       )}
-      
+
       {error && (
         <div className="max-w-[140px] text-center">
           <p className="text-[10px] text-rose-600 font-medium mb-1">{error}</p>

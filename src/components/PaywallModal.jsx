@@ -1,9 +1,13 @@
 // src/components/PaywallModal.jsx
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
 import { initiateUpgrade } from "../utils/upgrade.js";
 
 export default function PaywallModal({ onClose, onNotNow }) {
   const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const handleUpgrade = async () => {
     await initiateUpgrade({
@@ -38,13 +42,13 @@ export default function PaywallModal({ onClose, onNotNow }) {
       {/* Modal Overlay */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 transition-all duration-300">
         {/* Backdrop */}
-        <div 
+        <div
           className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
           onClick={onClose}
         ></div>
 
         {/* Modal Container */}
-        <div 
+        <div
           className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-y-auto max-h-[90vh] sm:max-h-none transform transition-all scale-100 opacity-100 flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
@@ -122,14 +126,41 @@ export default function PaywallModal({ onClose, onNotNow }) {
                     <span className="text-slate-500 font-medium ml-1">/mo</span>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleUpgrade}
-                  disabled={loading}
-                  className="w-full py-2.5 px-4 bg-primary hover:bg-blue-600 active:bg-blue-700 text-white font-semibold text-sm rounded-lg shadow-md hover:shadow-lg transition-all mb-6 text-center disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {loading ? "Opening checkout..." : "Upgrade to Pro"}
-                </button>
+
+                {/* Auth Gating for Upgrade */}
+                {user ? (
+                  // LOGGED IN: Standard Upgrade
+                  <button
+                    type="button"
+                    onClick={handleUpgrade}
+                    disabled={loading}
+                    className="w-full py-2.5 px-4 bg-primary hover:bg-blue-600 active:bg-blue-700 text-white font-semibold text-sm rounded-lg shadow-md hover:shadow-lg transition-all mb-6 text-center disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {loading ? "Opening checkout..." : "Upgrade to Pro"}
+                  </button>
+                ) : (
+                  // LOGGED OUT: Force Auth
+                  <div className="flex flex-col gap-3 mb-6">
+                    <button
+                      type="button"
+                      onClick={() => navigate("/signup")}
+                      className="w-full py-2.5 px-4 bg-primary hover:bg-blue-600 active:bg-blue-700 text-white font-semibold text-sm rounded-lg shadow-md hover:shadow-lg transition-all text-center"
+                    >
+                      Create free account to Upgrade
+                    </button>
+                    <p className="text-xs text-slate-500 text-center leading-relaxed px-2">
+                      Your subscription is linked to your email so you can log in anytime.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => navigate("/signin")}
+                      className="text-primary hover:text-primary-hover text-sm font-semibold hover:underline"
+                    >
+                      Already have an account? Sign in
+                    </button>
+                  </div>
+                )}
+
                 <ul className="flex flex-col gap-3 text-sm text-slate-700 font-medium">
                   <li className="flex items-start gap-3">
                     <span className="material-symbols-outlined text-primary text-xl shrink-0 icon-filled">check_circle</span>
