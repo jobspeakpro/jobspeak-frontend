@@ -15,6 +15,10 @@
     {
       "source": "/resume/(.*)",
       "destination": "https://jobspeak-backend-production.up.railway.app/resume/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
