@@ -32,14 +32,18 @@ export class ApiError extends Error {
 export async function apiClient(endpoint, options = {}) {
   const { parseJson = true, ...fetchOptions } = options;
 
-  // Use base URL from env if available (e.g. VITE_API_BASE_URL)
-  // Default to http://127.0.0.1:8080 for local development
+  // Use base URL from env - REQUIRED in production
   const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+
+  // Log error if missing in production
+  if (!API_BASE && import.meta.env.PROD) {
+    console.error("❌ VITE_API_BASE_URL is missing in production");
+  }
 
   // Ensure endpoint starts with /
   const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
 
-  // Construct final URL (absolute in dev if env set, relative in prod)
+  // Construct final URL
   const url = `${API_BASE}${path}`;
 
   // Get current user from Supabase (if logged in)
