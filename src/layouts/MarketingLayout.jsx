@@ -1,5 +1,6 @@
 // src/layouts/MarketingLayout.jsx
 import React from "react";
+import { Link } from "react-router-dom";
 import AppHeader from "../components/AppHeader.jsx";
 
 export default function MarketingLayout({ children }) {
