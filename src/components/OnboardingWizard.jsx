@@ -50,6 +50,7 @@ export default function OnboardingWizard({ onComplete }) {
     const [error, setError] = useState(null);
     const audioRef = useRef(new Audio());
     const [isPlayingPrompt, setIsPlayingPrompt] = useState(false);
+    const [autoplayBlocked, setAutoplayBlocked] = useState(false);
 
     // Explicit Mic State
     const [micEnabled, setMicEnabled] = useState(false);
@@ -213,10 +214,11 @@ export default function OnboardingWizard({ onComplete }) {
                 try {
                     await audioRef.current.play();
                     setIsPlayingPrompt(true);
+                    setAutoplayBlocked(false); // Autoplay worked
                 } catch (e) {
                     console.log("Autoplay blocked - user can click repeat", e);
                     setIsPlayingPrompt(false);
-                    // Don't throw - just log and allow manual retry via repeat button
+                    setAutoplayBlocked(true); // Show tap to play prompt
                 }
             }
         } catch (err) {
@@ -399,7 +401,7 @@ export default function OnboardingWizard({ onComplete }) {
     // AssistantBubble component - memoized to prevent remounting during typing
     // CRITICAL: Only depends on step - isPlayingPrompt changes should NOT cause remount
     // MOVED OUTSIDE to prevent re-creation on every render
-    const AssistantBubble = memo(({ currentStep, playing, onRepeat, steps }) => {
+    const AssistantBubble = memo(({ currentStep, playing, onRepeat, steps, autoplayBlocked: blocked }) => {
         // Debug: Track mounts/unmounts
         useEffect(() => {
             // console.log("[AVATAR] MOUNT");
@@ -438,13 +440,27 @@ export default function OnboardingWizard({ onComplete }) {
                     <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl rounded-tl-sm px-5 py-3 text-sm md:text-base text-slate-800 dark:text-slate-100 shadow-sm leading-relaxed">
                         {currentQ}
                     </div>
-                    <button
-                        onClick={onRepeat}
-                        className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-primary hover:text-primary-hover transition-colors ml-1"
-                    >
-                        <span className="material-symbols-outlined text-[14px]">replay</span>
-                        Repeat question
-                    </button>
+                    {/* Autoplay Blocked Prompt - Prominent */}
+                    {blocked && !playing && (
+                        <button
+                            onClick={onRepeat}
+                            className="flex items-center gap-2 mt-3 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white font-bold rounded-lg shadow-md transition-all animate-pulse"
+                        >
+                            <span className="material-symbols-outlined text-lg">volume_up</span>
+                            Tap to play audio
+                        </button>
+                    )}
+
+                    {/* Regular Repeat Button - Only show if not blocked or already playing */}
+                    {(!blocked || playing) && (
+                        <button
+                            onClick={onRepeat}
+                            className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-primary hover:text-primary-hover transition-colors ml-1"
+                        >
+                            <span className="material-symbols-outlined text-[14px]">replay</span>
+                            Repeat question
+                        </button>
+                    )}
                 </div>
             </div>
         );
@@ -769,7 +785,7 @@ export default function OnboardingWizard({ onComplete }) {
 
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto px-6 py-8 flex flex-col items-center">
-                    <AssistantBubble currentStep={step} playing={isPlayingPrompt} onRepeat={handleRepeatQuestion} steps={steps} />
+                    <AssistantBubble currentStep={step} playing={isPlayingPrompt} onRepeat={handleRepeatQuestion} steps={steps} autoplayBlocked={autoplayBlocked} />
                     {renderInput()}
                 </div>
 
