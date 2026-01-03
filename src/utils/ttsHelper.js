@@ -115,9 +115,45 @@ export async function fetchTtsBlobUrl({ text, voiceId = "DEFAULT", speed = 1.0 }
 
     const contentType = res.headers.get("content-type") || "";
     const isAudio = contentType.startsWith("audio/") || contentType.includes("audio/") || contentType === "application/octet-stream";
+    const isJson = contentType.includes("application/json") || contentType.includes("json");
+
+    // Handle JSON response (production format: {audioUrl: "data:audio/mpeg;base64..."})
+    if (isJson) {
+      try {
+        const jsonData = await res.json();
+
+        // Check if response contains audioUrl field
+        if (jsonData.audioUrl) {
+          // Cache the data URI directly
+          ttsCache.set(cacheKey, jsonData.audioUrl);
+          return { url: jsonData.audioUrl, contentType: "audio/mpeg", error: null };
+        }
+
+        // If no audioUrl, treat as error
+        return {
+          url: null,
+          contentType,
+          error: {
+            status: 500,
+            message: `JSON response missing audioUrl field. Keys: ${Object.keys(jsonData).join(", ")}`,
+            isProRequired: false,
+          },
+        };
+      } catch (e) {
+        return {
+          url: null,
+          contentType,
+          error: {
+            status: 500,
+            message: `Failed to parse JSON response: ${e.message}`,
+            isProRequired: false,
+          },
+        };
+      }
+    }
 
     if (isAudio) {
-      // Handle blob response
+      // Handle blob response (local/dev format)
       const blob = await res.blob();
       if (blob.size === 0) {
         return {
