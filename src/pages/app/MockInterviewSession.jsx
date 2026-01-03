@@ -543,10 +543,47 @@ export default function MockInterviewSession() {
         }
 
         return () => {
-            // Cleanup audio on unmount
-            questionAudioRef.current.pause();
+            // Cleanup audio on unmount - add null checks to prevent removeChild errors
+            try {
+                if (questionAudioRef.current) {
+                    questionAudioRef.current.pause();
+                    questionAudioRef.current.src = '';
+                    questionAudioRef.current.load();
+                }
+            } catch (err) {
+                // Silently handle cleanup errors during unmount
+                console.warn('[MOCK] Audio cleanup warning:', err);
+            }
         };
     }, [currentQuestionIndex, currentQuestion]);
+
+    // Comprehensive cleanup on component unmount to prevent removeChild errors
+    useEffect(() => {
+        return () => {
+            try {
+                // Clean up timers
+                if (timerRef.current) clearInterval(timerRef.current);
+                if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+
+                // Clean up media recorder and streams
+                if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+                    mediaRecorderRef.current.stop();
+                }
+                if (streamRef.current) {
+                    streamRef.current.getTracks().forEach(track => track.stop());
+                }
+
+                // Clean up audio element
+                if (questionAudioRef.current) {
+                    questionAudioRef.current.pause();
+                    questionAudioRef.current.src = '';
+                }
+            } catch (err) {
+                // Silently handle cleanup errors
+                console.warn('[MOCK] Component cleanup warning:', err);
+            }
+        };
+    }, []);
 
     // ✅ RENDER BRANCHES AFTER HOOKS
     if (elig.loading) {
