@@ -74,6 +74,10 @@ export default function MockInterviewSession() {
 
     // TTS audio ref
     const questionAudioRef = useRef(new Audio());
+    const [questionSpeed, setQuestionSpeed] = useState(() => {
+        const stored = localStorage.getItem("mock_question_speed");
+        return stored ? Number(stored) : 1.0;
+    });
 
     // Questions state - fetched from API
     const [questions, setQuestions] = useState([]);
@@ -529,6 +533,7 @@ export default function MockInterviewSession() {
                 const blob = await response.blob();
                 const url = URL.createObjectURL(blob);
                 questionAudioRef.current.src = url;
+                questionAudioRef.current.playbackRate = questionSpeed; // Apply speed
                 questionAudioRef.current.play();
             }
         } catch (err) {
@@ -716,14 +721,38 @@ export default function MockInterviewSession() {
                                         "{currentQuestion.text}"
                                     </h1>
 
-                                    {/* Repeat Question Button */}
-                                    <button
-                                        onClick={playQuestionAudio}
-                                        className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium transition-colors"
-                                    >
-                                        <span className="material-symbols-outlined text-[18px]">volume_up</span>
-                                        Repeat Question
-                                    </button>
+                                    {/* Audio Controls */}
+                                    <div className="mt-4 flex items-center gap-3 flex-wrap">
+                                        <button
+                                            onClick={playQuestionAudio}
+                                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium transition-colors"
+                                        >
+                                            <span className="material-symbols-outlined text-[18px]">volume_up</span>
+                                            Repeat Question
+                                        </button>
+
+                                        {/* Speed Selector */}
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs text-slate-600 dark:text-slate-400">Speed:</span>
+                                            <div className="flex gap-1">
+                                                {[0.75, 1.0, 1.25].map(speed => (
+                                                    <button
+                                                        key={speed}
+                                                        onClick={() => {
+                                                            setQuestionSpeed(speed);
+                                                            localStorage.setItem("mock_question_speed", String(speed));
+                                                        }}
+                                                        className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${questionSpeed === speed
+                                                                ? 'bg-primary text-white'
+                                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                                            }`}
+                                                    >
+                                                        {speed}×
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="mt-8 p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900/30 flex gap-3 items-start">
                                     <span className="material-symbols-outlined text-primary mt-0.5">lightbulb</span>
