@@ -947,8 +947,8 @@ export default function PracticeSpeakingPage() {
           </div>
         </div>
 
-        {/* Guidance Card - Constrained Width */}
-        <div className="w-full max-w-[1100px] mx-auto">
+        {/* Guidance Card - Same Width as Above */}
+        <div className="w-full max-w-[900px]">
           {/* Note: In expanded view, we use the detailed results block above */}
           {/* Placeholder state logic managed inside Guidance Results */}
           {loading ? (
