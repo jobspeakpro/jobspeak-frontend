@@ -41,9 +41,10 @@ const isValidJobTitle = (title) => {
   - Speak-First logic (blind confirmation)
   - Inline Calibration
   - TTS Overlap Guard
+  - Wrapped with React.memo to prevent flicker on parent rerenders
 */
 
-export default function OnboardingWizard({ onComplete }) {
+function OnboardingWizard({ onComplete }) {
     const { user, updateUser } = useAuth();
     const [step, setStep] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -853,3 +854,6 @@ export default function OnboardingWizard({ onComplete }) {
         </div>
     );
 }
+
+// Export with React.memo to prevent flickering when parent rerenders (e.g., on typing)
+export default memo(OnboardingWizard);

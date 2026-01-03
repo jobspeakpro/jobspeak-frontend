@@ -246,10 +246,10 @@ export default function PracticeSpeakingPage() {
 
   // ONBOARDING HANDLERS
   const showWizard = !onboardingComplete;
-  const handleWizardComplete = () => {
+  const handleWizardComplete = useCallback(() => {
     setOnboardingComplete(true);
     // The wizard component sets the localStorage flag "jsp_onboarding_complete_v1" = "1"
-  };
+  }, []);
 
   // Guidance section audio state (for improved answer)
   const guidanceAudioRef = useRef(null);
