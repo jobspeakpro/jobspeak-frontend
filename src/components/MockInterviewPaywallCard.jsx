@@ -87,15 +87,36 @@ export default function MockInterviewPaywallCard() {
                         {/* Inline Blocked State Message */}
                         {!checkingLimit && mockLimitStatus?.blocked && (
                             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-4">
-                                <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-                                    {mockLimitStatus.resetInDays > 1
-                                        ? `Next free mock in ${mockLimitStatus.resetInDays} days${mockLimitStatus.nextAllowedAt ? ` (${formatNextAllowedDate(mockLimitStatus.nextAllowedAt)})` : ''}`
-                                        : mockLimitStatus.resetInDays === 1
-                                            ? `Next free mock tomorrow${mockLimitStatus.nextAllowedAt ? ` (${formatNextAllowedDate(mockLimitStatus.nextAllowedAt)})` : ''}`
-                                            : mockLimitStatus.resetInDays === 0
-                                                ? 'Next free mock today'
-                                                : 'Next free mock: check back later'}. Unlock unlimited with Pro.
-                                </p>
+                                {(() => {
+                                    const now = new Date();
+                                    const allowed = mockLimitStatus.nextAllowedAt ? new Date(mockLimitStatus.nextAllowedAt) : null;
+
+                                    if (!allowed) {
+                                        return (
+                                            <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                                                Next free mock: check back later
+                                            </p>
+                                        );
+                                    }
+
+                                    const daysRemaining = Math.ceil((allowed - now) / (1000 * 60 * 60 * 24));
+                                    const weekday = allowed.toLocaleDateString('en-US', { weekday: 'long' });
+                                    const month = allowed.toLocaleDateString('en-US', { month: 'short' });
+                                    const day = allowed.getDate();
+                                    const dateStr = `${weekday}, ${month} ${day}`;
+                                    const subtext = daysRemaining > 1 ? `In ${daysRemaining} days` : daysRemaining === 1 ? 'Tomorrow' : 'Available soon';
+
+                                    return (
+                                        <div>
+                                            <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
+                                                Next free mock: {dateStr}
+                                            </p>
+                                            <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                                                {subtext}. Unlock unlimited with Pro.
+                                            </p>
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         )}
 
@@ -141,23 +162,39 @@ export default function MockInterviewPaywallCard() {
 
                         {/* Reset Information */}
                         <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 mb-6">
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="material-symbols-outlined text-slate-600 dark:text-slate-400 text-lg">schedule</span>
-                                <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                                    {mockLimitStatus?.resetInDays > 1
-                                        ? `Try again in ${mockLimitStatus.resetInDays} days`
-                                        : mockLimitStatus?.resetInDays === 1
-                                            ? 'Try again tomorrow'
-                                            : mockLimitStatus?.resetInDays === 0
-                                                ? 'Try again today'
-                                                : 'Check back later'}
-                                </p>
-                            </div>
-                            {mockLimitStatus?.nextAllowedAt && (
-                                <p className="text-xs text-slate-600 dark:text-slate-400 ml-7">
-                                    Available on {formatNextAllowedDate(mockLimitStatus.nextAllowedAt)}
-                                </p>
-                            )}
+                            {(() => {
+                                const now = new Date();
+                                const allowed = mockLimitStatus?.nextAllowedAt ? new Date(mockLimitStatus.nextAllowedAt) : null;
+
+                                if (!allowed) {
+                                    return (
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                            Check back later for your next free mock.
+                                        </p>
+                                    );
+                                }
+
+                                const daysRemaining = Math.ceil((allowed - now) / (1000 * 60 * 60 * 24));
+                                const weekday = allowed.toLocaleDateString('en-US', { weekday: 'long' });
+                                const month = allowed.toLocaleDateString('en-US', { month: 'short' });
+                                const day = allowed.getDate();
+                                const dateStr = `${weekday}, ${month} ${day}`;
+                                const subtext = daysRemaining > 1 ? `In ${daysRemaining} days` : daysRemaining === 1 ? 'Tomorrow' : 'Available soon';
+
+                                return (
+                                    <div className="flex items-start gap-3">
+                                        <span className="material-symbols-outlined text-slate-600 dark:text-slate-400 text-lg mt-0.5">schedule</span>
+                                        <div>
+                                            <p className="text-sm font-bold text-slate-900 dark:text-white">
+                                                Next free mock: {dateStr}
+                                            </p>
+                                            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                                                {subtext}
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                             {!mockLimitStatus?.nextAllowedAt && !mockLimitStatus?.resetInDays && (
                                 <p className="text-xs text-red-600 dark:text-red-400 ml-7">
                                     Error: Missing reset information. Please contact support.

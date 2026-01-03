@@ -1085,25 +1085,39 @@ export default function MockInterviewSummary() {
                     {/* Blocked state - show backend message */}
                     {!checkingLimit && mockLimitStatus?.blocked && (
                         <div className="w-full max-w-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-                            <div className="flex items-start gap-3">
-                                <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-xl">schedule</span>
-                                <div className="flex-1">
-                                    <p className="text-sm font-semibold text-amber-900 dark:text-amber-200 mb-1">
-                                        {mockLimitStatus.resetInDays > 1
-                                            ? `Next free mock in ${mockLimitStatus.resetInDays} days`
-                                            : mockLimitStatus.resetInDays === 1
-                                                ? 'Next free mock tomorrow'
-                                                : mockLimitStatus.resetInDays === 0
-                                                    ? 'Next free mock today'
-                                                    : mockLimitStatus.message}
-                                    </p>
-                                    {mockLimitStatus.nextAllowedAt && (
-                                        <p className="text-xs text-amber-700 dark:text-amber-300">
-                                            Try again on {formatNextAllowedDate(mockLimitStatus.nextAllowedAt)}
+                            {(() => {
+                                const now = new Date();
+                                const allowed = mockLimitStatus?.nextAllowedAt ? new Date(mockLimitStatus.nextAllowedAt) : null;
+
+                                if (!allowed) {
+                                    return (
+                                        <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                                            Next free mock: check back later
                                         </p>
-                                    )}
-                                </div>
-                            </div>
+                                    );
+                                }
+
+                                const daysRemaining = Math.ceil((allowed - now) / (1000 * 60 * 60 * 24));
+                                const weekday = allowed.toLocaleDateString('en-US', { weekday: 'long' });
+                                const month = allowed.toLocaleDateString('en-US', { month: 'short' });
+                                const day = allowed.getDate();
+                                const dateStr = `${weekday}, ${month} ${day}`;
+                                const subtext = daysRemaining > 1 ? `In ${daysRemaining} days` : daysRemaining === 1 ? 'Tomorrow' : 'Available soon';
+
+                                return (
+                                    <div className="flex items-start gap-3">
+                                        <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-xl">schedule</span>
+                                        <div className="flex-1">
+                                            <p className="text-sm font-bold text-amber-900 dark:text-amber-200 mb-1">
+                                                Next free mock: {dateStr}
+                                            </p>
+                                            <p className="text-xs text-amber-700 dark:text-amber-300">
+                                                {subtext}
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                         </div>
                     )}
 
