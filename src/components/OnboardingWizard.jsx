@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, memo } from "react";
+import { createPortal } from "react-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { supabase } from "../lib/supabaseClient.js";
 import { fetchTtsBlobUrl } from "../utils/ttsHelper.js";
@@ -44,7 +45,11 @@ const isValidJobTitle = (title) => {
   - Wrapped with React.memo to prevent flicker on parent rerenders
 */
 
+
 function OnboardingWizard({ onComplete }) {
+    // INSTRUMENTATION: Track renders and mount/unmount
+    console.count("[WIZARD] render");
+
     const { user, updateUser } = useAuth();
     const [step, setStep] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -52,6 +57,12 @@ function OnboardingWizard({ onComplete }) {
     const audioRef = useRef(new Audio());
     const [isPlayingPrompt, setIsPlayingPrompt] = useState(false);
     const [autoplayBlocked, setAutoplayBlocked] = useState(false);
+
+    // INSTRUMENTATION: Track mount/unmount
+    useEffect(() => {
+        console.log("[WIZARD] mounted");
+        return () => console.log("[WIZARD] unmounted");
+    }, []);
 
     // Explicit Mic State
     const [micEnabled, setMicEnabled] = useState(false);
@@ -804,7 +815,8 @@ function OnboardingWizard({ onComplete }) {
 
     const current = steps[step];
 
-    return (
+    // Render wizard into a portal to isolate from parent component rerenders/layout changes
+    return createPortal(
         <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 font-display" onClick={(e) => e.stopPropagation()}>
             {/* Card Container */}
             <div className="relative w-full max-w-md bg-white dark:bg-surface-dark rounded-3xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh] pointer-events-auto">
@@ -851,7 +863,8 @@ function OnboardingWizard({ onComplete }) {
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 
