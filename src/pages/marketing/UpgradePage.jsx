@@ -1,7 +1,7 @@
-// src/pages/marketing/UpgradePage.jsx
+﻿// src/pages/marketing/UpgradePage.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import MarketingLayout from "../../layouts/MarketingLayout.jsx";
+import UniversalHeader from "../../components/UniversalHeader.jsx";
 import { initiateUpgrade } from "../../utils/upgrade.js";
 
 export default function UpgradePage() {
@@ -17,7 +17,7 @@ export default function UpgradePage() {
   };
 
   return (
-    <MarketingLayout>
+    <>`n      <UniversalHeader />
       <div className="bg-background-light dark:bg-background-dark text-text-main dark:text-white min-h-screen flex flex-col items-center py-10 px-4 md:px-8 overflow-x-hidden">
         {/* Warning Pill */}
         <div className="mb-8 animate-fade-in-down">
@@ -173,7 +173,7 @@ export default function UpgradePage() {
         {/* Footer Space */}
         <div className="h-20"></div>
       </div>
-    </MarketingLayout>
+    </>
   );
 }
 

@@ -1,13 +1,13 @@
-// src/pages/marketing/HowItWorksPage.jsx
+﻿// src/pages/marketing/HowItWorksPage.jsx
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import MarketingLayout from "../../layouts/MarketingLayout.jsx";
+import UniversalHeader from "../../components/UniversalHeader.jsx";
 
 export default function HowItWorksPage() {
   const navigate = useNavigate();
 
   return (
-    <MarketingLayout>
+    <>`n      <UniversalHeader />
       {/* Keep ONLY inner content from Stitch (no header/footer/scripts/styles) */}
       <main className="flex-1 flex flex-col items-center py-10 px-6 md:px-10 lg:px-40 pb-20">
         <div className="flex flex-col max-w-[960px] w-full gap-16">
@@ -319,6 +319,6 @@ export default function HowItWorksPage() {
           </section>
         </div>
       </main>
-    </MarketingLayout>
+    </>
   );
 }

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { supabase } from "../../lib/supabaseClient.js";
 import { apiClient } from "../../utils/apiClient.js";
-import AppHeader from "../../components/AppHeader.jsx";
+import UniversalHeader from "../../components/UniversalHeader.jsx";
 import MicAudioTest from "../../components/MicAudioTest.jsx";
 
 export default function Dashboard() {
@@ -149,7 +149,7 @@ export default function Dashboard() {
   return (
     <div className="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white font-display antialiased min-h-screen flex flex-col">
       {/* Use new shared header */}
-      <AppHeader />
+      <UniversalHeader />
 
       {/* Main Content */}
       <main className="flex-1 w-full max-w-[1024px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">

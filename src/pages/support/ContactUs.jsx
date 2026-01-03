@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { saveContactMessage } from "../../lib/storage.js";
-import AppHeader from "../../components/AppHeader.jsx";
+import UniversalHeader from "../../components/UniversalHeader.jsx";
 
 export default function ContactUs() {
   const [formData, setFormData] = useState({
@@ -53,7 +53,7 @@ export default function ContactUs() {
   return (
     <div className="font-display antialiased text-slate-900 dark:text-white bg-background-light dark:bg-background-dark">
       <div className="relative flex flex-col min-h-screen w-full overflow-x-hidden">
-        <AppHeader />
+        <UniversalHeader />
         <main className="flex-grow layout-container flex flex-col items-center py-10 px-4 sm:px-6 lg:px-8">
           <div className="w-full max-w-6xl flex flex-col gap-10">
             <div className="flex flex-col items-center text-center space-y-4">

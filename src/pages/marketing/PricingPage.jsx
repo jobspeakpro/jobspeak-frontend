@@ -1,7 +1,7 @@
 // src/pages/marketing/PricingPage.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import MarketingLayout from "../../layouts/MarketingLayout.jsx";
+import UniversalHeader from "../../components/UniversalHeader.jsx";
 import { initiateUpgrade } from "../../utils/upgrade.js";
 
 export default function PricingPage() {
@@ -50,7 +50,8 @@ export default function PricingPage() {
   };
 
   return (
-    <MarketingLayout>
+    <>
+      <UniversalHeader />
       {/* Toast notification */}
       {toast === "canceled" && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-3 shadow-lg max-w-md">
@@ -407,6 +408,6 @@ export default function PricingPage() {
           </p>
         </div>
       </main>
-    </MarketingLayout>
+    </>
   );
 }

@@ -11,7 +11,7 @@ import PracticeTour from "../../components/PracticeTour.jsx";
 import OnboardingWizard from "../../components/OnboardingWizard.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { supabase } from "../../lib/supabaseClient.js";
-import AppHeader from "../../components/AppHeader.jsx";
+import UniversalHeader from "../../components/UniversalHeader.jsx";
 
 // ========================================
 // DEFENSIVE RENDERING HELPERS
@@ -690,7 +690,7 @@ export default function PracticeSpeakingPage() {
       )}
 
       {/* Use shared header */}
-      <AppHeader />
+      <UniversalHeader />
 
       <main className="flex-grow flex flex-col items-center justify-start py-8 px-4 md:px-6 pb-20">
         <div className="w-full max-w-[900px] flex flex-col gap-8">

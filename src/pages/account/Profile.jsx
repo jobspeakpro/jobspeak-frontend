@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { usePro } from "../../contexts/ProContext.jsx";
 import { supabase } from "../../lib/supabaseClient.js";
-import AppHeader from "../../components/AppHeader.jsx";
+import UniversalHeader from "../../components/UniversalHeader.jsx";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -29,7 +29,7 @@ export default function Profile() {
   if (!isAuthed || !user) {
     return (
       <div className="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white min-h-screen flex flex-col antialiased selection:bg-primary/20 selection:text-primary">
-        <AppHeader />
+        <UniversalHeader />
         <main className="flex-grow w-full max-w-3xl mx-auto px-4 sm:px-6 py-8 md:py-12">
           <div className="bg-white dark:bg-[#1A222C] rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-8 text-center">
             <p className="text-slate-600 dark:text-slate-400 mb-4">Please sign in to view your profile.</p>
@@ -205,7 +205,7 @@ export default function Profile() {
 
   return (
     <div className="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white min-h-screen flex flex-col antialiased selection:bg-primary/20 selection:text-primary">
-      <AppHeader />
+      <UniversalHeader />
       <main className="flex-grow w-full max-w-3xl mx-auto px-4 sm:px-6 py-8 md:py-12">
         <div className="mb-10">
           <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Profile</h1>

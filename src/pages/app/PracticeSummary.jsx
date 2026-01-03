@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { apiClient } from "../../utils/apiClient.js";
 import { normalizePracticeFeedback } from "../../utils/apiNormalizers.js";
-import AppHeader from "../../components/AppHeader.jsx";
+import UniversalHeader from "../../components/UniversalHeader.jsx";
 
 export default function PracticeSummary() {
     const { id } = useParams();
@@ -52,7 +52,7 @@ export default function PracticeSummary() {
     if (loading) {
         return (
             <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col">
-                <AppHeader />
+                <UniversalHeader />
                 <main className="flex-1 flex items-center justify-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                 </main>
@@ -63,7 +63,7 @@ export default function PracticeSummary() {
     if (error || !summary) {
         return (
             <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col">
-                <AppHeader />
+                <UniversalHeader />
                 <main className="flex-1 flex flex-col items-center justify-center p-4">
                     <p className="text-red-500 mb-4">{error || "Summary not found"}</p>
                     <button onClick={handleBack} className="text-primary hover:underline">Return to Progress</button>

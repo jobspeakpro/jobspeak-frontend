@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import AppHeader from '../../components/AppHeader.jsx';
+import UniversalHeader from '../../components/UniversalHeader.jsx';
 
 export default function HelpPage() {
     const location = useLocation();
@@ -96,7 +96,7 @@ export default function HelpPage() {
 
     return (
         <div className="relative flex min-h-screen w-full flex-col bg-background-light dark:bg-background-dark font-display">
-            <AppHeader />
+            <UniversalHeader />
 
             <div className="px-4 md:px-10 lg:px-20 xl:px-40 flex flex-1 justify-center py-5">
                 <div className="flex flex-col max-w-[1200px] flex-1">

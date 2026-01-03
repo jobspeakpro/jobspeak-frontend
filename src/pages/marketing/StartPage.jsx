@@ -1,13 +1,13 @@
-// src/pages/marketing/StartPage.jsx
+﻿// src/pages/marketing/StartPage.jsx
 import React from "react";
 import { useNavigate, Link } from "react-router-dom";
-import MarketingLayout from "../../layouts/MarketingLayout.jsx";
+import UniversalHeader from "../../components/UniversalHeader.jsx";
 
 export default function StartPage() {
   const navigate = useNavigate();
 
   return (
-    <MarketingLayout>
+    <>`n      <UniversalHeader />
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center py-10 px-4 md:px-0">
         <div className="w-full max-w-[640px] flex flex-col gap-10">
@@ -101,7 +101,7 @@ export default function StartPage() {
           </div>
         </div>
       </div>
-    </MarketingLayout>
+    </>
   );
 }
 

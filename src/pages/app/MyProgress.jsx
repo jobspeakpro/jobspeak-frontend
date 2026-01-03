@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
-import AppHeader from "../../components/AppHeader.jsx";
+import UniversalHeader from "../../components/UniversalHeader.jsx";
 
 export default function MyProgress() {
   const navigate = useNavigate();
@@ -43,7 +43,7 @@ export default function MyProgress() {
 
   return (
     <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-50 min-h-screen flex flex-col">
-      <AppHeader />
+      <UniversalHeader />
 
       <main className="flex-1 w-full max-w-[800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
         {/* Header Section */}

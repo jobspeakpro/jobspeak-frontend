@@ -1,11 +1,11 @@
-// src/pages/marketing/TermsPage.jsx
+﻿// src/pages/marketing/TermsPage.jsx
 import React from "react";
 import { Link } from "react-router-dom";
-import MarketingLayout from "../../layouts/MarketingLayout.jsx";
+import UniversalHeader from "../../components/UniversalHeader.jsx";
 
 export default function TermsPage() {
   return (
-    <MarketingLayout>
+    <>`n      <UniversalHeader />
       <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           {/* SIDEBAR */}
@@ -308,6 +308,6 @@ export default function TermsPage() {
           </main>
         </div>
       </div>
-    </MarketingLayout>
+    </>
   );
 }

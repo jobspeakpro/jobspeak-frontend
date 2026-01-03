@@ -1,13 +1,13 @@
-// src/pages/marketing/SignInPage.jsx
+﻿// src/pages/marketing/SignInPage.jsx
 import React from "react";
 import { useNavigate, Link } from "react-router-dom";
-import MarketingLayout from "../../layouts/MarketingLayout.jsx";
+import UniversalHeader from "../../components/UniversalHeader.jsx";
 
 export default function SignInPage() {
   const navigate = useNavigate();
 
   return (
-    <MarketingLayout>
+    <>`n      <UniversalHeader />
       <div className="w-full bg-white min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           {/* 
@@ -31,7 +31,7 @@ export default function SignInPage() {
           </div>
         </div>
       </div>
-    </MarketingLayout>
+    </>
   );
 }
 

@@ -1,11 +1,11 @@
-// src/pages/marketing/PrivacyPage.jsx
+﻿// src/pages/marketing/PrivacyPage.jsx
 import React from "react";
 import { Link } from "react-router-dom";
-import MarketingLayout from "../../layouts/MarketingLayout.jsx";
+import UniversalHeader from "../../components/UniversalHeader.jsx";
 
 export default function PrivacyPage() {
   return (
-    <MarketingLayout>
+    <>`n      <UniversalHeader />
       <div className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 lg:py-12 pb-20">
         <div className="flex flex-col lg:flex-row gap-12">
           {/* SIDEBAR */}
@@ -481,6 +481,6 @@ export default function PrivacyPage() {
           </main>
         </div>
       </div>
-    </MarketingLayout>
+    </>
   );
 }

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { usePro } from "../../contexts/ProContext.jsx";
 import { supabase } from "../../lib/supabaseClient.js";
 import { apiClient } from "../../utils/apiClient.js";
-import AppHeader from "../../components/AppHeader.jsx";
+import UniversalHeader from "../../components/UniversalHeader.jsx";
 import PaywallModal from "../../components/PaywallModal.jsx";
 import MockInterviewGate from "../../components/MockInterviewGate.jsx";
 
@@ -75,7 +75,7 @@ export default function MockInterviewPage() {
 
     return (
         <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col">
-            <AppHeader />
+            <UniversalHeader />
 
             {/* Show gate for guests */}
             {!checkingLimit && mockLimitStatus?.isGuest ? (

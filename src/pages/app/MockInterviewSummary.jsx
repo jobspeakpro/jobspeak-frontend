@@ -6,7 +6,7 @@ import { apiClient } from "../../utils/apiClient.js";
 import { normalizeMockSummary } from "../../utils/apiNormalizers.js";
 
 import { requestServerTTS, playAudioFromServer, speakBrowserTTS, stopAllTTS } from "../../utils/ttsClient.js";
-import AppHeader from "../../components/AppHeader.jsx";
+import UniversalHeader from "../../components/UniversalHeader.jsx";
 import TTSSampleButton from "../../components/TTSSampleButton.jsx";
 
 // Per-Question Audio Player Component (no speed controls, uses global settings)
@@ -601,7 +601,7 @@ export default function MockInterviewSummary() {
     if (loading) {
         return (
             <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col">
-                <AppHeader />
+                <UniversalHeader />
                 <main className="flex-1 flex items-center justify-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                 </main>
@@ -612,7 +612,7 @@ export default function MockInterviewSummary() {
     if (!summary || summary.error) {
         return (
             <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col">
-                <AppHeader />
+                <UniversalHeader />
                 <main className="flex-1 flex flex-col items-center justify-center p-6 text-center">
                     <span className="material-symbols-outlined text-slate-400 text-6xl mb-4">analytics</span>
                     <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Could not load summary. Please retry.</h2>
