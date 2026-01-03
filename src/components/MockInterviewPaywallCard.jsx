@@ -88,7 +88,9 @@ export default function MockInterviewPaywallCard() {
                         {!checkingLimit && mockLimitStatus?.blocked && (
                             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-4">
                                 <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-                                    Next free mock in {mockLimitStatus.resetInDays || 0} {mockLimitStatus.resetInDays === 1 ? 'day' : 'days'}. Unlock unlimited with Pro.
+                                    {mockLimitStatus.resetInDays > 0
+                                        ? `Next free mock in ${mockLimitStatus.resetInDays} ${mockLimitStatus.resetInDays === 1 ? 'day' : 'days'}.`
+                                        : 'Your free mock resets soon.'} Unlock unlimited with Pro.
                                 </p>
                             </div>
                         )}
@@ -138,7 +140,9 @@ export default function MockInterviewPaywallCard() {
                             <div className="flex items-center gap-2 mb-2">
                                 <span className="material-symbols-outlined text-slate-600 dark:text-slate-400 text-lg">schedule</span>
                                 <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                                    Try again in {mockLimitStatus?.resetInDays || 0} {mockLimitStatus?.resetInDays === 1 ? 'day' : 'days'}
+                                    {mockLimitStatus?.resetInDays > 0
+                                        ? `Try again in ${mockLimitStatus.resetInDays} ${mockLimitStatus.resetInDays === 1 ? 'day' : 'days'}`
+                                        : 'Resets soon'}
                                 </p>
                             </div>
                             {mockLimitStatus?.nextAllowedAt && (
