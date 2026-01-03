@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { supabase } from "../../lib/supabaseClient.js";
+import UniversalHeader from "../../components/UniversalHeader.jsx";
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -69,18 +70,7 @@ export default function SignUp() {
   // If email confirmation is shown, display that instead of the form
   if (showEmailConfirmation) {
     return (
-      <div className="bg-background-light dark:bg-background-dark text-[#111418] font-display antialiased min-h-screen flex flex-col">
-        {/* Navbar */}
-        <header className="w-full bg-white/80 dark:bg-[#101822]/90 backdrop-blur-md border-b border-[#f0f2f4] dark:border-slate-800 sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 flex items-center justify-center bg-primary/10 rounded-lg text-primary">
-                <span className="material-symbols-outlined" style={{ fontSize: "24px" }}>record_voice_over</span>
-              </div>
-              <h1 className="text-xl font-bold tracking-tight text-[#111418] dark:text-white">JobSpeak Pro</h1>
-            </div>
-          </div>
-        </header>
+      <div className="bg-background-light dark:bg-background-dark text-[#111418] font-display antialiased min-h-screen flex flex-col">        <UniversalHeader />
         {/* Email Confirmation Message */}
         <main className="flex-grow flex items-center justify-center p-4 sm:p-8">
           <div className="w-full max-w-[540px] flex flex-col gap-6">
@@ -119,18 +109,7 @@ export default function SignUp() {
   }
 
   return (
-    <div className="bg-background-light dark:bg-background-dark text-[#111418] font-display antialiased min-h-screen flex flex-col">
-      {/* Navbar */}
-      <header className="w-full bg-white/80 dark:bg-[#101822]/90 backdrop-blur-md border-b border-[#f0f2f4] dark:border-slate-800 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div className="w-8 h-8 flex items-center justify-center bg-primary/10 rounded-lg text-primary">
-              <span className="material-symbols-outlined" style={{ fontSize: "24px" }}>record_voice_over</span>
-            </div>
-            <h1 className="text-xl font-bold tracking-tight text-[#111418] dark:text-white">JobSpeak Pro</h1>
-          </Link>
-        </div>
-      </header>
+    <div className="bg-background-light dark:bg-background-dark text-[#111418] font-display antialiased min-h-screen flex flex-col">        <UniversalHeader />
       {/* Main Content */}
       <main className="flex-grow flex items-center justify-center p-4 sm:p-8">
         <div className="w-full max-w-[480px] flex flex-col gap-6">
