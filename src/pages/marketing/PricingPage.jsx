@@ -87,9 +87,9 @@ export default function PricingPage() {
         </div>
       )}
       {/* === STITCH MAIN CONTENT ONLY (no extra header/footer) === */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16 pb-20 flex flex-col items-center">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16 pb-20 flex flex-col items-center font-display">
         <div className="text-center max-w-2xl mx-auto mb-12">
-          <h1 className="text-slate-900 dark:text-white tracking-tight text-3xl md:text-4xl font-bold leading-tight mb-4">
+          <h1 className="text-slate-900 dark:text-white tracking-tight text-3xl md:text-4xl font-black leading-tight mb-4">
             Pricing
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-lg md:text-xl font-medium leading-normal mb-2">
