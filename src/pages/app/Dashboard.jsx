@@ -130,20 +130,25 @@ export default function Dashboard() {
 
     // Guest user - force signup
     if (mockLimitStatus.isGuest) {
-      alert('Create a free account to use your 1 free mock interview.');
       navigate('/signup');
       return;
     }
 
-    // Free limit reached - redirect to pricing
-    if (!mockLimitStatus.canStartMock) {
-      alert('Your free mock interview is complete. Upgrade for unlimited practice.');
-      navigate('/pricing');
+    // Blocked - show message (handled in UI)
+    if (mockLimitStatus.blocked || !mockLimitStatus.canStartMock) {
+      // UI already shows the block message, just prevent navigation
       return;
     }
 
     // Allowed - proceed
     navigate('/mock-interview/session?type=short');
+  };
+
+  // Format next allowed date
+  const formatNextAllowedDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   };
 
   return (
@@ -293,16 +298,36 @@ export default function Dashboard() {
               <p className="text-slate-600 dark:text-slate-400 mb-4">
                 Practice builds skills. Mock interviews test readiness. Choose between a quick warmup or deep dive.
               </p>
+
+              {/* Blocked state - show backend message */}
+              {!checkingLimit && mockLimitStatus?.blocked && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-xl">schedule</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-amber-900 dark:text-amber-200 mb-1">
+                        {mockLimitStatus.message}
+                      </p>
+                      {mockLimitStatus.nextAllowedAt && (
+                        <p className="text-xs text-amber-700 dark:text-amber-300">
+                          Try again on {formatNextAllowedDate(mockLimitStatus.nextAllowedAt)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <button
                 onClick={handleStartMockInterview}
-                disabled={checkingLimit || (mockLimitStatus && !mockLimitStatus.canStartMock && !mockLimitStatus.isGuest)}
-                className={`inline-flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors shadow-md ${(checkingLimit || (mockLimitStatus && !mockLimitStatus.canStartMock && !mockLimitStatus.isGuest)) ? 'opacity-50 cursor-not-allowed' : ''
+                disabled={checkingLimit || (mockLimitStatus && (mockLimitStatus.blocked || (!mockLimitStatus.canStartMock && !mockLimitStatus.isGuest)))}
+                className={`inline-flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors shadow-md ${(checkingLimit || (mockLimitStatus && (mockLimitStatus.blocked || (!mockLimitStatus.canStartMock && !mockLimitStatus.isGuest)))) ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
               >
                 <span className="material-symbols-outlined">
-                  {mockLimitStatus?.isGuest ? 'person_add' : mockLimitStatus?.canStartMock ? 'play_arrow' : 'workspace_premium'}
+                  {mockLimitStatus?.isGuest ? 'person_add' : (mockLimitStatus?.blocked || !mockLimitStatus?.canStartMock) ? 'workspace_premium' : 'play_arrow'}
                 </span>
-                {checkingLimit ? 'Checking...' : mockLimitStatus?.isGuest ? 'Create Free Account' : 'Start Mock Interview'}
+                {checkingLimit ? 'Checking...' : mockLimitStatus?.isGuest ? 'Create Free Account' : (mockLimitStatus?.blocked || !mockLimitStatus?.canStartMock) ? 'Upgrade to Pro' : 'Start Mock Interview'}
               </button>
 
               {/* Helper text based on status */}
@@ -311,14 +336,14 @@ export default function Dashboard() {
                   Sign up to get 1 free mock interview
                 </p>
               )}
-              {!checkingLimit && !mockLimitStatus?.isGuest && !mockLimitStatus?.canStartMock && (
+              {!checkingLimit && !mockLimitStatus?.isGuest && (mockLimitStatus?.blocked || !mockLimitStatus?.canStartMock) && (
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                  Free Trial used (1 mock). <button onClick={() => navigate('/pricing')} className="text-primary underline hover:no-underline">Upgrade for unlimited</button>
+                  <button onClick={() => navigate('/pricing')} className="text-primary underline hover:no-underline">View pricing</button> for unlimited mock interviews
                 </p>
               )}
-              {!checkingLimit && !mockLimitStatus?.isGuest && mockLimitStatus?.canStartMock && (
+              {!checkingLimit && !mockLimitStatus?.isGuest && mockLimitStatus?.canStartMock && !mockLimitStatus?.blocked && (
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                  Free Trial: 1 mock interview<br />
+                  Free Trial: 1 mock interview per week<br />
                   Upgrade for unlimited practice<br />
                   <span className="text-slate-400">No credit card required</span>
                 </p>

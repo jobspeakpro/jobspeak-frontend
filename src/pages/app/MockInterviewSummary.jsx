@@ -578,20 +578,24 @@ export default function MockInterviewSummary() {
 
         // Guest user - force signup
         if (mockLimitStatus.isGuest) {
-            alert('Create a free account to start another mock interview.');
             navigate('/signup');
             return;
         }
 
-        // Free limit reached - redirect to pricing
-        if (!mockLimitStatus.canStartMock) {
-            alert('Your free mock interview is complete. Upgrade for unlimited practice.');
-            navigate('/pricing');
+        // Blocked - prevent navigation (UI shows message)
+        if (mockLimitStatus.blocked || !mockLimitStatus.canStartMock) {
             return;
         }
 
         // Allowed - proceed
         navigate('/mock-interview/session?type=short');
+    };
+
+    // Format next allowed date
+    const formatNextAllowedDate = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
     };
 
     const handleDashboard = () => {
@@ -1077,7 +1081,27 @@ export default function MockInterviewSummary() {
                     >
                         Return to Dashboard
                     </button>
-                    {mockLimitStatus?.canStartMock && !mockLimitStatus?.isGuest ? (
+
+                    {/* Blocked state - show backend message */}
+                    {!checkingLimit && mockLimitStatus?.blocked && (
+                        <div className="w-full max-w-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                            <div className="flex items-start gap-3">
+                                <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-xl">schedule</span>
+                                <div className="flex-1">
+                                    <p className="text-sm font-semibold text-amber-900 dark:text-amber-200 mb-1">
+                                        {mockLimitStatus.message}
+                                    </p>
+                                    {mockLimitStatus.nextAllowedAt && (
+                                        <p className="text-xs text-amber-700 dark:text-amber-300">
+                                            Try again on {formatNextAllowedDate(mockLimitStatus.nextAllowedAt)}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {mockLimitStatus?.canStartMock && !mockLimitStatus?.blocked && !mockLimitStatus?.isGuest ? (
                         <button
                             onClick={handleStartNew}
                             disabled={checkingLimit}
@@ -1086,7 +1110,7 @@ export default function MockInterviewSummary() {
                             <span className="material-symbols-outlined">add_circle</span>
                             {checkingLimit ? 'Checking...' : 'Start New Mock Interview'}
                         </button>
-                    ) : (
+                    ) : !mockLimitStatus?.blocked && (
                         <button
                             onClick={() => navigate(mockLimitStatus?.isGuest ? '/signup' : '/pricing')}
                             className="px-8 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-md transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
