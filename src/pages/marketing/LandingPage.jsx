@@ -13,17 +13,6 @@ export default function LandingPage() {
 
   const hasTrackedStripeReturn = useRef(false);
 
-  // Debug overlay mount
-  useEffect(() => {
-    if (isMobileMenuOpen) {
-      console.log("OVERLAY_MOUNT", isMobileMenuOpen);
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => { document.body.style.overflow = ""; };
-  }, [isMobileMenuOpen]);
-
   // Handle anchor scrolling for #pricing
   useEffect(() => {
     if (location.hash === "#pricing") {
