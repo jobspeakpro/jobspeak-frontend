@@ -165,11 +165,13 @@ export default function OnboardingWizard({ onComplete }) {
     const lastBlobUrlRef = useRef(null); // Store blob URL for repeat functionality
     const lastPromptTextRef = useRef(null); // Store text for regeneration if needed
 
+
     const playCurrentPrompt = async (force = false) => {
         const text = steps[step].question;
 
         // Guard: Don't replay if already played for this step unless forced
         if (!force && lastPlayedRef.current.step === step && lastPlayedRef.current.text === text) {
+            console.log("[ONBOARDING] Skipping replay - already played for this step");
             return;
         }
 
@@ -188,8 +190,12 @@ export default function OnboardingWizard({ onComplete }) {
             lastPlayedRef.current = { step, text };
             lastPromptTextRef.current = text;
 
+            console.log("[ONBOARDING] Fetching TTS for:", text.substring(0, 50));
             const { url } = await fetchTtsBlobUrl({ text, speed: 1.0 });
+
             if (url) {
+                console.log("[ONBOARDING] TTS URL received:", url.substring(0, 100));
+
                 // Revoke OLD blob before storing new one (if different)
                 if (lastBlobUrlRef.current && lastBlobUrlRef.current !== url) {
                     URL.revokeObjectURL(lastBlobUrlRef.current);
@@ -198,33 +204,48 @@ export default function OnboardingWizard({ onComplete }) {
                 lastBlobUrlRef.current = url; // Store for repeat functionality
                 audioRef.current.src = url;
 
+                // CRITICAL: Ensure audio is not muted and volume is set
+                audioRef.current.muted = false;
+                audioRef.current.volume = 1.0;
+                console.log("[ONBOARDING] Audio element configured - muted:", audioRef.current.muted, "volume:", audioRef.current.volume);
+
                 // Set up event handlers - do NOT revoke blob URLs here!
                 audioRef.current.onended = () => {
+                    console.log("[ONBOARDING] Audio playback ended");
                     setIsPlayingPrompt(false);
                     // Keep blob URL alive for repeat functionality
                 };
 
                 audioRef.current.onerror = (e) => {
-                    console.error("Audio playback error", e);
+                    console.error("[ONBOARDING] Audio playback error:", e);
                     setIsPlayingPrompt(false);
                     // Keep blob URL alive for retry
                 };
 
                 // Wrap play in try/catch to handle autoplay blocking gracefully
                 try {
-                    await audioRef.current.play();
-                    setIsPlayingPrompt(true);
-                    setAutoplayBlocked(false); // Autoplay worked
+                    console.log("[ONBOARDING] Attempting to play audio...");
+                    const playPromise = audioRef.current.play();
+
+                    if (playPromise !== undefined) {
+                        await playPromise;
+                        console.log("[ONBOARDING] ✅ Audio playing successfully!");
+                        setIsPlayingPrompt(true);
+                        setAutoplayBlocked(false); // Autoplay worked
+                    }
                 } catch (e) {
-                    console.log("Autoplay blocked - user can click repeat", e);
+                    console.warn("[ONBOARDING] ❌ Autoplay blocked:", e.name, e.message);
                     setIsPlayingPrompt(false);
                     setAutoplayBlocked(true); // Show tap to play prompt
                 }
+            } else {
+                console.error("[ONBOARDING] No TTS URL returned from fetchTtsBlobUrl");
             }
         } catch (err) {
-            console.error("Prompt TTS error", err);
+            console.error("[ONBOARDING] Prompt TTS error:", err);
         }
     };
+
 
     // Cleanup: Only revoke blob URLs on unmount
     useEffect(() => {
@@ -239,23 +260,39 @@ export default function OnboardingWizard({ onComplete }) {
     // Helper for manual repeat - reuses existing blob URL
     const handleRepeatQuestion = (e) => {
         e.preventDefault();
+        console.log("[ONBOARDING] Repeat question clicked");
         stopTts(); // Stop current playback
 
         // Try to replay existing blob URL first (avoids regeneration)
         if (lastBlobUrlRef.current && audioRef.current) {
+            console.log("[ONBOARDING] Replaying existing audio URL");
             audioRef.current.src = lastBlobUrlRef.current;
+
+            // CRITICAL: Ensure audio is not muted and volume is set
+            audioRef.current.muted = false;
+            audioRef.current.volume = 1.0;
+            console.log("[ONBOARDING] Audio configured for replay - muted:", audioRef.current.muted, "volume:", audioRef.current.volume);
+
             audioRef.current.play()
-                .then(() => setIsPlayingPrompt(true))
+                .then(() => {
+                    console.log("[ONBOARDING] ✅ Replay successful!");
+                    setIsPlayingPrompt(true);
+                    setAutoplayBlocked(false); // Clear blocked state after successful manual play
+                })
                 .catch(err => {
-                    console.error("Repeat playback error", err);
+                    console.error("[ONBOARDING] ❌ Repeat playback error:", err);
                     // If blob URL failed, try regenerating
                     if (lastPromptTextRef.current) {
+                        console.log("[ONBOARDING] Regenerating audio...");
                         playCurrentPrompt(true);
                     }
                 });
         } else if (lastPromptTextRef.current) {
             // No blob URL available, regenerate
+            console.log("[ONBOARDING] No cached audio, regenerating...");
             playCurrentPrompt(true);
+        } else {
+            console.error("[ONBOARDING] No audio URL or text available for replay");
         }
     };
 
