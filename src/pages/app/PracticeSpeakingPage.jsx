@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import VoiceRecorder from "../../components/VoiceRecorder.jsx";
 import InlineError from "../../components/InlineError.jsx";
 import PaywallModal from "../../components/PaywallModal.jsx";
+import MockInterviewPaywallCard from "../../components/MockInterviewPaywallCard.jsx";
 import { usePracticeSession } from "../../hooks/usePracticeSession.js";
 import { getUserKey } from "../../utils/userKey.js";
 import { requestServerTTS, playAudioFromServer, speakBrowserTTS, stopAllTTS } from "../../utils/ttsClient.js";
@@ -1374,38 +1375,9 @@ export default function PracticeSpeakingPage() {
             </div>
           )}
 
-          {/* Mock Interview CTA */}
-          <div className="w-full max-w-lg mx-auto mt-6 p-6 bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-[#1A222C] rounded-xl border border-purple-200 dark:border-purple-900/30 shadow-sm">
-            <div className="flex items-start gap-4">
-              <div className="size-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-                <span className="material-symbols-outlined text-purple-600 dark:text-purple-400 text-2xl">video_call</span>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Ready for a full mock interview?</h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                  Practice builds skills. Mock interviews test readiness.
-                </p>
-                <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-4">
-                  <span className="material-symbols-outlined text-sm">lock</span>
-                  <span>Available with Pro</span>
-                </div>
-                <button
-                  onClick={() => {
-                    if (isPro) {
-                      setShowMockSelection(true);
-                    } else {
-                      // Show paywall
-                      setPaywallSource("mock_interview_cta");
-                      setShowPaywall(true);
-                    }
-                  }}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors text-sm"
-                >
-                  <span className="material-symbols-outlined text-lg">play_arrow</span>
-                  Start mock interview
-                </button>
-              </div>
-            </div>
+          {/* Mock Interview CTA - Unified Component */}
+          <div className="w-full max-w-lg mx-auto mt-6">
+            <MockInterviewPaywallCard />
           </div>
 
           {/* Free Plan Info Card */}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
+import MockInterviewPaywallCard from "../../components/MockInterviewPaywallCard.jsx";
 import { supabase } from "../../lib/supabaseClient.js";
 import { apiClient } from "../../utils/apiClient.js";
 import UniversalHeader from "../../components/UniversalHeader.jsx";
@@ -287,70 +288,8 @@ export default function Dashboard() {
         {/* Mic & Audio Test */}
         <MicAudioTest />
 
-        {/* Mock Interview Card */}
-        <section className="bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-[#1A222C] rounded-xl border border-purple-200 dark:border-purple-900/30 shadow-sm overflow-hidden">
-          <div className="p-6 flex flex-col sm:flex-row items-start sm:items-center gap-6">
-            <div className="size-16 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-              <span className="material-symbols-outlined text-purple-600 dark:text-purple-400 text-3xl">video_call</span>
-            </div>
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Ready for a Mock Interview?</h2>
-              <p className="text-slate-600 dark:text-slate-400 mb-4">
-                Practice builds skills. Mock interviews test readiness. Choose between a quick warmup or deep dive.
-              </p>
-
-              {/* Blocked state - show backend message */}
-              {!checkingLimit && mockLimitStatus?.blocked && (
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4">
-                  <div className="flex items-start gap-3">
-                    <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-xl">schedule</span>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-amber-900 dark:text-amber-200 mb-1">
-                        {mockLimitStatus.message}
-                      </p>
-                      {mockLimitStatus.nextAllowedAt && (
-                        <p className="text-xs text-amber-700 dark:text-amber-300">
-                          Try again on {formatNextAllowedDate(mockLimitStatus.nextAllowedAt)}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <button
-                onClick={handleStartMockInterview}
-                disabled={checkingLimit || (mockLimitStatus && (mockLimitStatus.blocked || (!mockLimitStatus.canStartMock && !mockLimitStatus.isGuest)))}
-                className={`inline-flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors shadow-md ${(checkingLimit || (mockLimitStatus && (mockLimitStatus.blocked || (!mockLimitStatus.canStartMock && !mockLimitStatus.isGuest)))) ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-              >
-                <span className="material-symbols-outlined">
-                  {mockLimitStatus?.isGuest ? 'person_add' : (mockLimitStatus?.blocked || !mockLimitStatus?.canStartMock) ? 'workspace_premium' : 'play_arrow'}
-                </span>
-                {checkingLimit ? 'Checking...' : mockLimitStatus?.isGuest ? 'Create Free Account' : (mockLimitStatus?.blocked || !mockLimitStatus?.canStartMock) ? 'Upgrade to Pro' : 'Start Mock Interview'}
-              </button>
-
-              {/* Helper text based on status */}
-              {!checkingLimit && mockLimitStatus?.isGuest && (
-                <p className="text-xs text-amber-600 dark:text-amber-500 mt-2">
-                  Sign up to get 1 free mock interview
-                </p>
-              )}
-              {!checkingLimit && !mockLimitStatus?.isGuest && (mockLimitStatus?.blocked || !mockLimitStatus?.canStartMock) && (
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                  <button onClick={() => navigate('/pricing')} className="text-primary underline hover:no-underline">View pricing</button> for unlimited mock interviews
-                </p>
-              )}
-              {!checkingLimit && !mockLimitStatus?.isGuest && mockLimitStatus?.canStartMock && !mockLimitStatus?.blocked && (
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                  Free Trial: 1 mock interview per week<br />
-                  Upgrade for unlimited practice<br />
-                  <span className="text-slate-400">No credit card required</span>
-                </p>
-              )}
-            </div>
-          </div>
-        </section>
+        {/* Mock Interview Card - Unified Component */}
+        <MockInterviewPaywallCard />
 
         {/* Moment of Reflection - Dynamic from backend */}
         <section className="bg-gradient-to-br from-teal-50 to-white dark:from-[#1A222C] dark:to-[#1A222C] p-6 rounded-xl border border-teal-100 dark:border-gray-800 shadow-sm">
