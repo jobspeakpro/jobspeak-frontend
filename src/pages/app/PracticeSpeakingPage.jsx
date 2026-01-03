@@ -1206,20 +1206,37 @@ export default function PracticeSpeakingPage() {
                                 <span className="text-sm font-mono text-slate-500 dark:text-slate-400">{ipa}</span>
                                 <button
                                   type="button"
-                                  onClick={(e) => {
+                                  onClick={async (e) => {
                                     e.stopPropagation();
                                     if (!word) return;
-                                    fetchTtsBlobUrl({
-                                      text: word,
-                                      voiceId: questionVoiceId,
-                                      speed: 1.0,
-                                      locale: "en-US"
-                                    }).then(({ url }) => {
-                                      if (url) {
-                                        const audio = new Audio(url);
-                                        audio.play().catch(e => console.error("Vocab play error", e));
+                                    try {
+                                      const result = await requestServerTTS({
+                                        text: word,
+                                        voiceId: questionVoiceId,
+                                        speed: 1.0
+                                      });
+
+                                      if (result.ok && (result.audioBase64 || result.audioUrl)) {
+                                        const audio = new Audio();
+                                        if (result.audioUrl) {
+                                          audio.src = result.audioUrl;
+                                        } else if (result.audioBase64) {
+                                          audio.src = `data:audio/mp3;base64,${result.audioBase64}`;
+                                        }
+                                        await audio.play();
+                                      } else {
+                                        // Fallback to browser TTS
+                                        await speakBrowserTTS({ text: word, rate: 1.0 });
                                       }
-                                    });
+                                    } catch (e) {
+                                      console.error("Vocab play error", e);
+                                      // Try browser fallback on error
+                                      try {
+                                        await speakBrowserTTS({ text: word, rate: 1.0 });
+                                      } catch (fallbackError) {
+                                        console.error("Browser TTS fallback failed", fallbackError);
+                                      }
+                                    }
                                   }}
                                   className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase transition-colors tracking-wide"
                                   title="Play US pronunciation"

@@ -1089,7 +1089,13 @@ export default function MockInterviewSummary() {
                                 <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-xl">schedule</span>
                                 <div className="flex-1">
                                     <p className="text-sm font-semibold text-amber-900 dark:text-amber-200 mb-1">
-                                        {mockLimitStatus.message}
+                                        {mockLimitStatus.resetInDays > 1
+                                            ? `Next free mock in ${mockLimitStatus.resetInDays} days`
+                                            : mockLimitStatus.resetInDays === 1
+                                                ? 'Next free mock tomorrow'
+                                                : mockLimitStatus.resetInDays === 0
+                                                    ? 'Next free mock today'
+                                                    : mockLimitStatus.message}
                                     </p>
                                     {mockLimitStatus.nextAllowedAt && (
                                         <p className="text-xs text-amber-700 dark:text-amber-300">
