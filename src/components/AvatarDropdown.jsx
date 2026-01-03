@@ -68,24 +68,40 @@ export default function AvatarDropdown() {
 
     return (
         <div className="relative" ref={dropdownRef}>
-            {/* Avatar Button */}
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="size-10 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
-                aria-label="User menu"
-            >
-                {avatarUrl || user?.user_metadata?.avatar_url ? (
-                    <img
-                        src={avatarUrl || user.user_metadata.avatar_url}
-                        alt="User avatar"
-                        className="w-full h-full object-cover"
-                    />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-500 dark:text-slate-400">
-                        <span className="material-symbols-outlined">person</span>
+            {/* UNIVERSAL HEADER RULE: Show avatar if logged in, hamburger if logged out */}
+            {user ? (
+                // LOGGED IN: Show avatar only
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="size-10 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                    aria-label="User menu"
+                >
+                    {avatarUrl || user?.user_metadata?.avatar_url ? (
+                        <img
+                            src={avatarUrl || user.user_metadata.avatar_url}
+                            alt="User avatar"
+                            className="w-full h-full object-cover"
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-500 dark:text-slate-400">
+                            <span className="material-symbols-outlined">person</span>
+                        </div>
+                    )}
+                </button>
+            ) : (
+                // LOGGED OUT: Show hamburger only
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                    aria-label="Menu"
+                >
+                    <div className="flex flex-col gap-[5px] w-6">
+                        <span className="w-full h-0.5 bg-current rounded-full" />
+                        <span className="w-full h-0.5 bg-current rounded-full" />
+                        <span className="w-full h-0.5 bg-current rounded-full" />
                     </div>
-                )}
-            </button>
+                </button>
+            )}
 
             {/* Dropdown Menu */}
             {isOpen && (
