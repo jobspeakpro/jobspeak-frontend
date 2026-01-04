@@ -238,7 +238,22 @@ function VocabWord({ word, ipa, definition, example, pos, voiceId, onPlay, isCur
             // Update ref with new URL
             audioUrlRef.current = result.url;
             audioRef.current.src = result.url;
-            audioRef.current.play();
+
+            // Properly handle the play() Promise to catch playback failures
+            try {
+                await audioRef.current.play();
+            } catch (playErr) {
+                console.error('[VOCAB] Audio play() failed:', playErr);
+                // Try fallback on play failure
+                const fallbackSuccess = triggerBrowserFallback(word, voiceId);
+                if (fallbackSuccess) {
+                    if (onFallback) onFallback();
+                } else if (onError) {
+                    onError(playErr);
+                }
+                setIsLoading(false);
+                onPlay(null);
+            }
         } catch (err) {
             clearTimeout(timeoutRef.current);
             if (err.name !== 'AbortError') {
