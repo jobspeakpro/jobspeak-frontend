@@ -170,11 +170,7 @@ function QuestionAudioPlayer({ text, label, voiceId, playbackRate, onPlay, isCur
 // Vocabulary Word Component with Pronunciation (uses global voice)
 function VocabWord({ word, ipa, definition, example, pos, voiceId, onPlay, isCurrentlyPlaying, onError, onFallback }) {
     const audioRef = useRef(new Audio());
-    const audioUrlRef = useRef(null); // Track current blob URL for cleanup
-    const abortControllerRef = useRef(null);
-    const timeoutRef = useRef(null);
     const [isLoading, setIsLoading] = useState(false);
-    // Parent manages toast via onError. But we need fallback logic here.
 
     useEffect(() => {
         const audio = audioRef.current;
@@ -183,10 +179,6 @@ function VocabWord({ word, ipa, definition, example, pos, voiceId, onPlay, isCur
         return () => {
             audio.removeEventListener('ended', handleEnded);
             audio.pause();
-            if (abortControllerRef.current) abortControllerRef.current.abort();
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
-            // Use ref for cleanup to ensure we always have the current URL
-            if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
         };
     }, [onPlay]);
 
@@ -204,70 +196,51 @@ function VocabWord({ word, ipa, definition, example, pos, voiceId, onPlay, isCur
         }
 
         if (isLoading) {
-            if (abortControllerRef.current) abortControllerRef.current.abort();
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
             setIsLoading(false);
             return;
         }
 
         onPlay(word);
         setIsLoading(true);
-        abortControllerRef.current = new AbortController();
 
-        timeoutRef.current = setTimeout(() => {
-            if (abortControllerRef.current) abortControllerRef.current.abort();
-            setIsLoading(false);
-            if (onError) onError();
-            onPlay(null);
-        }, 15000);
+        // CRITICAL: Stop all TTS before starting new playback
+        stopAllTTS();
 
+        // Use the SAME proven approach as QuestionAudioPlayer
         try {
-            const result = await fetchTtsBlobUrl({ text: word, voiceId });
-            clearTimeout(timeoutRef.current);
-            setIsLoading(false);
+            const server = await requestServerTTS({ text: word, voiceId, speed: 1.0 });
 
-            if (result.error) {
-                throw new Error(result.error);
-            }
-
-            // Revoke old blob URL before setting new one
-            if (audioUrlRef.current && audioUrlRef.current !== result.url) {
-                URL.revokeObjectURL(audioUrlRef.current);
-            }
-
-            // Update ref with new URL
-            audioUrlRef.current = result.url;
-            audioRef.current.src = result.url;
-
-            // Properly handle the play() Promise to catch playback failures
-            try {
-                await audioRef.current.play();
-            } catch (playErr) {
-                console.error('[VOCAB] Audio play() failed:', playErr);
-                // Try fallback on play failure
-                const fallbackSuccess = triggerBrowserFallback(word, voiceId);
-                if (fallbackSuccess) {
-                    if (onFallback) onFallback();
-                } else if (onError) {
-                    onError(playErr);
+            if (server.ok && (server.audioBase64 || server.audioUrl)) {
+                try {
+                    const url = server.audioUrl || `data:audio/mp3;base64,${server.audioBase64}`;
+                    audioRef.current.src = url;
+                    await audioRef.current.play();
+                    setIsLoading(false);
+                    return; // Success - exit early
+                } catch (playErr) {
+                    console.error('[VOCAB] Audio play() failed:', playErr);
+                    // Fall through to browser fallback
                 }
-                setIsLoading(false);
-                onPlay(null);
+            } else {
+                console.warn('[VOCAB] Server TTS failed:', server.error);
+                // Fall through to browser fallback
             }
         } catch (err) {
-            clearTimeout(timeoutRef.current);
-            if (err.name !== 'AbortError') {
-                console.warn('Pronunciation API failed, trying fallback...', err);
-                const fallbackSuccess = triggerBrowserFallback(word, voiceId);
-                if (fallbackSuccess) {
-                    if (onFallback) onFallback();
-                } else if (onError) {
-                    onError(err);
-                }
-            }
-            setIsLoading(false);
-            onPlay(null);
+            console.error('[VOCAB] Server TTS error:', err);
+            // Fall through to browser fallback
         }
+
+        // FALLBACK: Browser TTS
+        try {
+            await speakBrowserTTS({ text: word, rate: 1.0 });
+            if (onFallback) onFallback();
+        } catch (fallbackErr) {
+            console.error('[VOCAB] Browser TTS failed:', fallbackErr);
+            if (onError) onError(fallbackErr);
+        }
+
+        setIsLoading(false);
+        onPlay(null);
     };
 
     return (
@@ -295,7 +268,7 @@ function VocabWord({ word, ipa, definition, example, pos, voiceId, onPlay, isCur
                 )}
                 {example && (
                     <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 italic">
-                        <span className="font-semibold not-italic">Example:</span> "{example}"
+                        "{example}"
                     </p>
                 )}
             </div>
