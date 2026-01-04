@@ -13,6 +13,7 @@ import OnboardingWizard from "../../components/OnboardingWizard.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { supabase } from "../../lib/supabaseClient.js";
 import UniversalHeader from "../../components/UniversalHeader.jsx";
+import ReferralSurveyModal from "../../components/ReferralSurveyModal.jsx";
 
 // ========================================
 // DEFENSIVE RENDERING HELPERS
@@ -208,6 +209,9 @@ export default function PracticeSpeakingPage() {
   const [ttsErrorToast, setTtsErrorToast] = useState(false); // Default error toast
   const [fallbackToast, setFallbackToast] = useState(false); // "Using browser voice fallback"
   const [ttsStatus, setTtsStatus] = useState({ mode: "server", message: "" }); // TTS status for UI feedback
+
+  // 5. Referral Survey State
+  const [showReferralModal, setShowReferralModal] = useState(false);
 
   // --- EFFECTS ---
 
@@ -485,6 +489,30 @@ export default function PracticeSpeakingPage() {
     }
   }, [result]);
 
+  // REFERRAL SURVEY TRIGGER EFFECT
+  useEffect(() => {
+    // Requirements: Authenticated + Result Visible + Not Loading + Not previously done
+    if (user && result && !loading && !isTranscribing && !error) {
+      // 1. Fast Local Check
+      if (localStorage.getItem("jsp_referral_done")) return;
+
+      // 2. Profile Check (wait for profile to load)
+      if (profileContext) {
+        // If already exists in DB, mark local and skip
+        if (profileContext.referral_source) {
+          localStorage.setItem("jsp_referral_done", "true");
+          return;
+        }
+
+        // Trigger Modal
+        // Use a small delay to ensure UI is stable/viewable? 
+        // Requirements say "AFTER first completed Practice question". Immediate is fine if result is visible.
+        // Prevent double-trigger if already open
+        setShowReferralModal(true);
+      }
+    }
+  }, [user, result, loading, isTranscribing, error, profileContext]);
+
   // Handler for question audio - centralized with proper blob URL management
   const handlePlayQuestion = useCallback(async (options = {}) => {
     const { forceRegenerate = false } = options;
@@ -677,6 +705,16 @@ export default function PracticeSpeakingPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background-light dark:bg-background-dark font-display text-text-main dark:text-white antialiased transition-colors duration-200">
+      {/* Referral Modal - Highest Priority Overlay */}
+      {showReferralModal && (
+        <ReferralSurveyModal
+          onComplete={() => {
+            setShowReferralModal(false);
+            localStorage.setItem("jsp_referral_done", "true");
+          }}
+        />
+      )}
+
       {/* Strict Gating: Show Wizard first. Block Tour until complete. */}
       {showWizard && (
         <OnboardingWizard onComplete={handleWizardComplete} />
