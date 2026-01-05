@@ -424,10 +424,26 @@ export function usePracticeSession({ profileContext } = {}) {
           payload.difficulty = profileContext.difficulty;
         }
 
-        const data = await apiClient("/api/practice/answer", {
+        // Add timeout to prevent hanging requests (30 seconds)
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error("Request timeout - server took too long to respond")), 30000);
+        });
+
+        console.log("[Fix My Answer] Sending request to /api/practice/answer", { payload: { ...payload, answerText: payload.answerText?.substring(0, 50) + "..." } });
+
+        const apiPromise = apiClient("/api/practice/answer", {
           method: "POST",
           body: payload,
         });
+
+        const data = await Promise.race([apiPromise, timeoutPromise]);
+        
+        // FAILSAFE: Check if response is actually successful (200-299)
+        if (!data || (data.error && !data.improved)) {
+          console.error("[Fix My Answer] Response indicates failure:", data);
+          throw new ApiError("Response indicates failure", data?.status || 500, data);
+        }
+
         const normalized = normalizePracticeFeedback(data);
         setResult(normalized);
 
@@ -450,7 +466,10 @@ export function usePracticeSession({ profileContext } = {}) {
         // Session is saved by the /api/practice/answer endpoint now
         // No need for separate /api/sessions call
       } catch (err) {
-        // Refresh attempts from backend after failed call
+        // CRITICAL: Always clear loading state first to prevent stuck UI
+        setLoading(false);
+
+        // Refresh attempts from backend after failed call to sync state
         fetchFreeAttempts();
 
         // Enhanced error logging for debugging
@@ -458,79 +477,111 @@ export function usePracticeSession({ profileContext } = {}) {
           status: err.status,
           message: err.message,
           data: err.data,
-          stack: err.stack
+          stack: err.stack,
+          name: err.name,
+          isApiError: err instanceof ApiError
         });
 
-        if (err instanceof ApiError && err.status === 402 && err.data?.upgrade === true) {
-          setError("");
-          // Immediately update UI to 3/3 when limit reached
-          setFreeImproveUsage({ count: 3, limit: 3 });
-          setPaywallSource("fix_answer");
-          setShowUpgradeModal(true);
-          setLoading(false);
+        // FAILSAFE: Handle timeout errors
+        if (err.message && err.message.includes("timeout")) {
+          console.error("[Fix My Answer] Request timeout");
+          setError("Request took too long. Please try again.");
           return;
         }
 
-        // Log response body for debugging
-        if (err.status) {
-          console.error("[Fix My Answer] Response status:", err.status);
-        }
-        if (err.data) {
-          console.error("[Fix My Answer] Response body:", err.data);
+        // COMPREHENSIVE LIMIT HANDLING: Check for ALL possible limit-related status codes
+        // 402 = Payment Required (upgrade needed)
+        // 429 = Too Many Requests (rate limit)
+        // 403 = Forbidden (blocked/limit reached)
+        const isLimitError = err instanceof ApiError && (
+          (err.status === 402 && (err.data?.upgrade === true || err.data?.blocked === true || err.data?.error?.toLowerCase().includes("limit"))) ||
+          err.status === 429 ||
+          (err.status === 403 && (err.data?.blocked === true || err.data?.limit === true || err.message?.toLowerCase().includes("limit") || err.data?.error?.toLowerCase().includes("limit")))
+        );
+
+        if (isLimitError) {
+          // Clear any error message
+          setError("");
+          // Immediately update UI to reflect limit reached
+          setFreeImproveUsage({ count: 3, limit: 3 });
+          setUsage({ used: 3, limit: 3, remaining: 0, blocked: true });
+          // Update localStorage to sync with backend
+          setPracticeQuestionsUsed(3);
+          // Show paywall modal
+          setPaywallSource("fix_answer");
+          setShowUpgradeModal(true);
+          console.log("[Fix My Answer] Limit reached - showing paywall modal");
+          return; // CRITICAL: Return early to prevent further error handling
         }
 
-        // Handle network errors (backend unreachable) - show toast
-        if (isNetworkError(err)) {
+        // FAILSAFE: Handle ANY non-200 response status
+        if (err instanceof ApiError && err.status && err.status !== 200) {
+          console.error("[Fix My Answer] Non-200 response:", err.status, err.data);
+          
+          // If status is 4xx or 5xx, show user-facing error
+          if (err.status >= 400) {
+            // Check if it's a limit error we might have missed
+            const errorText = JSON.stringify(err.data || err.message || "").toLowerCase();
+            if (errorText.includes("limit") || errorText.includes("blocked") || errorText.includes("upgrade")) {
+              setError("");
+              setFreeImproveUsage({ count: 3, limit: 3 });
+              setUsage({ used: 3, limit: 3, remaining: 0, blocked: true });
+              setPracticeQuestionsUsed(3);
+              setPaywallSource("fix_answer");
+              setShowUpgradeModal(true);
+              console.log("[Fix My Answer] Limit detected in error message - showing paywall modal");
+              return;
+            }
+            
+            // Show user-facing error for other 4xx/5xx errors
+            setError(`Unable to process request (${err.status}). Please try again or upgrade if you've reached your limit.`);
+            return;
+          }
+        }
+
+        // Handle network errors (backend unreachable, CORS, etc.) - show toast
+        if (isNetworkError(err) || !err.status) {
           console.error("[Fix My Answer] Network error:", err.message);
-          setLoading(false);
-          const fixError = new Error("FIX_UNAVAILABLE");
-          fixError.isFixUnavailable = true;
-          throw fixError;
-        }
-
-        // Handle 404 or other endpoint errors gracefully
-        if (err instanceof ApiError && (err.status === 404 || err.status >= 500)) {
-          // Don't set error - let the component show a toast instead
-          console.error("[Fix My Answer] Endpoint error:", err.status, err.message);
-          setLoading(false);
-          // Throw a special error to indicate we should show toast
-          const fixError = new Error("FIX_UNAVAILABLE");
-          fixError.isFixUnavailable = true;
-          throw fixError;
+          setError("Connection issue. Check your internet and try again.");
+          return;
         }
 
         // Handle JSON parse errors or other unexpected errors
-        // Check if error is from JSON parsing
         if (err.message && (err.message.includes("JSON") || err.message.includes("parse") || err.message.includes("Unexpected token"))) {
           console.error("[Fix My Answer] Parse error:", err.message);
-          setLoading(false);
-          const fixError = new Error("FIX_UNAVAILABLE");
-          fixError.isFixUnavailable = true;
-          throw fixError;
+          setError("Invalid response from server. Please try again.");
+          return;
         }
 
-        // Show non-blocking error message instead of crashing
+        // FAILSAFE: Show error for ANY other unexpected errors (NO SILENT FAILURES)
         console.error("[Fix My Answer] Unexpected error:", err.status || err.message);
-        setError("Something went wrong. Try again in a moment.");
-        setLoading(false);
+        setError("Something went wrong. Please try again.");
         return;
       }
     } catch (err) {
+      // CRITICAL: Ensure loading is cleared even if error escapes inner catch
+      setLoading(false);
+      
       console.error("[Fix My Answer] Outer catch error:", err);
-      // Re-throw FIX_UNAVAILABLE errors to be handled by component
+      
+      // FAILSAFE: Show error for ANY error that escapes inner catch (NO SILENT FAILURES)
       if (err.isFixUnavailable) {
-        throw err;
+        // Component will handle this with toast, but also set error as backup
+        setError("Service temporarily unavailable. Please try again.");
+        return;
       }
-      // Handle other unexpected errors
-      if (isNetworkError(err)) {
+      
+      // Handle network errors
+      if (isNetworkError(err) || !err.status) {
         setServerUnavailable(true);
-        const fixError = new Error("FIX_UNAVAILABLE");
-        fixError.isFixUnavailable = true;
-        throw fixError;
-      } else {
         setError("Connection issue. Check your internet and try again.");
+        return;
       }
+      
+      // FAILSAFE: Show visible error message for ANY other error - NO SILENT FAILURES
+      setError("Something went wrong. Please try again.");
     } finally {
+      // CRITICAL: Always clear loading state as final safety net
       setLoading(false);
     }
   };

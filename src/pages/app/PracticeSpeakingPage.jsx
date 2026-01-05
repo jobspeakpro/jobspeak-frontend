@@ -490,28 +490,51 @@ export default function PracticeSpeakingPage() {
   }, [result]);
 
   // REFERRAL SURVEY TRIGGER EFFECT
+  // Trigger on FIRST completed practice for authenticated users with heard_about_us = NULL
   useEffect(() => {
-    // Requirements: Authenticated + Result Visible + Not Loading + Not previously done
-    if (user && result && !loading && !isTranscribing && !error) {
-      // 1. Fast Local Check
-      if (localStorage.getItem("jsp_referral_done")) return;
-
-      // 2. Profile Check (wait for profile to load)
-      if (profileContext) {
-        // If already exists in DB, mark local and skip
-        if (profileContext.heard_about_us) {
+    // Requirements: Authenticated + Result Visible + Not Loading + heard_about_us is NULL
+    const hasValidResult = result && !result.error && (result.improved || result.clearerRewrite || result.analysis);
+    
+    if (user && hasValidResult && !loading && !isTranscribing && profileContext) {
+      // Check database value ONLY - no localStorage gating before DB check
+      const heardAboutUs = profileContext.heard_about_us;
+      const isNull = heardAboutUs === null || heardAboutUs === undefined || heardAboutUs === "";
+      
+      console.log("[Referral Modal] Check:", {
+        user: !!user,
+        hasValidResult,
+        loading,
+        isTranscribing,
+        heardAboutUs,
+        isNull,
+        alreadyShown: !!localStorage.getItem("jsp_referral_done")
+      });
+      
+      if (isNull) {
+        // Prevent double-trigger in same session (only after DB confirms NULL)
+        if (!localStorage.getItem("jsp_referral_done")) {
+          console.log("[Referral Modal] Triggering modal");
+          setShowReferralModal(true);
+          // Set localStorage immediately to prevent double-trigger in same session
           localStorage.setItem("jsp_referral_done", "true");
-          return;
+        } else {
+          console.log("[Referral Modal] Already shown in this session");
         }
-
-        // Trigger Modal
-        // Use a small delay to ensure UI is stable/viewable? 
-        // Requirements say "AFTER first completed Practice question". Immediate is fine if result is visible.
-        // Prevent double-trigger if already open
-        setShowReferralModal(true);
+      } else {
+        console.log("[Referral Modal] heard_about_us is not NULL:", heardAboutUs);
+      }
+    } else {
+      if (user && hasValidResult) {
+        console.log("[Referral Modal] Conditions not met:", {
+          user: !!user,
+          hasValidResult,
+          loading,
+          isTranscribing,
+          hasProfileContext: !!profileContext
+        });
       }
     }
-  }, [user, result, loading, isTranscribing, error, profileContext]);
+  }, [user, result, loading, isTranscribing, profileContext]);
 
   // Handler for question audio - centralized with proper blob URL management
   const handlePlayQuestion = useCallback(async (options = {}) => {
@@ -711,6 +734,20 @@ export default function PracticeSpeakingPage() {
           onComplete={() => {
             setShowReferralModal(false);
             localStorage.setItem("jsp_referral_done", "true");
+          }}
+        />
+      )}
+
+      {/* Paywall Modal - Show when limit reached */}
+      {showPaywall && (
+        <PaywallModal
+          onClose={() => {
+            setShowPaywall(false);
+            setShowUpgradeModal(false);
+          }}
+          onNotNow={() => {
+            setShowPaywall(false);
+            setShowUpgradeModal(false);
           }}
         />
       )}
@@ -950,12 +987,20 @@ export default function PracticeSpeakingPage() {
                   try {
                     await handleImproveAnswer();
                   } catch (err) {
+                    // FAILSAFE: Handle ANY error that escapes handleImproveAnswer
+                    console.error("[PracticeSpeakingPage] Error in handleImproveAnswer:", err);
+                    
+                    // Ensure loading is cleared
+                    setLoading(false);
+                    
                     // Handle "Fix unavailable" error with toast
                     if (err.isFixUnavailable || err.message === "FIX_UNAVAILABLE") {
                       setShowFixToast(true);
                       setError("");
+                    } else {
+                      // Show error message for any other error (NO SILENT FAILURES)
+                      setError(err.message || "Something went wrong. Please try again.");
                     }
-                    // Other errors are handled by handleImproveAnswer internally
                   }
                 }}
                 className="w-full"
