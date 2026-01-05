@@ -47,7 +47,7 @@ const practiceQuestions = [
 
 export function usePracticeSession({ profileContext } = {}) {
   const { isPro, refreshProStatus } = usePro();
-  
+
   // Debug: Track last API response status
   const [lastApiStatus, setLastApiStatus] = useState(null);
   const [lastApiTimestamp, setLastApiTimestamp] = useState(null);
@@ -364,13 +364,8 @@ export function usePracticeSession({ profileContext } = {}) {
   }
 
   const handleImproveAnswer = async () => {
-    // Gate at handler level using backend usage as source of truth
-    if (isPaywalled) {
-      setError("");
-      setPaywallSource("fix_answer");
-      setShowUpgradeModal(true);
-      return; // Return early - do NOT make API call when paywalled
-    }
+    // FIX #2: Remove frontend paywall gate - always call backend
+    // Backend will return 429 when limit is reached, which we handle below
 
     // DEFENSIVE GUARD: Validate input before proceeding
     if (typeof text !== "string" || !text.trim()) {
@@ -441,11 +436,11 @@ export function usePracticeSession({ profileContext } = {}) {
         });
 
         const data = await Promise.race([apiPromise, timeoutPromise]);
-        
+
         // Debug: Track API response status
         setLastApiStatus(200);
         setLastApiTimestamp(new Date().toISOString());
-        
+
         // FAILSAFE: Check if response is actually successful (200-299)
         if (!data || (data.error && !data.improved)) {
           console.error("[Fix My Answer] Response indicates failure:", data);
@@ -505,7 +500,7 @@ export function usePracticeSession({ profileContext } = {}) {
           setLastApiStatus('error');
           setLastApiTimestamp(new Date().toISOString());
         }
-        
+
         // COMPREHENSIVE LIMIT HANDLING: Check for ALL possible limit-related status codes
         // 402 = Payment Required (upgrade needed)
         // 429 = Too Many Requests (rate limit)
@@ -517,24 +512,33 @@ export function usePracticeSession({ profileContext } = {}) {
         );
 
         if (isLimitError) {
-          // Clear any error message
+          // FIX #2: Show paywall + backup error message (NEVER SILENT)
+          console.log("[Fix My Answer] Limit reached - showing paywall modal + backup error");
+
+          // Clear any error message first
           setError("");
+
           // Immediately update UI to reflect limit reached
           setFreeImproveUsage({ count: 3, limit: 3 });
           setUsage({ used: 3, limit: 3, remaining: 0, blocked: true });
+
           // Update localStorage to sync with backend
           setPracticeQuestionsUsed(3);
+
           // Show paywall modal
           setPaywallSource("fix_answer");
           setShowUpgradeModal(true);
-          console.log("[Fix My Answer] Limit reached - showing paywall modal");
+
+          // BACKUP: Also set error message as fallback (never silent)
+          setError("You've used all 3 free attempts today. Upgrade to continue practicing!");
+
           return; // CRITICAL: Return early to prevent further error handling
         }
 
         // FAILSAFE: Handle ANY non-200 response status
         if (err instanceof ApiError && err.status && err.status !== 200) {
           console.error("[Fix My Answer] Non-200 response:", err.status, err.data);
-          
+
           // If status is 4xx or 5xx, show user-facing error
           if (err.status >= 400) {
             // Check if it's a limit error we might have missed
@@ -549,7 +553,7 @@ export function usePracticeSession({ profileContext } = {}) {
               console.log("[Fix My Answer] Limit detected in error message - showing paywall modal");
               return;
             }
-            
+
             // Show user-facing error for other 4xx/5xx errors
             setError(`Unable to process request (${err.status}). Please try again or upgrade if you've reached your limit.`);
             return;
@@ -578,23 +582,23 @@ export function usePracticeSession({ profileContext } = {}) {
     } catch (err) {
       // CRITICAL: Ensure loading is cleared even if error escapes inner catch
       setLoading(false);
-      
+
       console.error("[Fix My Answer] Outer catch error:", err);
-      
+
       // FAILSAFE: Show error for ANY error that escapes inner catch (NO SILENT FAILURES)
       if (err.isFixUnavailable) {
         // Component will handle this with toast, but also set error as backup
         setError("Service temporarily unavailable. Please try again.");
         return;
       }
-      
+
       // Handle network errors
       if (isNetworkError(err) || !err.status) {
         setServerUnavailable(true);
         setError("Connection issue. Check your internet and try again.");
         return;
       }
-      
+
       // FAILSAFE: Show visible error message for ANY other error - NO SILENT FAILURES
       setError("Something went wrong. Please try again.");
     } finally {

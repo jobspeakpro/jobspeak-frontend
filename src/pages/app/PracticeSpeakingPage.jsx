@@ -46,28 +46,22 @@ const safeArray = (v) => {
 export default function PracticeSpeakingPage() {
   const navigate = useNavigate();
   const { user } = useAuth(); // Need user to check missing fields if possible, or just rely on local/flag
-  
-  // Debug mode: Check for ?debug=1 in URL
-  const [isDebugMode, setIsDebugMode] = useState(false);
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setIsDebugMode(params.get('debug') === '1');
-  }, []);
-  
-  // Debug state tracking
-  const [debugState, setDebugState] = useState({
-    lastApiStatus: null,
-    lastApiTimestamp: null,
-    referralModalTriggered: false,
-    referralModalTimestamp: null,
-    paywallOpened: false,
-    paywallTimestamp: null,
-  });
 
   // --- STATE DECLARATIONS (MUST BE FIRST) ---
 
+
   // 1. Onboarding State
   const [onboardingComplete, setOnboardingComplete] = useState(() => {
+    // FIX #4: Skip onboarding if ?debug=1&skipOnboarding=1
+    const params = new URLSearchParams(window.location.search);
+    const isDebug = params.get('debug') === '1';
+    const skipOnboarding = params.get('skipOnboarding') === '1';
+
+    if (isDebug && skipOnboarding) {
+      console.log('[Onboarding] Skipped via URL parameters');
+      return true;
+    }
+
     return !!localStorage.getItem("jsp_onboarding_complete_v1");
   });
 
@@ -79,6 +73,18 @@ export default function PracticeSpeakingPage() {
   useEffect(() => {
     const loadTutorialStatus = async () => {
       setTutorialLoading(true);
+
+      // FIX #4: Skip tutorial if ?debug=1&skipOnboarding=1
+      const params = new URLSearchParams(window.location.search);
+      const isDebug = params.get('debug') === '1';
+      const skipOnboarding = params.get('skipOnboarding') === '1';
+
+      if (isDebug && skipOnboarding) {
+        console.log('[Tutorial] Skipped via URL parameters');
+        setTutorialSeen(true);
+        setTutorialLoading(false);
+        return;
+      }
 
       if (user) {
         // Logged-in user: Check database profile
@@ -231,7 +237,7 @@ export default function PracticeSpeakingPage() {
 
   // 5. Referral Survey State
   const [showReferralModal, setShowReferralModal] = useState(false);
-  
+
   // 6. Debug State (only when ?debug=1 AND safe conditions)
   const [isDebugMode, setIsDebugMode] = useState(false);
   const [debugState, setDebugState] = useState({
@@ -243,39 +249,27 @@ export default function PracticeSpeakingPage() {
     paywallTimestamp: null,
   });
   const [debugRefresh, setDebugRefresh] = useState(0); // Force re-render for localStorage changes
-  
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const hasDebugParam = params.get('debug') === '1';
-    
-    if (!hasDebugParam) {
-      setIsDebugMode(false);
-      return;
+
+    // FIX #3: Allow debug panel for ANYONE with ?debug=1 (no restrictions)
+    setIsDebugMode(hasDebugParam);
+
+    if (hasDebugParam) {
+      console.log('[Debug Panel] Debug mode enabled');
     }
-    
-    // Safety check: Only allow in non-production OR behind allowlist
-    const isProduction = import.meta.env.MODE === 'production';
-    const adminEmails = ['admin@jobspeakpro.com']; // Add your admin email here
-    const isAdmin = user && adminEmails.includes(user.email);
-    
-    // Allow if: non-production OR admin user
-    const isSafe = !isProduction || isAdmin;
-    
-    setIsDebugMode(isSafe);
-    
-    if (!isSafe && hasDebugParam) {
-      console.warn('[Debug Panel] Debug mode disabled in production for non-admin users');
-    }
-  }, [user]);
-  
+  }, []);
+
   // Debug: Refresh panel when localStorage changes (5s polling max, or manual refresh)
   useEffect(() => {
     if (!isDebugMode) return;
-    
+
     const interval = setInterval(() => {
       setDebugRefresh(prev => prev + 1);
     }, 5000); // Update every 5s (reduced from 500ms)
-    
+
     return () => clearInterval(interval);
   }, [isDebugMode]);
 
@@ -564,35 +558,28 @@ export default function PracticeSpeakingPage() {
   }, [result]);
 
   // REFERRAL SURVEY TRIGGER EFFECT
-  // Trigger on FIRST completed practice for BOTH guests and logged-in users
+  // Trigger on FIRST successful result for BOTH guests and logged-in users
+  // NO DEPENDENCIES on wizard, loading, or transcribing states
   useEffect(() => {
-    // Requirements: Result Visible + Not Loading + Not already answered
+    // Requirements: Valid successful result exists
     const hasValidResult = result && !result.error && (result.improved || result.clearerRewrite || result.analysis);
-    
-    if (!hasValidResult || loading || isTranscribing) return;
-    
-    // Check if already answered (prevent double-trigger)
-    const alreadyShown = localStorage.getItem("jsp_referral_done");
-    if (alreadyShown) {
-      console.log("[Referral Modal] Already shown in this session");
-      return;
-    }
-    
-    // For logged-in users: Check database
+
+    if (!hasValidResult) return;
+
+    // For logged-in users: Check database field
     if (user && profileContext) {
       const heardAboutUs = profileContext.heard_about_us;
       const isNull = heardAboutUs === null || heardAboutUs === undefined || heardAboutUs === "";
-      
+
       console.log("[Referral Modal] Logged-in check:", {
         heardAboutUs,
         isNull,
-        alreadyShown: !!alreadyShown
+        userId: user.id?.substring(0, 8)
       });
-      
+
       if (isNull) {
         console.log("[Referral Modal] Triggering modal (logged-in, DB NULL)");
         setShowReferralModal(true);
-        localStorage.setItem("jsp_referral_done", "true");
         // Debug tracking
         if (isDebugMode) {
           setDebugState(prev => ({
@@ -604,22 +591,18 @@ export default function PracticeSpeakingPage() {
       } else {
         console.log("[Referral Modal] Already answered in DB:", heardAboutUs);
       }
-    } 
+    }
     // For guests: Check localStorage
     else if (!user) {
       const guestAnswered = localStorage.getItem("jsp_heard_about_answered");
-      const guestValue = localStorage.getItem("jsp_heard_about_value");
-      
+
       console.log("[Referral Modal] Guest check:", {
-        guestAnswered,
-        guestValue,
-        alreadyShown: !!alreadyShown
+        guestAnswered: guestAnswered || 'null'
       });
-      
-      if (!guestAnswered || !guestValue) {
+
+      if (guestAnswered !== "true") {
         console.log("[Referral Modal] Triggering modal (guest, not answered)");
         setShowReferralModal(true);
-        localStorage.setItem("jsp_referral_done", "true");
         // Debug tracking
         if (isDebugMode) {
           setDebugState(prev => ({
@@ -629,10 +612,10 @@ export default function PracticeSpeakingPage() {
           }));
         }
       } else {
-        console.log("[Referral Modal] Guest already answered:", guestValue);
+        console.log("[Referral Modal] Guest already answered");
       }
     }
-  }, [user, result, loading, isTranscribing, profileContext]);
+  }, [user, result, profileContext, isDebugMode]);
 
   // Handler for question audio - centralized with proper blob URL management
   const handlePlayQuestion = useCallback(async (options = {}) => {
@@ -830,20 +813,20 @@ export default function PracticeSpeakingPage() {
       {isDebugMode && (
         <div className="fixed top-4 right-4 z-[10000] bg-black/90 text-white p-4 rounded-lg shadow-xl font-mono text-xs max-w-md border border-yellow-500">
           <div className="font-bold text-yellow-400 mb-2">🔍 DEBUG PANEL</div>
-          
+
           <div className="space-y-2">
             <div>
               <span className="text-gray-400">User State:</span> {user ? `Logged-in (${user.id?.substring(0, 8)}...)` : 'Guest'}
             </div>
-            
+
             <div>
               <span className="text-gray-400">Fix My Answer Attempts:</span> {freeImproveUsage.count} / {freeImproveUsage.limit}
             </div>
-            
+
             <div>
               <span className="text-gray-400">Last API Status:</span> {lastApiStatus || 'N/A'} {lastApiTimestamp && `(${new Date(lastApiTimestamp).toLocaleTimeString()})`}
             </div>
-            
+
             <div className="border-t border-gray-700 pt-2 mt-2">
               <div className="text-yellow-400 font-bold mb-1">Referral State:</div>
               <div className="pl-2 space-y-1">
@@ -861,7 +844,7 @@ export default function PracticeSpeakingPage() {
                 </div>
               </div>
             </div>
-            
+
             <div className="border-t border-gray-700 pt-2 mt-2">
               <div className="text-yellow-400 font-bold mb-1">Paywall State:</div>
               <div className="pl-2">
@@ -873,7 +856,7 @@ export default function PracticeSpeakingPage() {
           </div>
         </div>
       )}
-      
+
       {/* Referral Modal - Highest Priority Overlay */}
       {showReferralModal && (
         <ReferralSurveyModal
@@ -1136,10 +1119,10 @@ export default function PracticeSpeakingPage() {
                   } catch (err) {
                     // FAILSAFE: Handle ANY error that escapes handleImproveAnswer
                     console.error("[PracticeSpeakingPage] Error in handleImproveAnswer:", err);
-                    
+
                     // Ensure loading is cleared
                     setLoading(false);
-                    
+
                     // Handle "Fix unavailable" error with toast
                     if (err.isFixUnavailable || err.message === "FIX_UNAVAILABLE") {
                       setShowFixToast(true);
