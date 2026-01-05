@@ -499,7 +499,7 @@ export default function PracticeSpeakingPage() {
       // 2. Profile Check (wait for profile to load)
       if (profileContext) {
         // If already exists in DB, mark local and skip
-        if (profileContext.referral_source) {
+        if (profileContext.heard_about_us) {
           localStorage.setItem("jsp_referral_done", "true");
           return;
         }

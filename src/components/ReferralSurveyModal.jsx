@@ -30,7 +30,7 @@ export default function ReferralSurveyModal({ onComplete }) {
                 // Fail-open: Fire and forget the update or await it but ignore errors for UI purposes
                 const { error } = await supabase
                     .from('profiles')
-                    .update({ referral_source: source })
+                    .update({ heard_about_us: source })
                     .eq('id', user.id);
 
                 if (error) {
