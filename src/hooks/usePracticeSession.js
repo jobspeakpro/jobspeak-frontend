@@ -47,6 +47,10 @@ const practiceQuestions = [
 
 export function usePracticeSession({ profileContext } = {}) {
   const { isPro, refreshProStatus } = usePro();
+  
+  // Debug: Track last API response status
+  const [lastApiStatus, setLastApiStatus] = useState(null);
+  const [lastApiTimestamp, setLastApiTimestamp] = useState(null);
 
   const [text, setText] = useState("");
   const [result, setResult] = useState(null);
@@ -438,6 +442,10 @@ export function usePracticeSession({ profileContext } = {}) {
 
         const data = await Promise.race([apiPromise, timeoutPromise]);
         
+        // Debug: Track API response status
+        setLastApiStatus(200);
+        setLastApiTimestamp(new Date().toISOString());
+        
         // FAILSAFE: Check if response is actually successful (200-299)
         if (!data || (data.error && !data.improved)) {
           console.error("[Fix My Answer] Response indicates failure:", data);
@@ -489,6 +497,15 @@ export function usePracticeSession({ profileContext } = {}) {
           return;
         }
 
+        // Debug: Track API error status
+        if (err instanceof ApiError && err.status) {
+          setLastApiStatus(err.status);
+          setLastApiTimestamp(new Date().toISOString());
+        } else {
+          setLastApiStatus('error');
+          setLastApiTimestamp(new Date().toISOString());
+        }
+        
         // COMPREHENSIVE LIMIT HANDLING: Check for ALL possible limit-related status codes
         // 402 = Payment Required (upgrade needed)
         // 429 = Too Many Requests (rate limit)

@@ -46,6 +46,23 @@ const safeArray = (v) => {
 export default function PracticeSpeakingPage() {
   const navigate = useNavigate();
   const { user } = useAuth(); // Need user to check missing fields if possible, or just rely on local/flag
+  
+  // Debug mode: Check for ?debug=1 in URL
+  const [isDebugMode, setIsDebugMode] = useState(false);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setIsDebugMode(params.get('debug') === '1');
+  }, []);
+  
+  // Debug state tracking
+  const [debugState, setDebugState] = useState({
+    lastApiStatus: null,
+    lastApiTimestamp: null,
+    referralModalTriggered: false,
+    referralModalTimestamp: null,
+    paywallOpened: false,
+    paywallTimestamp: null,
+  });
 
   // --- STATE DECLARATIONS (MUST BE FIRST) ---
 
@@ -147,6 +164,8 @@ export default function PracticeSpeakingPage() {
     handleImproveAnswer,
     handleTryAnotherQuestion: originalHandleTryAnotherQuestion, // RENAME to wrap it
     fetchFreeAttempts,
+    lastApiStatus,
+    lastApiTimestamp,
   } = usePracticeSession({ profileContext });
 
   // SINGLE SOURCE OF TRUTH for question text
@@ -212,6 +231,22 @@ export default function PracticeSpeakingPage() {
 
   // 5. Referral Survey State
   const [showReferralModal, setShowReferralModal] = useState(false);
+  
+  // 6. Debug State (only when ?debug=1)
+  const [isDebugMode, setIsDebugMode] = useState(false);
+  const [debugState, setDebugState] = useState({
+    lastApiStatus: null,
+    lastApiTimestamp: null,
+    referralModalTriggered: false,
+    referralModalTimestamp: null,
+    paywallOpened: false,
+    paywallTimestamp: null,
+  });
+  
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setIsDebugMode(params.get('debug') === '1');
+  }, []);
 
   // --- EFFECTS ---
 
@@ -220,8 +255,16 @@ export default function PracticeSpeakingPage() {
   useEffect(() => {
     if (showUpgradeModal) {
       setShowPaywall(true);
+      // Debug tracking
+      if (isDebugMode) {
+        setDebugState(prev => ({
+          ...prev,
+          paywallOpened: true,
+          paywallTimestamp: new Date().toISOString(),
+        }));
+      }
     }
-  }, [showUpgradeModal]);
+  }, [showUpgradeModal, isDebugMode]);
 
   // Auto-dismiss TTS error toast
   useEffect(() => {
@@ -519,6 +562,14 @@ export default function PracticeSpeakingPage() {
         console.log("[Referral Modal] Triggering modal (logged-in, DB NULL)");
         setShowReferralModal(true);
         localStorage.setItem("jsp_referral_done", "true");
+        // Debug tracking
+        if (isDebugMode) {
+          setDebugState(prev => ({
+            ...prev,
+            referralModalTriggered: true,
+            referralModalTimestamp: new Date().toISOString(),
+          }));
+        }
       } else {
         console.log("[Referral Modal] Already answered in DB:", heardAboutUs);
       }
@@ -538,6 +589,14 @@ export default function PracticeSpeakingPage() {
         console.log("[Referral Modal] Triggering modal (guest, not answered)");
         setShowReferralModal(true);
         localStorage.setItem("jsp_referral_done", "true");
+        // Debug tracking
+        if (isDebugMode) {
+          setDebugState(prev => ({
+            ...prev,
+            referralModalTriggered: true,
+            referralModalTimestamp: new Date().toISOString(),
+          }));
+        }
       } else {
         console.log("[Referral Modal] Guest already answered:", guestValue);
       }
@@ -736,6 +795,54 @@ export default function PracticeSpeakingPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background-light dark:bg-background-dark font-display text-text-main dark:text-white antialiased transition-colors duration-200">
+      {/* Debug Panel - Only visible when ?debug=1 */}
+      {isDebugMode && (
+        <div className="fixed top-4 right-4 z-[10000] bg-black/90 text-white p-4 rounded-lg shadow-xl font-mono text-xs max-w-md border border-yellow-500">
+          <div className="font-bold text-yellow-400 mb-2">🔍 DEBUG PANEL</div>
+          
+          <div className="space-y-2">
+            <div>
+              <span className="text-gray-400">User State:</span> {user ? `Logged-in (${user.id?.substring(0, 8)}...)` : 'Guest'}
+            </div>
+            
+            <div>
+              <span className="text-gray-400">Fix My Answer Attempts:</span> {freeImproveUsage.count} / {freeImproveUsage.limit}
+            </div>
+            
+            <div>
+              <span className="text-gray-400">Last API Status:</span> {lastApiStatus || 'N/A'} {lastApiTimestamp && `(${new Date(lastApiTimestamp).toLocaleTimeString()})`}
+            </div>
+            
+            <div className="border-t border-gray-700 pt-2 mt-2">
+              <div className="text-yellow-400 font-bold mb-1">Referral State:</div>
+              <div className="pl-2 space-y-1">
+                <div>
+                  <span className="text-gray-400">localStorage jsp_heard_about_answered:</span> {localStorage.getItem("jsp_heard_about_answered") || 'null'}
+                </div>
+                <div>
+                  <span className="text-gray-400">localStorage jsp_heard_about_value:</span> {localStorage.getItem("jsp_heard_about_value") || 'null'}
+                </div>
+                <div>
+                  <span className="text-gray-400">profile heard_about_us:</span> {profileContext?.heard_about_us || 'null'}
+                </div>
+                <div>
+                  <span className="text-gray-400">Referral modal triggered:</span> {debugState.referralModalTriggered ? 'YES' : 'NO'} {debugState.referralModalTimestamp && `(${new Date(debugState.referralModalTimestamp).toLocaleTimeString()})`}
+                </div>
+              </div>
+            </div>
+            
+            <div className="border-t border-gray-700 pt-2 mt-2">
+              <div className="text-yellow-400 font-bold mb-1">Paywall State:</div>
+              <div className="pl-2">
+                <div>
+                  <span className="text-gray-400">Paywall opened:</span> {debugState.paywallOpened ? 'YES' : 'NO'} {debugState.paywallTimestamp && `(${new Date(debugState.paywallTimestamp).toLocaleTimeString()})`}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Referral Modal - Highest Priority Overlay */}
       {showReferralModal && (
         <ReferralSurveyModal
