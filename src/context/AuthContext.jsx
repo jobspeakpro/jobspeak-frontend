@@ -39,6 +39,57 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
+  // SYNC: Guest referral data to DB on login/signup
+  useEffect(() => {
+    const syncReferralData = async () => {
+      if (!user) return;
+
+      // Check if guest answered referral question in localStorage
+      const guestValue = localStorage.getItem("jsp_heard_about_value");
+      const guestAnswered = localStorage.getItem("jsp_heard_about_answered");
+      
+      if (!guestValue || !guestAnswered) return; // No guest data to sync
+
+      // Check if DB already has a value (write-once: only sync if DB is NULL)
+      try {
+        const { data: profile, error: fetchError } = await supabase
+          .from('profiles')
+          .select('heard_about_us')
+          .eq('id', user.id)
+          .single();
+
+        if (fetchError) {
+          console.warn("[SYNC] Failed to fetch profile:", fetchError);
+          return;
+        }
+
+        // Only sync if DB is NULL (write-once semantics)
+        if (profile && (profile.heard_about_us === null || profile.heard_about_us === undefined || profile.heard_about_us === "")) {
+          console.log("[SYNC] Syncing guest referral data to DB:", guestValue);
+          
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ heard_about_us: guestValue })
+            .eq('id', user.id);
+
+          if (updateError) {
+            console.warn("[SYNC] Failed to sync referral data:", updateError);
+          } else {
+            console.log("[SYNC] Successfully synced referral data to DB");
+            // Clear localStorage after successful sync (optional, but keeps it clean)
+            // Keep it for now in case sync fails and we need to retry
+          }
+        } else {
+          console.log("[SYNC] DB already has heard_about_us value, skipping sync");
+        }
+      } catch (e) {
+        console.error("[SYNC] Error syncing referral data:", e);
+      }
+    };
+
+    syncReferralData();
+  }, [user]);
+
   // MIGRATION: Guest -> Supabase
   useEffect(() => {
     const migrateGuestData = async () => {

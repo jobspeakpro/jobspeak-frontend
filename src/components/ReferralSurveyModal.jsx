@@ -26,9 +26,8 @@ export default function ReferralSurveyModal({ onComplete }) {
         setLoading(true);
 
         try {
-            // 1. Try to save to DB
             if (user) {
-                // Fail-open: Fire and forget the update or await it but ignore errors for UI purposes
+                // Logged-in user: Save to database
                 const { error } = await supabase
                     .from('profiles')
                     .update({ heard_about_us: source })
@@ -36,12 +35,24 @@ export default function ReferralSurveyModal({ onComplete }) {
 
                 if (error) {
                     console.warn("[ReferralSurvey] DB update failed (non-blocking):", error);
+                } else {
+                    console.log("[ReferralSurvey] Saved to DB:", source);
                 }
+            } else {
+                // Guest user: Save to localStorage
+                localStorage.setItem("jsp_heard_about_value", source);
+                localStorage.setItem("jsp_heard_about_answered", "true");
+                console.log("[ReferralSurvey] Saved to localStorage (guest):", source);
             }
         } catch (e) {
             console.warn("[ReferralSurvey] Error:", e);
+            // Fallback: Still save to localStorage even on error
+            if (!user) {
+                localStorage.setItem("jsp_heard_about_value", source);
+                localStorage.setItem("jsp_heard_about_answered", "true");
+            }
         } finally {
-            // 2. ALWAYS close and trigger completion logic
+            // ALWAYS close and trigger completion logic
             onComplete();
             setLoading(false);
         }

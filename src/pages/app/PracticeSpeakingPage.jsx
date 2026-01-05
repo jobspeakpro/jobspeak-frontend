@@ -490,48 +490,56 @@ export default function PracticeSpeakingPage() {
   }, [result]);
 
   // REFERRAL SURVEY TRIGGER EFFECT
-  // Trigger on FIRST completed practice for authenticated users with heard_about_us = NULL
+  // Trigger on FIRST completed practice for BOTH guests and logged-in users
   useEffect(() => {
-    // Requirements: Authenticated + Result Visible + Not Loading + heard_about_us is NULL
+    // Requirements: Result Visible + Not Loading + Not already answered
     const hasValidResult = result && !result.error && (result.improved || result.clearerRewrite || result.analysis);
     
-    if (user && hasValidResult && !loading && !isTranscribing && profileContext) {
-      // Check database value ONLY - no localStorage gating before DB check
+    if (!hasValidResult || loading || isTranscribing) return;
+    
+    // Check if already answered (prevent double-trigger)
+    const alreadyShown = localStorage.getItem("jsp_referral_done");
+    if (alreadyShown) {
+      console.log("[Referral Modal] Already shown in this session");
+      return;
+    }
+    
+    // For logged-in users: Check database
+    if (user && profileContext) {
       const heardAboutUs = profileContext.heard_about_us;
       const isNull = heardAboutUs === null || heardAboutUs === undefined || heardAboutUs === "";
       
-      console.log("[Referral Modal] Check:", {
-        user: !!user,
-        hasValidResult,
-        loading,
-        isTranscribing,
+      console.log("[Referral Modal] Logged-in check:", {
         heardAboutUs,
         isNull,
-        alreadyShown: !!localStorage.getItem("jsp_referral_done")
+        alreadyShown: !!alreadyShown
       });
       
       if (isNull) {
-        // Prevent double-trigger in same session (only after DB confirms NULL)
-        if (!localStorage.getItem("jsp_referral_done")) {
-          console.log("[Referral Modal] Triggering modal");
-          setShowReferralModal(true);
-          // Set localStorage immediately to prevent double-trigger in same session
-          localStorage.setItem("jsp_referral_done", "true");
-        } else {
-          console.log("[Referral Modal] Already shown in this session");
-        }
+        console.log("[Referral Modal] Triggering modal (logged-in, DB NULL)");
+        setShowReferralModal(true);
+        localStorage.setItem("jsp_referral_done", "true");
       } else {
-        console.log("[Referral Modal] heard_about_us is not NULL:", heardAboutUs);
+        console.log("[Referral Modal] Already answered in DB:", heardAboutUs);
       }
-    } else {
-      if (user && hasValidResult) {
-        console.log("[Referral Modal] Conditions not met:", {
-          user: !!user,
-          hasValidResult,
-          loading,
-          isTranscribing,
-          hasProfileContext: !!profileContext
-        });
+    } 
+    // For guests: Check localStorage
+    else if (!user) {
+      const guestAnswered = localStorage.getItem("jsp_heard_about_answered");
+      const guestValue = localStorage.getItem("jsp_heard_about_value");
+      
+      console.log("[Referral Modal] Guest check:", {
+        guestAnswered,
+        guestValue,
+        alreadyShown: !!alreadyShown
+      });
+      
+      if (!guestAnswered || !guestValue) {
+        console.log("[Referral Modal] Triggering modal (guest, not answered)");
+        setShowReferralModal(true);
+        localStorage.setItem("jsp_referral_done", "true");
+      } else {
+        console.log("[Referral Modal] Guest already answered:", guestValue);
       }
     }
   }, [user, result, loading, isTranscribing, profileContext]);
@@ -733,6 +741,7 @@ export default function PracticeSpeakingPage() {
         <ReferralSurveyModal
           onComplete={() => {
             setShowReferralModal(false);
+            // Mark as done to prevent showing again (already set in trigger logic, but ensure it's set)
             localStorage.setItem("jsp_referral_done", "true");
           }}
         />
