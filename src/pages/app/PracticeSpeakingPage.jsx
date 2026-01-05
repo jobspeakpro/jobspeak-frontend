@@ -732,6 +732,7 @@ export default function PracticeSpeakingPage() {
       <UniversalHeader />
 
       <main className="flex-grow flex flex-col items-center justify-start py-8 px-4 md:px-6 pb-20">
+
         <div className="w-full max-w-[900px] flex flex-col gap-8">
           {/* Title and subtitle */}
           <div className="text-center space-y-2 pt-4">

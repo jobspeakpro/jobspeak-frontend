@@ -11,7 +11,7 @@ export default function ReferralSurveyModal({ onComplete }) {
         "TikTok",
         "YouTube",
         "Discord",
-        "Twitter/X",
+        "Twitter / X",
         "Facebook",
         "LinkedIn",
         "Friend / Referral",
