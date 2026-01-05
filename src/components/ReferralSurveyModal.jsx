@@ -13,6 +13,7 @@ export default function ReferralSurveyModal({ onComplete }) {
         "Discord",
         "Twitter/X",
         "Facebook",
+        "LinkedIn",
         "Friend / Referral",
         "School / Teacher",
         "Google Search",
