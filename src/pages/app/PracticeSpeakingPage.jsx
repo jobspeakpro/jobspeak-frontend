@@ -242,11 +242,23 @@ export default function PracticeSpeakingPage() {
     paywallOpened: false,
     paywallTimestamp: null,
   });
+  const [debugRefresh, setDebugRefresh] = useState(0); // Force re-render for localStorage changes
   
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setIsDebugMode(params.get('debug') === '1');
   }, []);
+  
+  // Debug: Refresh panel when localStorage changes (for real-time updates)
+  useEffect(() => {
+    if (!isDebugMode) return;
+    
+    const interval = setInterval(() => {
+      setDebugRefresh(prev => prev + 1);
+    }, 500); // Update every 500ms
+    
+    return () => clearInterval(interval);
+  }, [isDebugMode]);
 
   // --- EFFECTS ---
 
