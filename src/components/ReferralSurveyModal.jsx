@@ -9,15 +9,14 @@ export default function ReferralSurveyModal({ onComplete }) {
 
     const OPTIONS = [
         "TikTok",
+        "Instagram",
         "YouTube",
         "Discord",
         "Twitter / X",
         "Facebook",
         "LinkedIn",
-        "Friend / Referral",
-        "School / Teacher",
-        "Google Search",
-        "Reddit / Forum",
+        "Google/Search",
+        "Friend/Referral",
         "Other"
     ];
 
