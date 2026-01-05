@@ -232,7 +232,7 @@ export default function PracticeSpeakingPage() {
   // 5. Referral Survey State
   const [showReferralModal, setShowReferralModal] = useState(false);
   
-  // 6. Debug State (only when ?debug=1)
+  // 6. Debug State (only when ?debug=1 AND safe conditions)
   const [isDebugMode, setIsDebugMode] = useState(false);
   const [debugState, setDebugState] = useState({
     lastApiStatus: null,
@@ -246,16 +246,35 @@ export default function PracticeSpeakingPage() {
   
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    setIsDebugMode(params.get('debug') === '1');
-  }, []);
+    const hasDebugParam = params.get('debug') === '1';
+    
+    if (!hasDebugParam) {
+      setIsDebugMode(false);
+      return;
+    }
+    
+    // Safety check: Only allow in non-production OR behind allowlist
+    const isProduction = import.meta.env.MODE === 'production';
+    const adminEmails = ['admin@jobspeakpro.com']; // Add your admin email here
+    const isAdmin = user && adminEmails.includes(user.email);
+    
+    // Allow if: non-production OR admin user
+    const isSafe = !isProduction || isAdmin;
+    
+    setIsDebugMode(isSafe);
+    
+    if (!isSafe && hasDebugParam) {
+      console.warn('[Debug Panel] Debug mode disabled in production for non-admin users');
+    }
+  }, [user]);
   
-  // Debug: Refresh panel when localStorage changes (for real-time updates)
+  // Debug: Refresh panel when localStorage changes (5s polling max, or manual refresh)
   useEffect(() => {
     if (!isDebugMode) return;
     
     const interval = setInterval(() => {
       setDebugRefresh(prev => prev + 1);
-    }, 500); // Update every 500ms
+    }, 5000); // Update every 5s (reduced from 500ms)
     
     return () => clearInterval(interval);
   }, [isDebugMode]);
