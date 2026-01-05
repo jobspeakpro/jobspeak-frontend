@@ -61,6 +61,13 @@ function SanityPing() {
   return null;
 }
 
+// --- Build ID for production verification ---
+const BUILD_ID = "7a52d0a-fix-no-silent-failures";
+console.log(`[BUILD_ID] ${BUILD_ID}`);
+if (typeof window !== 'undefined') {
+  window.__BUILD_ID__ = BUILD_ID;
+}
+
 // --- Sentry setup ---
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
