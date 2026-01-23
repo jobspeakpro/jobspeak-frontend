@@ -32,8 +32,9 @@ export class ApiError extends Error {
 export async function apiClient(endpoint, options = {}) {
   const { parseJson = true, ...fetchOptions } = options;
 
-  // Use absolute path to ensure headers aren't stripped by proxies
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+  // Use absolute path to ensure headers aren't stripped by proxies.
+  // Fallback to strict production URL if env var is missing.
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://jobspeak-backend-production.up.railway.app";
 
   // Ensure endpoint starts with /
   const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
@@ -112,6 +113,11 @@ export async function apiClient(endpoint, options = {}) {
         }
         // If response is ok but not JSON, re-throw parse error
         throw parseError;
+      }
+
+      // Update debug info with response body data if available
+      if (typeof window !== 'undefined' && window.__JSP_DEBUG__ && window.__JSP_DEBUG__.lastRequest) {
+        window.__JSP_DEBUG__.lastRequest.identityKey = data?.identityKey || data?.user?.id || 'Not found';
       }
 
       if (!response.ok) {

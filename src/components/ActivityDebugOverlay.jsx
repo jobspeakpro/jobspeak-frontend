@@ -72,7 +72,8 @@ export default function ActivityDebugOverlay() {
                     lastActivityTime: debugData.lastActivityTime,
                     backendCommit: debugData.lastRequest?.backendCommit,
                     lastRequestUrl: debugData.lastRequest?.url,
-                    lastRequestStatus: debugData.lastRequest?.status
+                    lastRequestStatus: debugData.lastRequest?.status,
+                    lastResponseIdentity: debugData.lastRequest?.identityKey
                 });
             }, 500);
 
@@ -119,6 +120,10 @@ export default function ActivityDebugOverlay() {
                         <div className="flex justify-between gap-2">
                             <span className="text-gray-400 truncate max-w-[200px]" title={debugData.lastRequestUrl}>{debugData.lastRequestUrl ? new URL(debugData.lastRequestUrl).pathname : '-'}</span>
                             <span className={debugData.lastRequestStatus === 200 ? 'text-green-400' : 'text-red-400'}>{debugData.lastRequestStatus || '-'}</span>
+                        </div>
+                        <div className="flex justify-between gap-2 border-t border-white/5 pt-0.5 mt-0.5">
+                            <span className="text-[8px] text-gray-500">Backend ID:</span>
+                            <span className="text-[8px] text-gray-400 font-mono truncate max-w-[150px]">{debugData.lastResponseIdentity || '-'}</span>
                         </div>
                     </div>
                 </div>
