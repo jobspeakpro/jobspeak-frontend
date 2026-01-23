@@ -51,9 +51,14 @@ export async function apiClient(endpoint, options = {}) {
   // Explicitly get guest key from localStorage to ensure it relies on the single source of truth
   const guestKey = typeof localStorage !== 'undefined' ? localStorage.getItem('jsp_guest_userKey') : null;
 
+  // Get Auth session token if user is logged in
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+
   // Default headers for JSON requests (unless body is FormData)
   const defaultHeaders = {
     'x-guest-key': guestKey || userKey, // Always prefer actual guest key for merging
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
   };
 
   if (fetchOptions.body && !(fetchOptions.body instanceof FormData)) {
