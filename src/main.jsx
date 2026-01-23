@@ -112,10 +112,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                   <Route path="/practice-legacy" element={<PracticePage />} />
                   <Route path="/resume" element={<App defaultTab="resume" />} />
                   {/* /progress points to MyProgress page */}
-                  <Route path="/progress" element={<ProtectedRoute><MyProgress /></ProtectedRoute>} />
+                  <Route path="/progress" element={<MyProgress />} />
                   {/* Preserve old App defaultTab="progress" behavior via /app/progress */}
                   <Route path="/app/progress" element={<App defaultTab="progress" />} />
-                  <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                  <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/mock-interview" element={<ProtectedRoute><MockInterviewPage /></ProtectedRoute>} />
                   <Route path="/mock-interview/session" element={<ProtectedRoute><MockInterviewSession /></ProtectedRoute>} />
                   <Route path="/mock-interview/summary/:id" element={<ProtectedRoute><MockInterviewSummary /></ProtectedRoute>} />

@@ -539,8 +539,17 @@ export default function PracticeSpeakingPage() {
 
   // Activity Tracking: Track practice start when user is on practice page (after onboarding)
   useEffect(() => {
-    // Gate: Only track if onboarding is complete and user is actually on practice page
-    if (!onboardingComplete) {
+    // DERIVED LOGIC: Ensure we track if:
+    // 1. Onboarding is complete (normal flow)
+    // 2. OR skipOnboarding is present (bypass flow)
+    // 3. AND we haven't tracked yet
+    const params = new URLSearchParams(window.location.search);
+    const skipOnboarding = params.get('skipOnboarding') === '1';
+
+    // Check if we should track: Onboarding done OR skipped
+    const shouldTrack = onboardingComplete || skipOnboarding;
+
+    if (!shouldTrack) {
       return;
     }
 
@@ -556,11 +565,13 @@ export default function PracticeSpeakingPage() {
         source: 'PracticeSpeakingPage',
         questionCount: 1, // Single question mode
         tabId: getTabId(), // Explicit tab ID for backend deduplication
+        skippedOnboarding: skipOnboarding
       }
     });
+
     // Mark as tracked to prevent duplicates
     markActivityTracked('practice');
-  }, [onboardingComplete]); // Only trigger when onboarding completes
+  }, [onboardingComplete]); // Run when onboarding state changes (or on mount if already true)
 
   // SYNC: Use backend-provided audio URL if avail (optimization)
   // This avoids a second fetch if the backend already generated usage

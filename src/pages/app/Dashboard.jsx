@@ -98,7 +98,9 @@ export default function Dashboard() {
       }
     };
 
-    if (user) {
+    const hasGuestKey = typeof localStorage !== 'undefined' && localStorage.getItem('jsp_guest_userKey');
+
+    if (user || hasGuestKey) {
       fetchProgress();
     } else {
       setProgressLoading(false);
