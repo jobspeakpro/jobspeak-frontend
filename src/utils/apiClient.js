@@ -32,8 +32,8 @@ export class ApiError extends Error {
 export async function apiClient(endpoint, options = {}) {
   const { parseJson = true, ...fetchOptions } = options;
 
-  // Use relative paths to leverage Vercel proxy (avoid CORS)
-  const API_BASE = "";
+  // Use absolute path to ensure headers aren't stripped by proxies
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
 
   // Ensure endpoint starts with /
   const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
@@ -48,10 +48,14 @@ export async function apiClient(endpoint, options = {}) {
   // Get persistent userKey (prioritizes user.id if logged in, else guest key)
   const userKey = getUserKey(user);
 
+  // Explicitly get guest key from localStorage to ensure it relies on the single source of truth
+  const guestKey = typeof localStorage !== 'undefined' ? localStorage.getItem('jsp_guest_userKey') : null;
+
   // Default headers for JSON requests (unless body is FormData)
   const defaultHeaders = {
-    'x-guest-key': (typeof localStorage !== 'undefined' ? localStorage.getItem('jsp_guest_userKey') : null) || userKey, // Always prefer actual guest key for merging
+    'x-guest-key': guestKey || userKey, // Always prefer actual guest key for merging
   };
+
   if (fetchOptions.body && !(fetchOptions.body instanceof FormData)) {
     if (!fetchOptions.headers?.['Content-Type']) {
       defaultHeaders['Content-Type'] = 'application/json';
@@ -74,6 +78,17 @@ export async function apiClient(endpoint, options = {}) {
       ...fetchOptions,
       headers,
     });
+
+    // Capture debug info
+    if (typeof window !== 'undefined') {
+      if (!window.__JSP_DEBUG__) window.__JSP_DEBUG__ = {};
+      window.__JSP_DEBUG__.lastRequest = {
+        url,
+        status: response.status,
+        backendCommit: response.headers.get('x-jsp-backend-commit'),
+        timestamp: Date.now()
+      };
+    }
 
     // Parse JSON if requested
     if (parseJson) {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { apiClient } from "../../utils/apiClient.js";
 import UniversalHeader from "../../components/UniversalHeader.jsx";
 
 export default function MyProgress() {
@@ -12,39 +13,26 @@ export default function MyProgress() {
   // Fetch progress data from backend
   useEffect(() => {
     const fetchProgress = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
       try {
-        const API_BASE = '';
-        const response = await fetch(`${API_BASE}/api/progress/summary`, {
-          headers: {
-            'Authorization': `Bearer ${user.access_token || ''}`,
-          },
-        });
+        const data = await apiClient('/api/progress/summary');
+        setProgressData(data);
 
-        if (response.ok) {
-          const data = await response.json();
-          setProgressData(data);
-
-          // DEBUG INSTRUMENTATION
-          if (typeof window !== 'undefined') {
-            if (!window.__JSP_DEBUG__) window.__JSP_DEBUG__ = {};
-            window.__JSP_DEBUG__.progressSummary = {
-              count: (data?.totalSessions || 0) + (data?.activityEvents?.length || 0),
-              timestamp: Date.now()
-            };
-          }
+        // DEBUG INSTRUMENTATION
+        if (typeof window !== 'undefined') {
+          if (!window.__JSP_DEBUG__) window.__JSP_DEBUG__ = {};
+          window.__JSP_DEBUG__.progressSummary = {
+            count: (data?.totalSessions || 0) + (data?.activityEvents?.length || 0),
+            timestamp: Date.now()
+          };
         }
       } catch (err) {
-        console.error('Failed to fetch progress:', err);
+        console.error('Failed to fetch progress summary:', err);
       } finally {
         setLoading(false);
       }
     };
 
+    // Always fetch, apiClient handles auth/guest logic
     fetchProgress();
   }, [user]);
 

@@ -56,13 +56,9 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchDailyReflection = async () => {
       try {
-        const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
-        const response = await fetch(`${API_BASE}/api/daily-reflection`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.reflection) {
-            setDailyReflection(data.reflection);
-          }
+        const data = await apiClient('/api/daily-reflection');
+        if (data.reflection) {
+          setDailyReflection(data.reflection);
         }
       } catch (err) {
         console.error('Failed to fetch daily reflection:', err);
@@ -98,13 +94,8 @@ export default function Dashboard() {
       }
     };
 
-    const hasGuestKey = typeof localStorage !== 'undefined' && localStorage.getItem('jsp_guest_userKey');
-
-    if (user || hasGuestKey) {
-      fetchProgress();
-    } else {
-      setProgressLoading(false);
-    }
+    // Always fetch, apiClient handles auth/guest logic
+    fetchProgress();
   }, [user]);
 
   const recentSessions = progress?.recentSessions || [];
@@ -113,20 +104,8 @@ export default function Dashboard() {
   useEffect(() => {
     const checkMockLimit = async () => {
       try {
-        const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
-        const { data } = await supabase.auth.getSession();
-        const token = data?.session?.access_token;
-
-        const response = await fetch(`${API_BASE}/api/mock-interview/limit-status`, {
-          method: 'GET',
-          credentials: 'include',
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setMockLimitStatus(data);
-        }
+        const data = await apiClient('/api/mock-interview/limit-status');
+        setMockLimitStatus(data);
       } catch (err) {
         console.error('[MOCK] Limit check failed:', err);
       } finally {
