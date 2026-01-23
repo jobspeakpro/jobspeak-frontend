@@ -20,39 +20,39 @@ export default function ReferralSurveyModal({ onComplete }) {
         "Other"
     ];
 
-    const handleSelect = async (source) => {
+    const handleSelect = (source) => {
         if (loading) return;
         setLoading(true);
 
-        try {
-            if (user) {
-                // Logged-in user: Save to database
-                const { error } = await supabase
-                    .from('profiles')
-                    .update({ heard_about_us: source })
-                    .eq('id', user.id);
+        // INSTANT CLOSE: Close modal immediately (don't wait for network)
+        onComplete();
 
-                if (error) {
-                    console.warn("[ReferralSurvey] DB update failed (non-blocking):", error);
-                } else {
-                    console.log("[ReferralSurvey] Saved to DB:", source);
-                }
-            } else {
-                // Guest user: Save to localStorage
-                localStorage.setItem("jsp_heard_about_value", source);
-                localStorage.setItem("jsp_heard_about_answered", "true");
-                console.log("[ReferralSurvey] Saved to localStorage (guest):", source);
-            }
-        } catch (e) {
-            console.warn("[ReferralSurvey] Error:", e);
-            // Fallback: Still save to localStorage even on error
-            if (!user) {
-                localStorage.setItem("jsp_heard_about_value", source);
-                localStorage.setItem("jsp_heard_about_answered", "true");
-            }
-        } finally {
-            // ALWAYS close and trigger completion logic
-            onComplete();
+        // ALWAYS save to localStorage first (instant, reliable)
+        localStorage.setItem("jsp_heard_about_value", source);
+        localStorage.setItem("jsp_heard_about_answered", "true");
+        console.log("[ReferralSurvey] Saved to localStorage:", source);
+
+        // FIRE-AND-FORGET: Backend call for logged-in users (non-blocking)
+        if (user) {
+            // Don't await - let it complete in background
+            supabase
+                .from('profiles')
+                .update({ heard_about_us: source })
+                .eq('id', user.id)
+                .then(({ error }) => {
+                    if (error) {
+                        console.warn("[ReferralSurvey] DB update failed (non-blocking):", error);
+                    } else {
+                        console.log("[ReferralSurvey] Saved to DB:", source);
+                    }
+                })
+                .catch(e => {
+                    console.warn("[ReferralSurvey] DB error (non-blocking):", e);
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
+        } else {
             setLoading(false);
         }
     };

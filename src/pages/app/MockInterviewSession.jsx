@@ -7,6 +7,7 @@ import UniversalHeader from "../../components/UniversalHeader.jsx";
 import VoiceRecorder from "../../components/VoiceRecorder.jsx";
 import MockInterviewGate from "../../components/MockInterviewGate.jsx";
 import interviewerAvatar from "../../assets/avatars/SarahJ.png";
+import { trackActivityStart, isActivityTracked, markActivityTracked, getTabId } from "../../utils/activityClient.js";
 
 // LOCAL HISTORY TEST #2 - 2025-12-31 09:30 - Second verification attempt
 // Adding debug Logging for Persistence
@@ -165,6 +166,21 @@ export default function MockInterviewSession() {
                 sessionIdRef.current = finalSessionId;
 
                 console.log(`[MOCK] Loaded ${data.questions.length} ${type} questions, sessionId: ${finalSessionId}`);
+
+                // Activity Tracking: Track mock interview session start (fire-and-forget)
+                // Only track once per tab + date to prevent duplicates
+                if (!isActivityTracked('mock_interview')) {
+                    trackActivityStart({
+                        activityType: 'mock_interview',
+                        context: {
+                            type: type || 'unknown',
+                            source: 'MockInterviewSession',
+                            questionCount: type === 'long' ? 5 : 2,
+                            tabId: getTabId(), // Explicit tab ID for backend deduplication
+                        },
+                    });
+                    markActivityTracked('mock_interview');
+                }
             } catch (err) {
                 console.error('[MOCK] Question fetch failed:', err);
                 setQuestionsError(err.message);
@@ -743,8 +759,8 @@ export default function MockInterviewSession() {
                                                             localStorage.setItem("mock_question_speed", String(speed));
                                                         }}
                                                         className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${questionSpeed === speed
-                                                                ? 'bg-primary text-white'
-                                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                                            ? 'bg-primary text-white'
+                                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                                                             }`}
                                                     >
                                                         {speed}×

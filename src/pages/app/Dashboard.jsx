@@ -82,6 +82,15 @@ export default function Dashboard() {
       try {
         const data = await apiClient('/api/progress');
         setProgress(data);
+
+        // DEBUG INSTRUMENTATION
+        if (typeof window !== 'undefined') {
+          if (!window.__JSP_DEBUG__) window.__JSP_DEBUG__ = {};
+          window.__JSP_DEBUG__.dashboardSummary = {
+            count: data?.recentActivity?.length || 0,
+            timestamp: Date.now()
+          };
+        }
       } catch (err) {
         console.error('Failed to fetch progress:', err);
       } finally {
@@ -262,7 +271,62 @@ export default function Dashboard() {
               ))}
             </div>
           </section>
+        ) : progress?.recentActivity && Array.isArray(progress.recentActivity) && progress.recentActivity.length > 0 ? (
+          /* Show Recent Activity if no sessions but activity exists */
+          <section className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-[#111418] dark:text-white">Recent Activity</h2>
+              <button
+                onClick={() => navigate("/progress")}
+                className="text-primary hover:underline text-sm font-medium"
+              >
+                View all
+              </button>
+            </div>
+
+            <div className="bg-white dark:bg-[#1A222C] rounded-xl border border-[#dbe0e6] dark:border-gray-800 shadow-sm p-6">
+              <div className="flex items-center gap-2 mb-4 text-blue-600 dark:text-blue-400">
+                <span className="material-symbols-outlined">info</span>
+                <p className="text-sm font-medium">You've started practicing! Complete a session to see detailed feedback here.</p>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                {progress.recentActivity.map((activity, index) => (
+                  <div
+                    key={activity.id || index}
+                    className="flex items-center gap-4 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"
+                  >
+                    <div className={`size-10 rounded-full flex items-center justify-center shrink-0 ${activity.activityType === 'practice'
+                      ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                      : 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
+                      }`}>
+                      <span className="material-symbols-outlined text-[18px]">
+                        {activity.activityType === 'practice' ? 'mic' : 'video_call'}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-slate-900 dark:text-white">
+                        {activity.activityType === 'practice'
+                          ? 'Practiced'
+                          : `Mock interview started${activity.context?.type ? ` (${activity.context.type})` : ''}`
+                        }
+                      </p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        {activity.timestamp ? new Date(activity.timestamp).toLocaleString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit'
+                        }) : 'Recently'}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
         ) : (
+          /* Empty State */
           <section className="bg-white dark:bg-[#1A222C] rounded-xl border border-[#dbe0e6] dark:border-gray-800 shadow-sm p-12 text-center">
             <div className="max-w-md mx-auto">
               <div className="size-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">

@@ -1,6 +1,7 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { apiClient } from '../utils/apiClient';
 
 const AuthContext = createContext(null);
 
@@ -39,6 +40,18 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
+  // SYNC: Activity data (guest -> user)
+  useEffect(() => {
+    if (user && typeof localStorage !== 'undefined' && localStorage.getItem('jsp_guest_userKey')) {
+      // Fire and forget sync to merge guest activity with user account
+      // apiClient handles attaching x-guest-key automatically
+      console.log('[Activity] Triggering guest activity sync...');
+      apiClient('/api/activity/sync', { method: 'POST' })
+        .then(() => console.log('[Activity] Sync initiated'))
+        .catch(err => console.warn('[Activity] Sync failed (non-critical):', err));
+    }
+  }, [user]);
+
   // SYNC: Guest referral data to DB on login/signup
   useEffect(() => {
     const syncReferralData = async () => {
@@ -47,7 +60,7 @@ export function AuthProvider({ children }) {
       // Check if guest answered referral question in localStorage
       const guestValue = localStorage.getItem("jsp_heard_about_value");
       const guestAnswered = localStorage.getItem("jsp_heard_about_answered");
-      
+
       if (!guestValue || !guestAnswered) return; // No guest data to sync
 
       // Check if DB already has a value (write-once: only sync if DB is NULL)
@@ -66,7 +79,7 @@ export function AuthProvider({ children }) {
         // Only sync if DB is NULL (write-once semantics)
         if (profile && (profile.heard_about_us === null || profile.heard_about_us === undefined || profile.heard_about_us === "")) {
           console.log("[SYNC] Syncing guest referral data to DB:", guestValue);
-          
+
           const { error: updateError } = await supabase
             .from('profiles')
             .update({ heard_about_us: guestValue })

@@ -407,11 +407,17 @@ export function usePracticeSession({ profileContext } = {}) {
       try {
         const sessionId = `practice_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
+        // Get current user and stable userKey for identity tracking
+        const { supabase } = await import('../lib/supabaseClient.js');
+        const { data: { user } } = await supabase.auth.getUser();
+        const userKey = getUserKey(user);
+
         const payload = {
           sessionId,
           questionId: currentQuestion?.id || `q_${Date.now()}`, // Ensure ID is present
           questionText: currentQuestion?.question || currentQuestion?.prompt || currentQuestion?.text || "Practice Question",
-          answerText: text
+          answerText: text,
+          userKey // Include userKey in body as fallback identity source
         };
 
         // Inject profile context if available
@@ -647,10 +653,11 @@ export function usePracticeSession({ profileContext } = {}) {
     setServerUnavailable,
     freeImproveUsage,
     usage: {
-      used: practiceQuestionsUsed,
-      limit: PRACTICE_QUESTION_LIMIT,
-      remaining: Math.max(0, PRACTICE_QUESTION_LIMIT - practiceQuestionsUsed),
-      blocked: practiceQuestionsUsed >= PRACTICE_QUESTION_LIMIT
+      // USE BACKEND DATA (freeImproveUsage) for display, not local counter
+      used: freeImproveUsage.count || 0,
+      limit: freeImproveUsage.limit === -1 ? Infinity : (freeImproveUsage.limit || PRACTICE_QUESTION_LIMIT),
+      remaining: Math.max(0, (freeImproveUsage.limit === -1 ? Infinity : freeImproveUsage.limit) - (freeImproveUsage.count || 0)),
+      blocked: usage.blocked || (freeImproveUsage.count >= freeImproveUsage.limit)
     },
     currentQuestion,
     questionNumber,

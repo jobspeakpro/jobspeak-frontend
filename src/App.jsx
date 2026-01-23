@@ -18,6 +18,7 @@ import { apiClient, ApiError } from "./utils/apiClient.js";
 import { getUserKey } from "./utils/userKey.js";
 import { isBlocked } from "./utils/usage.js";
 import { gaEvent } from "./utils/ga.js";
+import ActivityDebugOverlay from "./components/ActivityDebugOverlay.jsx";
 
 export default function App({ defaultTab = "interview" }) {
   const { isPro, refreshProStatus } = usePro();
@@ -572,6 +573,7 @@ export default function App({ defaultTab = "interview" }) {
   return (
     <div className="min-h-screen bg-rose-50 text-slate-900 flex">
       {/* Sidebar */}
+      <ActivityDebugOverlay />
       <aside className="hidden md:flex md:flex-col w-64 bg-white border-r border-rose-100">
         <div className="px-6 py-5 border-b border-rose-100 flex items-center gap-3">
           <div className="h-9 w-9 rounded-full bg-rose-500 flex items-center justify-center text-xs font-bold text-white">

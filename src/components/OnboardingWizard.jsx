@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, memo } from "react";
+import React, { useState, useEffect, useRef, memo, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { supabase } from "../lib/supabaseClient.js";
@@ -88,9 +88,9 @@ function OnboardingWizard({ onComplete }) {
     const [customInputDraft, setCustomInputDraft] = useState("");
 
 
-    // Steps Config
+    // Steps Config - MOVED OUTSIDE to prevent re-creation on every render
     // Step 0 is now Mic Setup (Functional Step, not data field)
-    const steps = [
+    const ONBOARDING_STEPS = [
         { type: "mic_setup", title: "Mic Setup", question: "Hi! To get started, please turn on your microphone so you can answer out loud.", optional: true },
         { type: "field", title: "Name", question: "What should I call you?", field: "display_name", optional: false, inputType: "text" },
         { type: "field", title: "Job Role", question: "Nice to meet you. What job role are you preparing for?", field: "job_title", optional: false, inputType: "text" },
@@ -100,6 +100,10 @@ function OnboardingWizard({ onComplete }) {
         { type: "field", title: "Difficulty", question: "What difficulty level do you want?", field: "difficulty", optional: false, inputType: "select" },
         { type: "field", title: "Speed", question: "Finally, how fast should I speak during our sessions?", field: "tts_speed_pref", optional: true, inputType: "select" }
     ];
+
+    // Use the constant steps array
+    const steps = ONBOARDING_STEPS;
+
 
     // Load existing data on mount
     useEffect(() => {
@@ -815,11 +819,21 @@ function OnboardingWizard({ onComplete }) {
 
     const current = steps[step];
 
+    // CRITICAL: Memoize AssistantBubble to prevent remounting on every render
+    const MemoizedAssistantBubble = useMemo(() => {
+        return <AssistantBubble currentStep={step} playing={isPlayingPrompt} onRepeat={handleRepeatQuestion} steps={steps} autoplayBlocked={autoplayBlocked} />;
+    }, [step, isPlayingPrompt, autoplayBlocked]);
+
+    // CRITICAL: Memoize renderInput to prevent recreating JSX on every render
+    const MemoizedInput = useMemo(() => {
+        return renderInput();
+    }, [step, formData, inputMode, tempTranscript, customInputDraft, micEnabled, micDenied]);
+
     // Render wizard into a portal to isolate from parent component rerenders/layout changes
     return createPortal(
         <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 font-display" onClick={(e) => e.stopPropagation()}>
-            {/* Card Container */}
-            <div className="relative w-full max-w-md bg-white dark:bg-surface-dark rounded-3xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh] pointer-events-auto">
+            {/* Card Container - DISABLE ANIMATIONS */}
+            <div className="relative w-full max-w-md bg-white dark:bg-surface-dark rounded-3xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh] pointer-events-auto" style={{ animation: 'none', transition: 'none' }}>
 
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-surface-dark z-10">
@@ -833,10 +847,10 @@ function OnboardingWizard({ onComplete }) {
                     )}
                 </div>
 
-                {/* Body */}
-                <div className="flex-1 overflow-y-auto px-6 py-8 flex flex-col items-center">
-                    <AssistantBubble currentStep={step} playing={isPlayingPrompt} onRepeat={handleRepeatQuestion} steps={steps} autoplayBlocked={autoplayBlocked} />
-                    {renderInput()}
+                {/* Body - DISABLE ANIMATIONS */}
+                <div className="flex-1 overflow-y-auto px-6 py-8 flex flex-col items-center" style={{ animation: 'none', transition: 'none' }}>
+                    {MemoizedAssistantBubble}
+                    {MemoizedInput}
                 </div>
 
                 {/* Footer Controls */}

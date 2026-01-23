@@ -50,7 +50,7 @@ export async function apiClient(endpoint, options = {}) {
 
   // Default headers for JSON requests (unless body is FormData)
   const defaultHeaders = {
-    'x-user-key': userKey, // Always include userKey header for all requests
+    'x-guest-key': (typeof localStorage !== 'undefined' ? localStorage.getItem('jsp_guest_userKey') : null) || userKey, // Always prefer actual guest key for merging
   };
   if (fetchOptions.body && !(fetchOptions.body instanceof FormData)) {
     if (!fetchOptions.headers?.['Content-Type']) {

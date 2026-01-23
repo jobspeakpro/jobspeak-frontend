@@ -28,6 +28,15 @@ export default function MyProgress() {
         if (response.ok) {
           const data = await response.json();
           setProgressData(data);
+
+          // DEBUG INSTRUMENTATION
+          if (typeof window !== 'undefined') {
+            if (!window.__JSP_DEBUG__) window.__JSP_DEBUG__ = {};
+            window.__JSP_DEBUG__.progressSummary = {
+              count: (data?.totalSessions || 0) + (data?.activityEvents?.length || 0),
+              timestamp: Date.now()
+            };
+          }
         }
       } catch (err) {
         console.error('Failed to fetch progress:', err);
@@ -39,7 +48,11 @@ export default function MyProgress() {
     fetchProgress();
   }, [user]);
 
-  const hasData = progressData && (progressData.totalSessions > 0 || (Array.isArray(progressData.sessions) && progressData.sessions.length > 0));
+  const hasData = progressData && (
+    progressData.totalSessions > 0 ||
+    (Array.isArray(progressData.sessions) && progressData.sessions.length > 0) ||
+    (Array.isArray(progressData.activityEvents) && progressData.activityEvents.length > 0)
+  );
 
   return (
     <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-50 min-h-screen flex flex-col">
@@ -162,6 +175,55 @@ export default function MyProgress() {
                 </div>
               </div>
             )}
+
+            {/* Activity Events (if no sessions yet) */}
+            {progressData?.activityEvents && Array.isArray(progressData.activityEvents) && progressData.activityEvents.length > 0 &&
+              (!progressData.sessions || progressData.sessions.length === 0) && (
+                <div className="mt-4">
+                  <div className="flex justify-between items-end mb-4">
+                    <h3 className="text-slate-900 dark:text-white text-lg font-bold flex items-center gap-2">
+                      <span className="material-symbols-outlined text-slate-400">history</span>
+                      Recent Activity
+                    </h3>
+                  </div>
+                  <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
+                    <div className="flex items-center gap-2 mb-4 text-blue-600 dark:text-blue-400">
+                      <span className="material-symbols-outlined">info</span>
+                      <p className="text-sm font-medium">You've started practicing! Complete a session to see detailed feedback here.</p>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                      {progressData.activityEvents.map((event, index) => (
+                        <div key={event.id || index} className="flex items-center gap-4 p-4 rounded-lg bg-slate-50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-600">
+                          <div className={`size-10 rounded-full flex items-center justify-center shrink-0 ${event.activityType === 'practice'
+                            ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                            : 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
+                            }`}>
+                            <span className="material-symbols-outlined text-[18px]">
+                              {event.activityType === 'practice' ? 'mic' : 'video_call'}
+                            </span>
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-slate-900 dark:text-white">
+                              {event.activityType === 'practice'
+                                ? 'Practiced (started)'
+                                : `Mock interview started${event.context?.type ? ` (${event.context.type})` : ''}`
+                              }
+                            </p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                              {event.timestamp ? new Date(event.timestamp).toLocaleString(undefined, {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: '2-digit'
+                              }) : 'Recently'}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
           </>
         )}
 

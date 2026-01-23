@@ -26,12 +26,12 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       "/api": {
-        target: "http://127.0.0.1:3000",
+        target: "https://jobspeak-backend-production.up.railway.app",
         changeOrigin: true,
         secure: false,
       },
       "/voice": {
-        target: "http://127.0.0.1:3000",
+        target: "https://jobspeak-backend-production.up.railway.app",
         changeOrigin: true,
         secure: false,
         configure: (proxy) => {
@@ -47,17 +47,17 @@ export default defineConfig({
         },
       },
       "/ai": {
-        target: "http://127.0.0.1:3000",
+        target: "https://jobspeak-backend-production.up.railway.app",
         changeOrigin: true,
         secure: false,
       },
       "/resume": {
-        target: "http://127.0.0.1:3000",
+        target: "https://jobspeak-backend-production.up.railway.app",
         changeOrigin: true,
         secure: false,
       },
       "/health": {
-        target: "http://127.0.0.1:3000",
+        target: "https://jobspeak-backend-production.up.railway.app",
         changeOrigin: true,
         secure: false,
       },

@@ -14,6 +14,7 @@ import { useAuth } from "../../context/AuthContext.jsx";
 import { supabase } from "../../lib/supabaseClient.js";
 import UniversalHeader from "../../components/UniversalHeader.jsx";
 import ReferralSurveyModal from "../../components/ReferralSurveyModal.jsx";
+import { trackActivityStart, isActivityTracked, markActivityTracked, getTabId } from "../../utils/activityClient.js";
 
 // ========================================
 // DEFENSIVE RENDERING HELPERS
@@ -237,6 +238,7 @@ export default function PracticeSpeakingPage() {
 
   // 5. Referral Survey State
   const [showReferralModal, setShowReferralModal] = useState(false);
+  const [showReferralToast, setShowReferralToast] = useState(false);
 
   // 6. Debug State (only when ?debug=1 AND safe conditions)
   const [isDebugMode, setIsDebugMode] = useState(false);
@@ -534,6 +536,31 @@ export default function PracticeSpeakingPage() {
     };
     loadContext();
   }, [user, onboardingComplete]); // reload if onboarding finishes
+
+  // Activity Tracking: Track practice start when user is on practice page (after onboarding)
+  useEffect(() => {
+    // Gate: Only track if onboarding is complete and user is actually on practice page
+    if (!onboardingComplete) {
+      return;
+    }
+
+    // Gate: Check if already tracked for this tab + date
+    if (isActivityTracked('practice')) {
+      return;
+    }
+
+    // Fire activity tracking (fire-and-forget)
+    trackActivityStart({
+      activityType: 'practice',
+      context: {
+        source: 'PracticeSpeakingPage',
+        questionCount: 1, // Single question mode
+        tabId: getTabId(), // Explicit tab ID for backend deduplication
+      }
+    });
+    // Mark as tracked to prevent duplicates
+    markActivityTracked('practice');
+  }, [onboardingComplete]); // Only trigger when onboarding completes
 
   // SYNC: Use backend-provided audio URL if avail (optimization)
   // This avoids a second fetch if the backend already generated usage
@@ -864,6 +891,9 @@ export default function PracticeSpeakingPage() {
             setShowReferralModal(false);
             // Mark as done to prevent showing again (already set in trigger logic, but ensure it's set)
             localStorage.setItem("jsp_referral_done", "true");
+            // Show confirmation toast
+            setShowReferralToast(true);
+            setTimeout(() => setShowReferralToast(false), 3000);
           }}
         />
       )}
@@ -1617,7 +1647,15 @@ export default function PracticeSpeakingPage() {
               <span className="material-symbols-outlined text-slate-400 mt-0.5">info</span>
               <div className="flex-1">
                 <p className="text-sm text-text-secondary dark:text-slate-400 leading-relaxed">
-                  You've used <span className="font-medium text-text-main dark:text-slate-200">{usage.used} of {usage.limit === Infinity ? "∞" : usage.limit}</span> free practice questions for today. You can continue tomorrow or upgrade for unlimited practice.
+                  {usage.used >= usage.limit ? (
+                    <>
+                      You've used all <span className="font-medium text-text-main dark:text-slate-200">{usage.limit === Infinity ? "∞" : usage.limit}</span> free practice questions for today. You can continue tomorrow or upgrade for unlimited practice.
+                    </>
+                  ) : (
+                    <>
+                      You've used <span className="font-medium text-text-main dark:text-slate-200">{Math.min(usage.used, usage.limit)} of {usage.limit === Infinity ? "∞" : usage.limit}</span> free practice questions for today. You can continue tomorrow or upgrade for unlimited practice.
+                    </>
+                  )}
                 </p>
                 <a className="inline-block mt-2 text-sm font-semibold text-primary hover:underline" href="#" onClick={(e) => { e.preventDefault(); navigate("/pricing"); }}>
                   View upgrade options
@@ -1681,6 +1719,23 @@ export default function PracticeSpeakingPage() {
               >
                 ✕
               </button>
+            </div>
+          </div>
+        )
+      }
+
+      {/* Referral Confirmation Toast */}
+      {
+        showReferralToast && (
+          <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[100] bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg px-4 py-3 shadow-lg animate-in fade-in slide-in-from-top-5 duration-200">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-green-600 dark:text-green-400">check_circle</span>
+              <div>
+                <p className="text-sm font-semibold text-green-900 dark:text-green-200">Thanks — saved.</p>
+                <p className="text-xs text-green-700 dark:text-green-300 mt-0.5">
+                  {user ? "Saved to your account" : "Saved on this device"}
+                </p>
+              </div>
             </div>
           </div>
         )

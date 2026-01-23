@@ -5,3 +5,5 @@ dist/
 .env*
 .history/
 f.headers.txt
+.vercel
+.env*.local
