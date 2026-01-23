@@ -53,12 +53,11 @@ export default function PracticeSpeakingPage() {
 
   // 1. Onboarding State
   const [onboardingComplete, setOnboardingComplete] = useState(() => {
-    // FIX #4: Skip onboarding if ?debug=1&skipOnboarding=1
+    // FIX #4: Skip onboarding if ?skipOnboarding=1 (regardless of debug mode)
     const params = new URLSearchParams(window.location.search);
-    const isDebug = params.get('debug') === '1';
     const skipOnboarding = params.get('skipOnboarding') === '1';
 
-    if (isDebug && skipOnboarding) {
+    if (skipOnboarding) {
       console.log('[Onboarding] Skipped via URL parameters');
       return true;
     }

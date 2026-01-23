@@ -58,11 +58,7 @@ export default function MockInterviewPage() {
     const handleStartMockInterview = () => {
         if (!mockLimitStatus) return;
 
-        if (mockLimitStatus.isGuest) {
-            alert('Create a free account to use your 1 free mock interview.');
-            navigate('/signup');
-            return;
-        }
+        /* Guest check removed to allow guest access */
 
         if (!mockLimitStatus.canStartMock) {
             alert('Your free mock interview is complete. Upgrade for unlimited practice.');

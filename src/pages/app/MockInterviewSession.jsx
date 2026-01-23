@@ -121,9 +121,16 @@ export default function MockInterviewSession() {
             return; // Still checking eligibility
         }
 
-        // Gate: Do not fetch questions for guests or ineligible users
-        if (!elig.canStartMock || elig.reason === "AUTH_REQUIRED" || elig.isGuest) {
-            return; // User will be redirected by render logic
+        // Gate: Do not fetch questions for ineligible users (guests allowed now)
+        if (!elig.canStartMock && elig.reason !== "AUTH_REQUIRED") {
+            // We allow AUTH_REQUIRED for guests now, but check if blocked otherwise? 
+            // Actually, simply removing elig.isGuest check from blocking logic.
+            // Original: if (!elig.canStartMock || elig.reason === "AUTH_REQUIRED" || elig.isGuest)
+        }
+
+        // Simplified check: only block if explicitly blocked by limit (not guest status)
+        if (!elig.canStartMock && !elig.isGuest) {
+            return;
         }
 
         const fetchQuestions = async () => {
