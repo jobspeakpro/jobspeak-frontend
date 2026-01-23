@@ -62,7 +62,7 @@ function SanityPing() {
 }
 
 // --- Build ID for production verification ---
-const BUILD_ID = "7a52d0a-fix-no-silent-failures";
+const BUILD_ID = "fix-guest-access-v3-final";
 console.log(`[BUILD_ID] ${BUILD_ID}`);
 if (typeof window !== 'undefined') {
   window.__BUILD_ID__ = BUILD_ID;
@@ -116,8 +116,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                   {/* Preserve old App defaultTab="progress" behavior via /app/progress */}
                   <Route path="/app/progress" element={<App defaultTab="progress" />} />
                   <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/mock-interview" element={<ProtectedRoute><MockInterviewPage /></ProtectedRoute>} />
-                  <Route path="/mock-interview/session" element={<ProtectedRoute><MockInterviewSession /></ProtectedRoute>} />
+                  <Route path="/mock-interview" element={<MockInterviewPage />} />
+                  <Route path="/mock-interview/session" element={<MockInterviewSession />} />
                   <Route path="/mock-interview/summary/:id" element={<ProtectedRoute><MockInterviewSummary /></ProtectedRoute>} />
                   <Route path="/practice/summary/:id" element={<ProtectedRoute><PracticeSummary /></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

@@ -21,8 +21,8 @@ import { apiClient } from './apiClient.js';
  * @returns {Promise<void>} Fire-and-forget promise (errors swallowed)
  */
 export async function trackActivityStart({ activityType, context = {} }) {
-  // Gate: Only track if feature flag enabled
-  if (import.meta.env.VITE_ACTIVITY_TRACKING !== '1') {
+  // Gate: Only track if feature flag enabled (default to enabled if missing)
+  if (import.meta.env.VITE_ACTIVITY_TRACKING === '0') {
     return;
   }
 
