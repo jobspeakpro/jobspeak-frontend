@@ -1,9 +1,25 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { apiClient } from '../../utils/apiClient.js';
 
 export default function ReferralPage() {
+    const [referralCode, setReferralCode] = useState(null);
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
         document.title = "JobSpeakPro - Practice Is Better With Friends";
+
+        async function fetchCode() {
+            try {
+                const res = await apiClient.get("/referrals/code");
+                setReferralCode(res.data.referralCode);
+            } catch (err) {
+                console.error("Fetch referral code error:", err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchCode();
     }, []);
 
     return (
@@ -105,9 +121,23 @@ export default function ReferralPage() {
                                     </div>
                                     <div className="flex flex-col md:flex-row gap-3">
                                         <div className="relative flex-1">
-                                            <input className="w-full bg-gray-50 dark:bg-[#1c2630] border border-gray-200 dark:border-gray-700 rounded-full h-12 px-5 text-gray-600 dark:text-gray-300 font-mono text-sm focus:outline-none" readOnly type="text" value="jobspeakpro.com/ref/user_9921_ax" />
+                                            <input
+                                                className="w-full bg-gray-50 dark:bg-[#1c2630] border border-gray-200 dark:border-gray-700 rounded-full h-12 px-5 text-gray-600 dark:text-gray-300 font-mono text-sm focus:outline-none"
+                                                readOnly
+                                                type="text"
+                                                value={loading ? "Loading..." : `jobspeakpro.com/ref/${referralCode || '...'}`}
+                                            />
                                         </div>
-                                        <button className="bg-[#4799eb] text-white px-8 h-12 rounded-full font-bold hover:bg-[#4799eb]/90 transition-all flex items-center justify-center gap-2">
+                                        <button
+                                            onClick={() => {
+                                                if (referralCode) {
+                                                    navigator.clipboard.writeText(`https://jobspeakpro.com/ref/${referralCode}`);
+                                                    alert("Link copied!");
+                                                }
+                                            }}
+                                            disabled={loading || !referralCode}
+                                            className="bg-[#4799eb] text-white px-8 h-12 rounded-full font-bold hover:bg-[#4799eb]/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
                                             <span className="material-symbols-outlined text-[20px]">content_copy</span>
                                             Copy Link
                                         </button>

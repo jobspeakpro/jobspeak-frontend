@@ -1,17 +1,38 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { apiClient } from '../../utils/apiClient.js';
 
 export default function AffiliateJoinPage() {
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         document.title = "Affiliate Application | JobSpeakPro";
     }, []);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Use navigate instead of default form behavior
-        navigate('/affiliate/joined');
+        setLoading(true);
+
+        // Gather form data
+        const form = e.target;
+        const payload = {
+            name: form['full-name'].value,
+            email: form['email'].value,
+            platform: form['platform'].value,
+            audienceSize: form['audience'].value,
+            channelLink: form['link'].value,
+            promoPlan: form['strategy'].value
+        };
+
+        try {
+            await apiClient.post("/affiliate/apply", payload);
+            navigate('/affiliate/joined');
+        } catch (err) {
+            console.error("Affiliate apply error:", err);
+            setLoading(false);
+            alert("Something went wrong. Please try again.");
+        }
     };
 
     return (

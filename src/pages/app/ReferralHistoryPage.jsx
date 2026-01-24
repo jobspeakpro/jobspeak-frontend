@@ -1,12 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { apiClient } from '../../utils/apiClient.js';
 import RedeemCreditModal from '../../components/RedeemCreditModal';
 
 export default function ReferralHistoryPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [history, setHistory] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         document.title = "Referral History | JobSpeakPro";
+
+        async function fetchHistory() {
+            try {
+                const res = await apiClient.get("/referrals/history");
+                setHistory(res.data.history || []);
+            } catch (err) {
+                console.error("Fetch referral history error:", err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchHistory();
     }, []);
 
     return (
@@ -119,45 +134,44 @@ export default function ReferralHistoryPage() {
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-[#f0f2f4] dark:divide-slate-800">
-                                                <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                                                    <td className="px-6 py-4 text-sm font-medium">a***@gmail.com</td>
-                                                    <td className="px-6 py-4 text-sm text-[#637588] dark:text-slate-400">Oct 24, 2023</td>
-                                                    <td className="px-6 py-4">
-                                                        <span className="inline-flex items-center gap-1.5 py-1 px-3 rounded-full text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                                            <span className="material-symbols-outlined text-[14px]">check_circle</span>
-                                                            Completed
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <span className="text-sm font-bold text-[#4799eb]">+1 Credit Earned</span>
-                                                    </td>
-                                                </tr>
-                                                <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                                                    <td className="px-6 py-4 text-sm font-medium">m***@yahoo.com</td>
-                                                    <td className="px-6 py-4 text-sm text-[#637588] dark:text-slate-400">Oct 28, 2023</td>
-                                                    <td className="px-6 py-4">
-                                                        <span className="inline-flex items-center gap-1.5 py-1 px-3 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                                                            <span className="material-symbols-outlined text-[14px]">bolt</span>
-                                                            Pro Trial Active
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <span className="text-sm font-medium text-[#637588] dark:text-slate-400">Pending Completion</span>
-                                                    </td>
-                                                </tr>
-                                                <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                                                    <td className="px-6 py-4 text-sm font-medium">s***@outlook.com</td>
-                                                    <td className="px-6 py-4 text-sm text-[#637588] dark:text-slate-400">Nov 02, 2023</td>
-                                                    <td className="px-6 py-4">
-                                                        <span className="inline-flex items-center gap-1.5 py-1 px-3 rounded-full text-xs font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                                                            <span className="material-symbols-outlined text-[14px]">hourglass_empty</span>
-                                                            Joined
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <span className="text-sm font-medium text-[#637588] dark:text-slate-400">Pending Pro Trial</span>
-                                                    </td>
-                                                </tr>
+                                                {loading ? (
+                                                    <tr>
+                                                        <td colSpan="4" className="px-6 py-8 text-center text-gray-500">Loading history...</td>
+                                                    </tr>
+                                                ) : history.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan="4" className="px-6 py-8 text-center text-gray-500">No referrals yet. Share your link to get started!</td>
+                                                    </tr>
+                                                ) : (
+                                                    history.map((item, index) => (
+                                                        <tr key={index} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                                                            <td className="px-6 py-4 text-sm font-medium">{item.friendEmail || "Anonymous"}</td>
+                                                            <td className="px-6 py-4 text-sm text-[#637588] dark:text-slate-400">{item.dateJoined ? new Date(item.dateJoined).toLocaleDateString() : "-"}</td>
+                                                            <td className="px-6 py-4">
+                                                                <span className={`inline-flex items-center gap-1.5 py-1 px-3 rounded-full text-xs font-bold ${item.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                                                        item.status === 'trial_active' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                                                                            'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                                                    }`}>
+                                                                    <span className="material-symbols-outlined text-[14px]">
+                                                                        {item.status === 'completed' ? 'check_circle' :
+                                                                            item.status === 'trial_active' ? 'bolt' : 'hourglass_empty'}
+                                                                    </span>
+                                                                    {item.status === 'completed' ? 'Completed' :
+                                                                        item.status === 'trial_active' ? 'Pro Trial Active' : 'Joined'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-right">
+                                                                {item.status === 'completed' ? (
+                                                                    <span className="text-sm font-bold text-[#4799eb]">+1 Credit Earned</span>
+                                                                ) : item.status === 'trial_active' ? (
+                                                                    <span className="text-sm font-medium text-[#637588] dark:text-slate-400">Pending Completion</span>
+                                                                ) : (
+                                                                    <span className="text-sm font-medium text-[#637588] dark:text-slate-400">Pending Pro Trial</span>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
                                             </tbody>
                                         </table>
                                     </div>
