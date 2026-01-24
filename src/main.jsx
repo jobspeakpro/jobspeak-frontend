@@ -67,7 +67,7 @@ function SanityPing() {
 }
 
 // --- Build ID for production verification ---
-const BUILD_ID = "fix-guest-access-v3-final";
+const BUILD_ID = "prod-routes-v1";
 console.log(`[BUILD_ID] ${BUILD_ID}`);
 if (typeof window !== 'undefined') {
   window.__BUILD_ID__ = BUILD_ID;
