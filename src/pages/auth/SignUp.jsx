@@ -55,7 +55,7 @@ export default function SignUp() {
       }
 
       // Show email confirmation message - DO NOT auto-login
-      setShowEmailConfirmation(true);
+      // setShowEmailConfirmation(true);
       setToast("success");
       setLoading(false);
 
@@ -77,7 +77,16 @@ export default function SignUp() {
       }
 
       // Force sign out to ensure user is not logged in until confirmed
-      await supabase.auth.signOut();
+      // FOR TESTING: BYPASS EMAIL VERIFICATION
+      // await supabase.auth.signOut();
+
+      // FOR TESTING: Navigate to dashboard directly
+      // setShowEmailConfirmation(true);
+      setToast("success");
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1000);
+
     } catch (err) {
       setError(err.message || "Something went wrong. Please try again.");
       setLoading(false);
