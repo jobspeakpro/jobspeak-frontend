@@ -14,7 +14,7 @@ export default function MyProgress() {
   useEffect(() => {
     const fetchProgress = async () => {
       try {
-        const data = await apiClient('/api/progress/summary');
+        const data = await apiClient('/api/progress');
         setProgressData(data);
 
         // DEBUG INSTRUMENTATION
