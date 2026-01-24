@@ -77,15 +77,12 @@ export default function SignUp() {
       }
 
       // Force sign out to ensure user is not logged in until confirmed
-      // FOR TESTING: BYPASS EMAIL VERIFICATION
-      // await supabase.auth.signOut();
+      await supabase.auth.signOut();
 
-      // FOR TESTING: Navigate to dashboard directly
-      // setShowEmailConfirmation(true);
+      // Show email confirmation message - DO NOT auto-login
+      setShowEmailConfirmation(true);
       setToast("success");
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 1000);
+      setLoading(false);
 
     } catch (err) {
       setError(err.message || "Something went wrong. Please try again.");
