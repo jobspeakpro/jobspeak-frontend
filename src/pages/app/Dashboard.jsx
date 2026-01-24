@@ -82,8 +82,11 @@ export default function Dashboard() {
         // DEBUG INSTRUMENTATION
         if (typeof window !== 'undefined') {
           if (!window.__JSP_DEBUG__) window.__JSP_DEBUG__ = {};
+          // robust count
+          const count = (data?.recentActivity?.length || data?.activityEvents?.length || 0) +
+            (data?.recentSessions?.length || data?.sessions?.length || 0);
           window.__JSP_DEBUG__.dashboardSummary = {
-            count: data?.recentActivity?.length || 0,
+            count,
             timestamp: Date.now()
           };
         }
@@ -98,7 +101,10 @@ export default function Dashboard() {
     fetchProgress();
   }, [user]);
 
-  const recentSessions = progress?.recentSessions || [];
+  // Robustly handle API variations (sessions vs recentSessions)
+  const recentSessions = progress?.recentSessions || progress?.sessions || [];
+  // Ensure we check for alternate activity list too if needed
+  const recentActivityEvents = progress?.recentActivity || progress?.activityEvents || [];
 
   // Check mock interview limit status on mount
   useEffect(() => {
@@ -197,6 +203,7 @@ export default function Dashboard() {
               {recentSessions.map((session) => (
                 <div
                   key={session.id}
+                  data-testid="activity-row"
                   onClick={() => navigate(session.type === 'practice' ? `/practice/summary/${session.sessionId || session.id}` : `/mock-interview/summary/${session.sessionId || session.id}`)}
                   className={`bg-white dark:bg-[#1A222C] p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all cursor-pointer hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800`}
                 >
@@ -252,7 +259,7 @@ export default function Dashboard() {
               ))}
             </div>
           </section>
-        ) : progress?.recentActivity && Array.isArray(progress.recentActivity) && progress.recentActivity.length > 0 ? (
+        ) : recentActivityEvents.length > 0 ? (
           /* Show Recent Activity if no sessions but activity exists */
           <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
@@ -265,16 +272,17 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div className="bg-white dark:bg-[#1A222C] rounded-xl border border-[#dbe0e6] dark:border-gray-800 shadow-sm p-6">
+            <div data-testid="recent-activity" className="bg-white dark:bg-[#1A222C] rounded-xl border border-[#dbe0e6] dark:border-gray-800 shadow-sm p-6">
               <div className="flex items-center gap-2 mb-4 text-blue-600 dark:text-blue-400">
                 <span className="material-symbols-outlined">info</span>
                 <p className="text-sm font-medium">You've started practicing! Complete a session to see detailed feedback here.</p>
               </div>
 
               <div className="flex flex-col gap-3">
-                {progress.recentActivity.map((activity, index) => (
+                {recentActivityEvents.map((activity, index) => (
                   <div
                     key={activity.id || index}
+                    data-testid="activity-row"
                     className="flex items-center gap-4 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"
                   >
                     <div className={`size-10 rounded-full flex items-center justify-center shrink-0 ${activity.activityType === 'practice'
@@ -308,7 +316,7 @@ export default function Dashboard() {
           </section>
         ) : (
           /* Empty State */
-          <section className="bg-white dark:bg-[#1A222C] rounded-xl border border-[#dbe0e6] dark:border-gray-800 shadow-sm p-12 text-center">
+          <section data-testid="empty-state" className="bg-white dark:bg-[#1A222C] rounded-xl border border-[#dbe0e6] dark:border-gray-800 shadow-sm p-12 text-center">
             <div className="max-w-md mx-auto">
               <div className="size-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
                 <span className="material-symbols-outlined text-primary text-3xl">mic</span>

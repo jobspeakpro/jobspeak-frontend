@@ -36,10 +36,15 @@ export default function MyProgress() {
     fetchProgress();
   }, [user]);
 
+  /* Robust Data Access */
+  const sessions = progressData?.sessions || progressData?.recentSessions || [];
+  const activityEvents = progressData?.activityEvents || progressData?.recentActivity || [];
+  const totalSessions = progressData?.totalSessions || sessions.length;
+
   const hasData = progressData && (
-    progressData.totalSessions > 0 ||
-    (Array.isArray(progressData.sessions) && progressData.sessions.length > 0) ||
-    (Array.isArray(progressData.activityEvents) && progressData.activityEvents.length > 0)
+    totalSessions > 0 ||
+    sessions.length > 0 ||
+    activityEvents.length > 0
   );
 
   return (
@@ -134,7 +139,7 @@ export default function MyProgress() {
             </div>
 
             {/* Recent Practice List */}
-            {progressData?.sessions && Array.isArray(progressData.sessions) && progressData.sessions.length > 0 && (
+            {sessions.length > 0 && (
               <div className="mt-4">
                 <div className="flex justify-between items-end mb-4">
                   <h3 className="text-slate-900 dark:text-white text-lg font-bold flex items-center gap-2">
@@ -143,8 +148,8 @@ export default function MyProgress() {
                   </h3>
                 </div>
                 <div className="flex flex-col gap-3">
-                  {progressData.sessions.map((session, index) => (
-                    <div key={index} className="group flex items-center gap-4 p-4 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-all hover:shadow-md hover:border-primary/20">
+                  {sessions.map((session, index) => (
+                    <div key={index} data-testid="activity-row" className="group flex items-center gap-4 p-4 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-all hover:shadow-md hover:border-primary/20">
                       <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full p-2 flex items-center justify-center">
                         <span className="material-symbols-outlined text-xl">check</span>
                       </div>
@@ -165,8 +170,8 @@ export default function MyProgress() {
             )}
 
             {/* Activity Events (if no sessions yet) */}
-            {progressData?.activityEvents && Array.isArray(progressData.activityEvents) && progressData.activityEvents.length > 0 &&
-              (!progressData.sessions || progressData.sessions.length === 0) && (
+            {activityEvents.length > 0 &&
+              sessions.length === 0 && (
                 <div className="mt-4">
                   <div className="flex justify-between items-end mb-4">
                     <h3 className="text-slate-900 dark:text-white text-lg font-bold flex items-center gap-2">
@@ -180,8 +185,8 @@ export default function MyProgress() {
                       <p className="text-sm font-medium">You've started practicing! Complete a session to see detailed feedback here.</p>
                     </div>
                     <div className="flex flex-col gap-3">
-                      {progressData.activityEvents.map((event, index) => (
-                        <div key={event.id || index} className="flex items-center gap-4 p-4 rounded-lg bg-slate-50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-600">
+                      {activityEvents.map((event, index) => (
+                        <div key={event.id || index} data-testid="activity-row" className="flex items-center gap-4 p-4 rounded-lg bg-slate-50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-600">
                           <div className={`size-10 rounded-full flex items-center justify-center shrink-0 ${event.activityType === 'practice'
                             ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
                             : 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
