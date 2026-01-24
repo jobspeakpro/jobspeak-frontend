@@ -39,10 +39,48 @@ export default function MyProgress() {
   /* Robust Data Access */
   const sessions = progressData?.sessions || progressData?.recentSessions || [];
   const activityEvents = progressData?.activityEvents || progressData?.recentActivity || [];
-  const totalSessions = progressData?.totalSessions || sessions.length;
+
+  // Calculate stats from frontend data to ensure consistency with list
+  // Include both lists to match Dashboard count logic
+  const displayTotal = sessions.length + activityEvents.length;
+
+  // Calculate Dates & Streak
+  const allDates = [
+    ...sessions.map(s => s.date || s.created_at || s.startedAt),
+    ...activityEvents.map(e => e.timestamp || e.startedAt || e.created_at)
+  ].filter(Boolean).map(d => new Date(d));
+
+  const uniqueDays = new Set(allDates.map(d => d.toDateString())).size;
+
+  // Simple streak calculation (consecutive days ending today/yesterday)
+  let currentStreak = 0;
+  if (allDates.length > 0) {
+    const sortedDates = [...new Set(allDates.map(d => d.toDateString()))]
+      .map(d => new Date(d))
+      .sort((a, b) => b - a); // Descending
+
+    // Check if most recent is today or yesterday
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const contextDate = sortedDates[0];
+    if (contextDate.toDateString() === today.toDateString() || contextDate.toDateString() === yesterday.toDateString()) {
+      currentStreak = 1;
+      let checkDate = new Date(contextDate);
+      for (let i = 1; i < sortedDates.length; i++) {
+        checkDate.setDate(checkDate.getDate() - 1);
+        if (sortedDates[i].toDateString() === checkDate.toDateString()) {
+          currentStreak++;
+        } else {
+          break;
+        }
+      }
+    }
+  }
 
   const hasData = progressData && (
-    totalSessions > 0 ||
+    displayTotal > 0 ||
     sessions.length > 0 ||
     activityEvents.length > 0
   );
@@ -112,7 +150,7 @@ export default function MyProgress() {
                     <p className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-normal">Total Sessions</p>
                     <span className="material-symbols-outlined text-primary/60 text-xl">forum</span>
                   </div>
-                  <p className="text-slate-900 dark:text-white tracking-tight text-3xl font-bold leading-tight">{progressData.totalSessions || 0}</p>
+                  <p className="text-slate-900 dark:text-white tracking-tight text-3xl font-bold leading-tight">{displayTotal}</p>
                 </div>
                 {/* Days Practiced */}
                 <div className="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:border-primary/30 transition-colors">
@@ -120,7 +158,7 @@ export default function MyProgress() {
                     <p className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-normal">Days Practiced</p>
                     <span className="material-symbols-outlined text-primary/60 text-xl">calendar_month</span>
                   </div>
-                  <p className="text-slate-900 dark:text-white tracking-tight text-3xl font-bold leading-tight">{progressData.daysPracticed || 0}</p>
+                  <p className="text-slate-900 dark:text-white tracking-tight text-3xl font-bold leading-tight">{uniqueDays}</p>
                 </div>
                 {/* Current Streak */}
                 <div className="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:border-primary/30 transition-colors">
@@ -128,10 +166,10 @@ export default function MyProgress() {
                     <p className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-normal">Current Streak</p>
                     <span className="material-symbols-outlined text-primary/60 text-xl">local_fire_department</span>
                   </div>
-                  <p className="text-slate-900 dark:text-white tracking-tight text-3xl font-bold leading-tight">{progressData.currentStreak || 0} <span className="text-base font-normal text-slate-500 dark:text-slate-400">days</span></p>
+                  <p className="text-slate-900 dark:text-white tracking-tight text-3xl font-bold leading-tight">{currentStreak} <span className="text-base font-normal text-slate-500 dark:text-slate-400">days</span></p>
                 </div>
               </div>
-              {progressData.totalSessions > 0 && (
+              {displayTotal > 0 && (
                 <p className="text-slate-600 dark:text-slate-300 text-base font-normal leading-normal mt-4 px-1">
                   You've been practicing regularly. Consistency matters more than perfection.
                 </p>
