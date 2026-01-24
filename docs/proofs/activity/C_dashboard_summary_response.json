@@ -1,0 +1,102 @@
+{
+  "total_practice_sessions": 0,
+  "total_mock_interviews": 0,
+  "last_mock_interview": null,
+  "recentActivity": [
+    {
+      "activityType": "practice",
+      "startedAt": "2026-01-24T00:13:26.504815+00:00",
+      "context": {
+        "tabId": "1769213606210_u2u1mbfby",
+        "source": "PracticeSpeakingPage",
+        "questionCount": 1,
+        "skippedOnboarding": true
+      }
+    },
+    {
+      "activityType": "practice",
+      "startedAt": "2026-01-24T00:13:16.625932+00:00",
+      "context": {
+        "tabId": "TRUTH-TABLE-1769213595801",
+        "source": "truth-table"
+      }
+    },
+    {
+      "activityType": "practice",
+      "startedAt": "2026-01-24T00:08:45.043794+00:00",
+      "context": {
+        "tabId": "1769213324670_9vawp8h4v",
+        "source": "PracticeSpeakingPage",
+        "questionCount": 1,
+        "skippedOnboarding": true
+      }
+    },
+    {
+      "activityType": "practice",
+      "startedAt": "2026-01-24T00:06:54.408407+00:00",
+      "context": {
+        "tabId": "1769213213621_z1dcuxjy5",
+        "source": "PracticeSpeakingPage",
+        "questionCount": 1,
+        "skippedOnboarding": true
+      }
+    },
+    {
+      "activityType": "practice",
+      "startedAt": "2026-01-23T23:53:42.075059+00:00",
+      "context": {
+        "tabId": "NODE-PROOF-1769212421241"
+      }
+    },
+    {
+      "activityType": "practice",
+      "startedAt": "2026-01-23T23:50:13.458603+00:00",
+      "context": {
+        "tabId": "NODE-PROOF-1769212212739"
+      }
+    },
+    {
+      "activityType": "practice",
+      "startedAt": "2026-01-23T23:44:52.786299+00:00",
+      "context": {
+        "tabId": "FINAL-ID-PROOF"
+      }
+    },
+    {
+      "activityType": "practice",
+      "startedAt": "2026-01-23T23:38:42.691156+00:00",
+      "context": {
+        "realProof": "final-heuristic-free"
+      }
+    },
+    {
+      "activityType": "practice",
+      "startedAt": "2026-01-23T23:38:04.858566+00:00",
+      "context": {
+        "tabId": "UUID-GUEST-TEST-183804"
+      }
+    },
+    {
+      "activityType": "mock_interview",
+      "startedAt": "2026-01-23T23:36:05.251129+00:00",
+      "context": {
+        "type": "short",
+        "tabId": "1769211354885_o5uj5vijx",
+        "source": "MockInterviewSession",
+        "questionCount": 2
+      }
+    }
+  ],
+  "practiceStartsToday": 4,
+  "mockInterviewStartsToday": 0,
+  "debug": {
+    "commit": "50022b16e3743749cb436e5688dfc2ac45416a71",
+    "identityKeyResolved": "50158919-0025-4b72-9a26-56df4ddcf86d",
+    "guestKeyFromHeader": "50158919-0025-4b72-9a26-56df4ddcf86d",
+    "userId": null,
+    "activityCountCombined": 13,
+    "identityKey": "50158919-0025-4b72-9a26-56df4ddcf86d",
+    "activityCountUserId": 13,
+    "activityCountGuestKey": 13
+  }
+}

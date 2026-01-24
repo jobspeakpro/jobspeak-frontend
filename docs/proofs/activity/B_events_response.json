@@ -1,0 +1,170 @@
+{
+  "events": [
+    {
+      "id": 59,
+      "created_at": "2026-01-24T00:13:26.504815+00:00",
+      "user_id": null,
+      "identity_key": "50158919-0025-4b72-9a26-56df4ddcf86d",
+      "activity_type": "practice",
+      "context": {
+        "tabId": "1769213606210_u2u1mbfby",
+        "source": "PracticeSpeakingPage",
+        "questionCount": 1,
+        "skippedOnboarding": true
+      },
+      "day": "2026-01-24"
+    },
+    {
+      "id": 58,
+      "created_at": "2026-01-24T00:13:16.625932+00:00",
+      "user_id": null,
+      "identity_key": "50158919-0025-4b72-9a26-56df4ddcf86d",
+      "activity_type": "practice",
+      "context": {
+        "tabId": "TRUTH-TABLE-1769213595801",
+        "source": "truth-table"
+      },
+      "day": "2026-01-24"
+    },
+    {
+      "id": 57,
+      "created_at": "2026-01-24T00:08:45.043794+00:00",
+      "user_id": null,
+      "identity_key": "50158919-0025-4b72-9a26-56df4ddcf86d",
+      "activity_type": "practice",
+      "context": {
+        "tabId": "1769213324670_9vawp8h4v",
+        "source": "PracticeSpeakingPage",
+        "questionCount": 1,
+        "skippedOnboarding": true
+      },
+      "day": "2026-01-24"
+    },
+    {
+      "id": 56,
+      "created_at": "2026-01-24T00:06:54.408407+00:00",
+      "user_id": null,
+      "identity_key": "50158919-0025-4b72-9a26-56df4ddcf86d",
+      "activity_type": "practice",
+      "context": {
+        "tabId": "1769213213621_z1dcuxjy5",
+        "source": "PracticeSpeakingPage",
+        "questionCount": 1,
+        "skippedOnboarding": true
+      },
+      "day": "2026-01-24"
+    },
+    {
+      "id": 55,
+      "created_at": "2026-01-23T23:53:42.075059+00:00",
+      "user_id": null,
+      "identity_key": "50158919-0025-4b72-9a26-56df4ddcf86d",
+      "activity_type": "practice",
+      "context": {
+        "tabId": "NODE-PROOF-1769212421241"
+      },
+      "day": "2026-01-23"
+    },
+    {
+      "id": 54,
+      "created_at": "2026-01-23T23:50:13.458603+00:00",
+      "user_id": null,
+      "identity_key": "50158919-0025-4b72-9a26-56df4ddcf86d",
+      "activity_type": "practice",
+      "context": {
+        "tabId": "NODE-PROOF-1769212212739"
+      },
+      "day": "2026-01-23"
+    },
+    {
+      "id": 53,
+      "created_at": "2026-01-23T23:44:52.786299+00:00",
+      "user_id": null,
+      "identity_key": "50158919-0025-4b72-9a26-56df4ddcf86d",
+      "activity_type": "practice",
+      "context": {
+        "tabId": "FINAL-ID-PROOF"
+      },
+      "day": "2026-01-23"
+    },
+    {
+      "id": 51,
+      "created_at": "2026-01-23T23:38:42.691156+00:00",
+      "user_id": null,
+      "identity_key": "50158919-0025-4b72-9a26-56df4ddcf86d",
+      "activity_type": "practice",
+      "context": {
+        "realProof": "final-heuristic-free"
+      },
+      "day": "2026-01-23"
+    },
+    {
+      "id": 50,
+      "created_at": "2026-01-23T23:38:04.858566+00:00",
+      "user_id": null,
+      "identity_key": "50158919-0025-4b72-9a26-56df4ddcf86d",
+      "activity_type": "practice",
+      "context": {
+        "tabId": "UUID-GUEST-TEST-183804"
+      },
+      "day": "2026-01-23"
+    },
+    {
+      "id": 49,
+      "created_at": "2026-01-23T23:36:05.251129+00:00",
+      "user_id": null,
+      "identity_key": "50158919-0025-4b72-9a26-56df4ddcf86d",
+      "activity_type": "mock_interview",
+      "context": {
+        "type": "short",
+        "tabId": "1769211354885_o5uj5vijx",
+        "source": "MockInterviewSession",
+        "questionCount": 2
+      },
+      "day": "2026-01-23"
+    },
+    {
+      "id": 48,
+      "created_at": "2026-01-23T23:35:55.479798+00:00",
+      "user_id": null,
+      "identity_key": "50158919-0025-4b72-9a26-56df4ddcf86d",
+      "activity_type": "practice",
+      "context": {
+        "tabId": "1769211354885_o5uj5vijx",
+        "source": "PracticeSpeakingPage",
+        "questionCount": 1,
+        "skippedOnboarding": true
+      },
+      "day": "2026-01-23"
+    },
+    {
+      "id": 47,
+      "created_at": "2026-01-23T23:29:24.234607+00:00",
+      "user_id": null,
+      "identity_key": "50158919-0025-4b72-9a26-56df4ddcf86d",
+      "activity_type": "mock_interview",
+      "context": {
+        "type": "short",
+        "tabId": "1769210951010_5qq8oeh71",
+        "source": "MockInterviewSession",
+        "questionCount": 2
+      },
+      "day": "2026-01-23"
+    },
+    {
+      "id": 46,
+      "created_at": "2026-01-23T23:29:12.560311+00:00",
+      "user_id": null,
+      "identity_key": "50158919-0025-4b72-9a26-56df4ddcf86d",
+      "activity_type": "practice",
+      "context": {
+        "tabId": "1769210951010_5qq8oeh71",
+        "source": "PracticeSpeakingPage",
+        "questionCount": 1,
+        "skippedOnboarding": true
+      },
+      "day": "2026-01-23"
+    }
+  ],
+  "total": 13
+}

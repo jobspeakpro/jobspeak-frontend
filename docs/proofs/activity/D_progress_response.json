@@ -1,0 +1,15 @@
+{
+  "sessions": [],
+  "total": 0,
+  "activityEvents": [],
+  "debug": {
+    "commit": "50022b16e3743749cb436e5688dfc2ac45416a71",
+    "identityKey": "50158919-0025-4b72-9a26-56df4ddcf86d",
+    "identityKeyResolved": "50158919-0025-4b72-9a26-56df4ddcf86d",
+    "guestKeyFromHeader": null,
+    "userId": null,
+    "activityCountCombined": 0,
+    "activityCountUserId": 0,
+    "activityCountGuestKey": 0
+  }
+}
