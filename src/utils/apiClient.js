@@ -33,8 +33,13 @@ export async function apiClient(endpoint, options = {}) {
   const { parseJson = true, ...fetchOptions } = options;
 
   // Use absolute path to ensure headers aren't stripped by proxies.
-  // Fallback to strict production URL if env var is missing.
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://jobspeak-backend-production.up.railway.app";
+  // STRICT: Do not use hardcoded fallbacks. Rely on VITE_API_BASE_URL.
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+
+  if (!API_BASE && typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    // Warn in console if we are likely in production but missing the base URL
+    console.warn('WARN: VITE_API_BASE_URL is missing. Requests will be relative.');
+  }
 
   // Ensure endpoint starts with /
   const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;

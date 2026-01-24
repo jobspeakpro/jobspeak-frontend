@@ -26,6 +26,11 @@ import MockInterviewPage from "./pages/app/MockInterviewPage.jsx";
 import MockInterviewSession from "./pages/app/MockInterviewSession.jsx";
 import MockInterviewSummary from "./pages/app/MockInterviewSummary.jsx";
 import PracticeSummary from "./pages/app/PracticeSummary.jsx";
+import AffiliatePage from "./pages/marketing/AffiliatePage.jsx";
+import AffiliateJoinPage from "./pages/marketing/AffiliateJoinPage.jsx";
+import AffiliateSuccessPage from "./pages/marketing/AffiliateSuccessPage.jsx";
+import ReferralPage from "./pages/app/ReferralPage.jsx";
+import ReferralHistoryPage from "./pages/app/ReferralHistoryPage.jsx";
 import { ProProvider } from "./contexts/ProContext.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
@@ -104,6 +109,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                   <Route path="/privacy" element={<PrivacyPage />} />
                   <Route path="/terms" element={<TermsPage />} />
 
+                  {/* Affiliate Routes */}
+                  <Route path="/affiliate" element={<AffiliatePage />} />
+                  <Route path="/affiliate/apply" element={<AffiliateJoinPage />} />
+                  <Route path="/affiliate/joined" element={<AffiliateSuccessPage />} />
+
                   {/* App routes (practice pages) */}
                   <Route path="/practice" element={<PracticeSpeakingPage />} />
                   <Route path="/interview" element={<Navigate to="/practice" replace />} />
@@ -121,6 +131,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                   <Route path="/mock-interview/summary/:id" element={<ProtectedRoute><MockInterviewSummary /></ProtectedRoute>} />
                   <Route path="/practice/summary/:id" element={<ProtectedRoute><PracticeSummary /></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+
+                  {/* Referral Routes */}
+                  <Route path="/referral" element={<ProtectedRoute><ReferralPage /></ProtectedRoute>} />
+                  <Route path="/referral/history" element={<ProtectedRoute><ReferralHistoryPage /></ProtectedRoute>} />
 
                   {/* Catch-all: redirect to landing */}
                   <Route path="*" element={<Navigate to="/" replace />} />

@@ -100,8 +100,8 @@ export default function ActivityDebugOverlay() {
 
                 <div className="flex justify-between gap-4">
                     <span className="text-gray-400">API Base:</span>
-                    <span className="font-bold text-gray-300 truncate max-w-[150px]" title={debugData.apiBase}>
-                        {debugData.apiBase || 'Same Origin'}
+                    <span className={`font-bold truncate max-w-[150px] ${debugData.apiBase ? 'text-gray-300' : 'text-red-400'}`} title={debugData.apiBase || 'Missing VITE_API_BASE_URL'}>
+                        {debugData.apiBase || 'Relative (Caution)'}
                     </span>
                 </div>
 
