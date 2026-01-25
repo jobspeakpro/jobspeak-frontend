@@ -1,3 +1,15 @@
+
+# Verification Debug Info (V4.3)
+
+## Configuration
+- VITE_API_BASE_URL: See Network Logs
+- MODE: production
+
+## Request Info
+- Test Email: test_aff_1769315010155@example.com
+- Request URL (captured): See logs
+
+## Console Logs
 [log] HTML MARKER LOADED: html-marker-live-1
 [log] Supabase Env Vars Present: {url: true, key: true, mode: production}
 [log] [BUILD_ID] prod-routes-v1
@@ -14,3 +26,4 @@
 [error] Affiliate apply error: ApiError: Not found
     at Le (https://jobspeakpro.com/assets/index-DycBRhG8.js:81:6041)
     at async l (https://jobspeakpro.com/assets/index-DycBRhG8.js:187:106086)
+        

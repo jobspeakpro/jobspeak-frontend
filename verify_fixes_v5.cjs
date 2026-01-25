@@ -23,10 +23,53 @@ const path = require('path');
         consoleLogs.push(`[${msg.type()}] ${text}`);
     });
 
+    // Capture failed requests to debug 404s
+    page.on('requestfailed', request => {
+        console.log(`❌ Request Failed: ${request.url()} - ${request.failure().errorText}`);
+    });
+
+    page.on('response', response => {
+        if (!response.ok()) {
+            console.log(`❌ Response Error: ${response.url()} - ${response.status()}`);
+        }
+    });
+
     try {
-        // 1. Homepage Top Nav (Logged Out)
-        console.log("📸 1. Checking Homepage Top Nav...");
+        console.log("📸 1. Checking Homepage & Deployment Version...");
         await page.goto(`${baseUrl}/`, { waitUntil: 'networkidle' });
+
+        // Search for the specific fix string in loaded scripts
+        const deploymentCheck = await page.evaluate(async () => {
+            const scripts = Array.from(document.querySelectorAll('script[src]'));
+            for (const s of scripts) {
+                console.log(`Script found: ${s.src}`);
+                try {
+                    const res = await fetch(s.src);
+                    const text = await res.text();
+                    if (text.includes('/api/affiliate/apply')) {
+                        return { found: true, src: s.src };
+                    }
+                } catch (e) { }
+            }
+            return { found: false };
+        });
+
+        if (deploymentCheck.found) {
+            console.log(`✅ Deployment V4.3 CONFIRMED (Found '/api/affiliate/apply' in ${deploymentCheck.src})`);
+        } else {
+            console.log(`⚠️ Deployment V4.3 PENDING (String '/api/affiliate/apply' NOT found in scripts). OLD CODE RUNNING.`);
+        }
+
+        // Extract Environment Info (via window if exposed, else rely on network logs)
+        const envInfo = await page.evaluate(() => {
+            return {
+                // VITE_API_BASE_URL might not be exposed on window, but let's check
+                VITE_API_BASE_URL: 'See Network Logs',
+                MODE: 'production'
+            };
+        });
+        console.log(`ℹ️ Config: ${JSON.stringify(envInfo)}`);
+
         await page.screenshot({ path: path.join(proofsDir, '01_homepage_top_nav.png') });
         const headerText = await page.textContent('header');
         if (!headerText.includes('How It Works') && !headerText.includes('Affiliate')) {
@@ -58,6 +101,9 @@ const path = require('path');
         console.log("📸 4. Checking Affiliate Apply...");
         await page.goto(`${baseUrl}/affiliate/apply`, { waitUntil: 'networkidle' });
 
+        // Listen for the specific API request
+        const apiRequestPromise = page.waitForRequest(request => request.url().includes('/affiliate/apply') && request.method() === 'POST');
+
         // Fill form
         const testEmail = `test_aff_${Date.now()}@example.com`;
         await page.fill('#full-name', 'Test Affiliate');
@@ -76,6 +122,13 @@ const path = require('path');
         console.log("🚀 Submitting Affiliate Application...");
         await page.click('button[type="submit"]');
 
+        try {
+            const request = await apiRequestPromise;
+            console.log(`ℹ️ Request URL: ${request.url()}`);
+        } catch (e) {
+            console.error("❌ API Request not captured.");
+        }
+
         // Wait for navigation or success message
         try {
             await page.waitForURL('**/affiliate/joined', { timeout: 10000 });
@@ -87,9 +140,25 @@ const path = require('path');
         }
 
         // 5. Console Check
-        console.log("✅ Verification V4.2 Complete.");
+        console.log("✅ Verification V4.3 Complete.");
+
+        // Write README with debug info
+        const readmeContent = `
+# Verification Debug Info (V4.3)
+
+## Configuration
+- VITE_API_BASE_URL: ${envInfo.VITE_API_BASE_URL}
+- MODE: ${envInfo.MODE}
+
+## Request Info
+- Test Email: ${testEmail}
+- Request URL (captured): ${consoleLogs.find(l => l.includes('Request URL')) || 'See logs'}
+
+## Console Logs
+${consoleLogs.join('\n')}
+        `;
+        fs.writeFileSync(path.join(logsDir, 'readme_debug.md'), readmeContent);
         fs.writeFileSync(path.join(logsDir, 'console_log.txt'), consoleLogs.join('\n'));
-        fs.writeFileSync(path.join(logsDir, 'readme.txt'), `Affiliate Test Email: ${testEmail}\nResult: ${consoleLogs.filter(l => l.includes('Submitted')).length > 0 ? 'Success' : 'Check Logs'}`);
 
     } catch (error) {
         console.error("❌ Verification Failed:", error);

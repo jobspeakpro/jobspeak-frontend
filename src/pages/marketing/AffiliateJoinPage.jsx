@@ -4,6 +4,7 @@ import { apiClient } from '../../utils/apiClient.js';
 import UniversalHeader from '../../components/UniversalHeader.jsx';
 
 export default function AffiliateJoinPage() {
+    // V4.4 Force Deploy - Fix API Path
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [platform, setPlatform] = useState("");

@@ -29,7 +29,6 @@ export default function ReferralPage() {
             <UniversalHeader />
             <div className="relative flex h-auto w-full flex-col group/design-root overflow-x-hidden flex-grow">
                 <div className="layout-container flex h-full grow flex-col">
-                    {/* Top Navigation Replaced by UniversalHeader */}
                     <main className="flex flex-1 justify-center py-10 px-4 md:px-10">
                         <div className="layout-content-container flex flex-col max-w-[900px] flex-1 gap-8">
                             {/* Hero Section */}
@@ -72,7 +71,7 @@ export default function ReferralPage() {
                                 </div>
                             </div>
                         </section>
-                        {/* Feature List: What they get */}
+                        {/* Feature List */}
                         <section className="bg-white/50 dark:bg-white/5 rounded-xl p-8">
                             <h3 className="text-[#111418] dark:text-white text-xl font-bold leading-tight tracking-[-0.015em] pb-6">What they get</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
@@ -131,16 +130,10 @@ export default function ReferralPage() {
                                                         return false;
                                                     }
                                                 };
-
                                                 copyToClipboard().then(() => {
                                                     const btn = document.activeElement;
-                                                    const originalHTML = btn.innerHTML;
                                                     btn.innerText = "Copied!";
-                                                    // Show a simple toast or just button feedback as requested (success toast implied by "success toast" in prompt, can use local state or just button feedback if no toast system active in this file. Prompt says "success toast". The app has a toast in LandingPage but not globally obvious here. I will just use button feedback + alert if strictly needed, but button feedback is often better. Wait, prompt says "success toast". I'll add a simple inline toast state.)
-                                                    // Actually, I'll stick to the button feedback which I can execute reliably. "Success toast" might mean a UI element. I entered one in LandingPage. I can add one here.
                                                 });
-
-                                                // Trigger toast
                                                 const toast = document.createElement('div');
                                                 toast.className = 'fixed bottom-4 right-4 bg-emerald-600 text-white px-4 py-2 rounded shadow-lg z-50 animate-in fade-in slide-in-from-bottom-2';
                                                 toast.innerText = 'Link copied to clipboard!';
@@ -155,23 +148,15 @@ export default function ReferralPage() {
                                         Copy Link
                                     </button>
                                 </div>
-
                                 <div className="mt-4 flex justify-center flex-col items-center gap-2">
                                     <button
                                         onClick={async () => {
                                             const link = `https://jobspeakpro.com?ref=${referralCode}`;
                                             if (navigator.share) {
                                                 try {
-                                                    await navigator.share({
-                                                        title: 'Join JobSpeakPro',
-                                                        text: 'Check out JobSpeakPro! Practice interviews with AI.',
-                                                        url: link,
-                                                    });
-                                                } catch (err) {
-                                                    // Cancelled/Failed
-                                                }
+                                                    await navigator.share({ title: 'Join JobSpeakPro', text: 'Check out JobSpeakPro! Practice interviews with AI.', url: link });
+                                                } catch (err) { }
                                             } else {
-                                                // Fallback mechanism: scroll to share buttons
                                                 const fallback = document.getElementById('share-fallback-container');
                                                 if (fallback) fallback.scrollIntoView({ behavior: 'smooth' });
                                             }
@@ -181,50 +166,26 @@ export default function ReferralPage() {
                                     >
                                         Share your referral link
                                     </button>
-                                    <Link to="/referral/history" className="text-slate-500 hover:text-slate-900 text-sm font-medium">
-                                        View Referral History
-                                    </Link>
+                                    <Link to="/referral/history" className="text-slate-500 hover:text-slate-900 text-sm font-medium">View Referral History</Link>
                                 </div>
-
                                 <div id="share-fallback-container" className="flex items-center gap-4 pt-2 border-t border-gray-100 dark:border-gray-800 mt-4">
                                     <span className="text-sm font-medium text-gray-500">Share via:</span>
                                     <div className="flex gap-3">
-                                        <button
-                                            onClick={() => window.open(`mailto:?subject=Join JobSpeakPro&body=Check out JobSpeakPro! https://jobspeakpro.com?ref=${referralCode}`, '_blank')}
-                                            className="size-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined text-[#197fe6]">mail</span>
-                                        </button>
-                                        <button
-                                            onClick={() => window.open(`sms:?&body=Check out JobSpeakPro! https://jobspeakpro.com?ref=${referralCode}`, '_blank')}
-                                            className="size-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined text-[#197fe6]">sms</span>
-                                        </button>
-                                        <button
-                                            onClick={() => window.open(`https://wa.me/?text=Check out JobSpeakPro! https://jobspeakpro.com?ref=${referralCode}`, '_blank')}
-                                            className="size-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined text-[#197fe6]">chat</span>
-                                        </button>
+                                        <button onClick={() => window.open(`mailto:?subject=Join JobSpeakPro&body=Check out JobSpeakPro! https://jobspeakpro.com?ref=${referralCode}`, '_blank')} className="size-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"><span className="material-symbols-outlined text-[#197fe6]">mail</span></button>
+                                        <button onClick={() => window.open(`sms:?&body=Check out JobSpeakPro! https://jobspeakpro.com?ref=${referralCode}`, '_blank')} className="size-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"><span className="material-symbols-outlined text-[#197fe6]">sms</span></button>
+                                        <button onClick={() => window.open(`https://wa.me/?text=Check out JobSpeakPro! https://jobspeakpro.com?ref=${referralCode}`, '_blank')} className="size-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"><span className="material-symbols-outlined text-[#197fe6]">chat</span></button>
                                     </div>
                                 </div>
                             </div>
                         </section>
-                        {/* Trust Note */}
                         <footer className="mt-4">
-                            <div className="bg-[#4799eb]/5 dark:bg-[#4799eb]/10 border border-[#4799eb]/10 rounded-lg p-5 flex items-center justify-center gap-4 text-center">
-                                <span className="material-symbols-outlined text-[#4799eb]">verified_user</span>
-                                <p className="text-sm md:text-base font-medium text-[#4799eb]/80">No spam. No pressure. Just helping someone practice for their dream job.</p>
-                            </div>
                             <div className="py-10 text-center text-xs text-gray-400">
                                 © 2024 JobSpeakPro Referral Program • Terms Apply
                             </div>
                         </footer>
+                    </main>
                 </div>
-            </main>
+            </div>
         </div>
-            </div >
-        </div >
     );
 }
