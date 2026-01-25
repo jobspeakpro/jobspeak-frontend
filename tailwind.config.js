@@ -9,6 +9,7 @@ export default {
         primary: marketingTokens.colors.primary,
         "primary-dark": "#0b63be",
         "primary-hover": "#0e5bc9",
+        brand: "#197fe6",
         "background-light": marketingTokens.colors["background-light"],
         "background-dark": marketingTokens.colors["background-dark"],
         "card-light": "#ffffff",

@@ -13,7 +13,7 @@ export default function ReferralPage() {
 
         async function fetchCode() {
             try {
-                const res = await apiClient.get("/referrals/me");
+                const res = await apiClient("/referrals/me");
                 setReferralCode(res?.data?.referralCode || res?.referralCode);
             } catch (err) {
                 console.error("Fetch referral code error:", err);
@@ -43,165 +43,188 @@ export default function ReferralPage() {
                                             Invite someone you know to JobSpeakPro. Help them practice interviews and advance their career. Get rewarded for every success.
                                         </p>
                                     </div>
-                                    <button className="mt-4 flex min-w-[200px] cursor-pointer items-center justify-center rounded-full h-12 px-8 bg-[#4799eb] text-white text-base font-bold leading-normal tracking-[0.015em] hover:bg-[#4799eb]/90 transition-all shadow-lg shadow-[#4799eb]/20">
-                                        Share Your Referral Link
-                                    </button>
                                 </div>
                             </div>
-                            {/* The Reward Offer */}
-                            <section>
-                                <h2 className="text-[#111418] dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-4">The Reward Offer</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
-                                    {/* For Them */}
-                                    <div className="flex flex-1 gap-4 rounded-lg border border-[#dce0e5] dark:border-[#2a343f] bg-white dark:bg-[#111921] p-6 flex-col shadow-sm">
-                                        <div className="bg-[#4799eb]/10 text-[#4799eb] w-12 h-12 rounded-full flex items-center justify-center">
-                                            <span className="material-symbols-outlined text-3xl">celebration</span>
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <h3 className="text-[#111418] dark:text-white text-xl font-bold leading-tight">For them</h3>
-                                            <p className="text-[#637588] dark:text-gray-400 text-base font-normal leading-normal">7 days of full Pro access to all premium tools</p>
-                                        </div>
-                                    </div>
-                                    {/* For You */}
-                                    <div className="flex flex-1 gap-4 rounded-lg border border-[#dce0e5] dark:border-[#2a343f] bg-white dark:bg-[#111921] p-6 flex-col shadow-sm">
-                                        <div className="bg-[#4799eb]/10 text-[#4799eb] w-12 h-12 rounded-full flex items-center justify-center">
-                                            <span className="material-symbols-outlined text-3xl">redeem</span>
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <h3 className="text-[#111418] dark:text-white text-xl font-bold leading-tight">For you</h3>
-                                            <p className="text-[#637588] dark:text-gray-400 text-base font-normal leading-normal">1 free mock interview credit for your next session</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </section>
-                            {/* Feature List: What they get */}
-                            <section className="bg-white/50 dark:bg-white/5 rounded-xl p-8">
-                                <h3 className="text-[#111418] dark:text-white text-xl font-bold leading-tight tracking-[-0.015em] pb-6">What they get</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
-                                    <div className="flex items-center gap-3">
-                                        <span className="material-symbols-outlined text-[#4799eb]">check_circle</span>
-                                        <span className="text-sm md:text-base font-medium">Unlimited practice sessions</span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className="material-symbols-outlined text-[#4799eb]">check_circle</span>
-                                        <span className="text-sm md:text-base font-medium">No paywalls or restricted features</span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className="material-symbols-outlined text-[#4799eb]">check_circle</span>
-                                        <span className="text-sm md:text-base font-medium">Unlimited mock interviews</span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className="material-symbols-outlined text-[#4799eb]">check_circle</span>
-                                        <span className="material-symbols-outlined text-[#197fe6]">check_circle</span>
-                                        <span className="text-sm md:text-base font-medium">Full JobSpeakPro experience</span>
-                                    </div>
-                                </div>
-                            </section>
-                            {/* Share Your Link */}
-                            <section className="flex flex-col gap-6">
-                                <div className="rounded-lg border border-[#197fe6]/20 bg-white dark:bg-[#111921] p-8 shadow-sm flex flex-col gap-6">
-                                    <div className="flex flex-col gap-2">
-                                        <h3 className="text-xl font-bold">Your Unique Invite Link</h3>
-                                        <p className="text-sm text-gray-500">Copy this link and send it to your friends or colleagues.</p>
-                                    </div>
-                                    <div className="flex flex-col md:flex-row gap-3">
-                                        <div className="relative flex-1">
-                                            <input
-                                                className="w-full bg-gray-50 dark:bg-[#1c2630] border border-gray-200 dark:border-gray-700 rounded-full h-12 px-5 text-gray-600 dark:text-gray-300 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[#197fe6]"
-                                                readOnly
-                                                type="text"
-                                                value={loading ? "Loading..." : `https://jobspeakpro.com?ref=${referralCode || '...'}`}
-                                            />
-                                        </div>
-                                        <button
-                                            onClick={() => {
-                                                if (referralCode) {
-                                                    const link = `https://jobspeakpro.com?ref=${referralCode}`;
-                                                    navigator.clipboard.writeText(link);
-                                                    const btn = document.activeElement;
-                                                    const originalText = btn.innerText;
-                                                    btn.innerText = "Copied!";
-                                                    setTimeout(() => btn.innerText = originalText, 2000);
-                                                }
-                                            }}
-                                            disabled={loading || !referralCode}
-                                            className="bg-[#197fe6] text-white px-8 h-12 rounded-full font-bold hover:bg-[#197fe6]/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#197fe6]/20"
-                                        >
-                                            <span className="material-symbols-outlined text-[20px]">content_copy</span>
-                                            Copy Link
-                                        </button>
-                                    </div>
-
-                                    <div className="mt-4 flex justify-center flex-col items-center gap-2">
-                                        <button
-                                            onClick={async () => {
-                                                const link = `https://jobspeakpro.com?ref=${referralCode}`;
-                                                if (navigator.share) {
-                                                    try {
-                                                        await navigator.share({
-                                                            title: 'Join JobSpeakPro',
-                                                            text: 'Check out JobSpeakPro! Practice interviews with AI.',
-                                                            url: link,
-                                                        });
-                                                    } catch (err) {
-                                                        // Fallback/Cancelled
-                                                    }
-                                                } else {
-                                                    // Fallback
-                                                    const btn = document.getElementById('share-fallback-btn');
-                                                    if (btn) btn.click();
-                                                }
-                                            }}
-                                            disabled={loading || !referralCode}
-                                            className="text-[#197fe6] font-semibold hover:underline text-sm"
-                                        >
-                                            Share your referral link
-                                        </button>
-                                        <Link to="/referral/history" className="text-slate-500 hover:text-slate-900 text-sm font-medium">
-                                            View Referral History
-                                        </Link>
-                                    </div>
-
-                                    <div className="flex items-center gap-4 pt-2 border-t border-gray-100 dark:border-gray-800 mt-4">
-                                        <span className="text-sm font-medium text-gray-500">Share via:</span>
-                                        <div className="flex gap-3">
-                                            <button
-                                                id="share-fallback-btn"
-                                                onClick={() => window.open(`mailto:?subject=Join JobSpeakPro&body=Check out JobSpeakPro! https://jobspeakpro.com?ref=${referralCode}`, '_blank')}
-                                                className="size-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                                            >
-                                                <span className="material-symbols-outlined text-[#197fe6]">mail</span>
-                                            </button>
-                                            <button
-                                                onClick={() => window.open(`sms:?&body=Check out JobSpeakPro! https://jobspeakpro.com?ref=${referralCode}`, '_blank')}
-                                                className="size-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                                            >
-                                                <span className="material-symbols-outlined text-[#197fe6]">sms</span>
-                                            </button>
-                                            <button
-                                                onClick={() => window.open(`https://wa.me/?text=Check out JobSpeakPro! https://jobspeakpro.com?ref=${referralCode}`, '_blank')}
-                                                className="size-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                                            >
-                                                <span className="material-symbols-outlined text-[#197fe6]">chat</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </section>
-                            {/* Trust Note */}
-                            <footer className="mt-4">
-                                <div className="bg-[#4799eb]/5 dark:bg-[#4799eb]/10 border border-[#4799eb]/10 rounded-lg p-5 flex items-center justify-center gap-4 text-center">
-                                    <span className="material-symbols-outlined text-[#4799eb]">verified_user</span>
-                                    <p className="text-sm md:text-base font-medium text-[#4799eb]/80">No spam. No pressure. Just helping someone practice for their dream job.</p>
-                                </div>
-                                <div className="py-10 text-center text-xs text-gray-400">
-                                    © 2024 JobSpeakPro Referral Program • Terms Apply
-                                </div>
-                            </footer>
                         </div>
-                    </main>
+                        {/* The Reward Offer */}
+                        <section>
+                            <h2 className="text-[#111418] dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-4">The Reward Offer</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+                                {/* For Them */}
+                                <div className="flex flex-1 gap-4 rounded-lg border border-[#dce0e5] dark:border-[#2a343f] bg-white dark:bg-[#111921] p-6 flex-col shadow-sm">
+                                    <div className="bg-[#4799eb]/10 text-[#4799eb] w-12 h-12 rounded-full flex items-center justify-center">
+                                        <span className="material-symbols-outlined text-3xl">celebration</span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <h3 className="text-[#111418] dark:text-white text-xl font-bold leading-tight">For them</h3>
+                                        <p className="text-[#637588] dark:text-gray-400 text-base font-normal leading-normal">7 days of full Pro access to all premium tools</p>
+                                    </div>
+                                </div>
+                                {/* For You */}
+                                <div className="flex flex-1 gap-4 rounded-lg border border-[#dce0e5] dark:border-[#2a343f] bg-white dark:bg-[#111921] p-6 flex-col shadow-sm">
+                                    <div className="bg-[#4799eb]/10 text-[#4799eb] w-12 h-12 rounded-full flex items-center justify-center">
+                                        <span className="material-symbols-outlined text-3xl">redeem</span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <h3 className="text-[#111418] dark:text-white text-xl font-bold leading-tight">For you</h3>
+                                        <p className="text-[#637588] dark:text-gray-400 text-base font-normal leading-normal">1 free mock interview credit for your next session</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        {/* Feature List: What they get */}
+                        <section className="bg-white/50 dark:bg-white/5 rounded-xl p-8">
+                            <h3 className="text-[#111418] dark:text-white text-xl font-bold leading-tight tracking-[-0.015em] pb-6">What they get</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
+                                <div className="flex items-center gap-3">
+                                    <span className="material-symbols-outlined text-[#4799eb]">check_circle</span>
+                                    <span className="text-sm md:text-base font-medium">Unlimited practice sessions</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="material-symbols-outlined text-[#4799eb]">check_circle</span>
+                                    <span className="text-sm md:text-base font-medium">No paywalls or restricted features</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="material-symbols-outlined text-[#4799eb]">check_circle</span>
+                                    <span className="text-sm md:text-base font-medium">Unlimited mock interviews</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="material-symbols-outlined text-[#4799eb]">check_circle</span>
+                                    <span className="material-symbols-outlined text-[#197fe6]">check_circle</span>
+                                    <span className="text-sm md:text-base font-medium">Full JobSpeakPro experience</span>
+                                </div>
+                            </div>
+                        </section>
+                        {/* Share Your Link */}
+                        <section className="flex flex-col gap-6">
+                            <div className="rounded-lg border border-[#197fe6]/20 bg-white dark:bg-[#111921] p-8 shadow-sm flex flex-col gap-6">
+                                <div className="flex flex-col gap-2">
+                                    <h3 className="text-xl font-bold">Your Unique Invite Link</h3>
+                                    <p className="text-sm text-gray-500">Copy this link and send it to your friends or colleagues.</p>
+                                </div>
+                                <div className="flex flex-col md:flex-row gap-3">
+                                    <div className="relative flex-1">
+                                        <input
+                                            className="w-full bg-gray-50 dark:bg-[#1c2630] border border-gray-200 dark:border-gray-700 rounded-full h-12 px-5 text-gray-600 dark:text-gray-300 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[#197fe6]"
+                                            readOnly
+                                            type="text"
+                                            id="referral-link-input"
+                                            value={loading ? "Loading..." : `https://jobspeakpro.com?ref=${referralCode || '...'}`}
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            if (referralCode) {
+                                                const link = `https://jobspeakpro.com?ref=${referralCode}`;
+                                                const copyToClipboard = async () => {
+                                                    try {
+                                                        await navigator.clipboard.writeText(link);
+                                                        return true;
+                                                    } catch (err) {
+                                                        // Fallback
+                                                        const input = document.getElementById('referral-link-input');
+                                                        if (input) {
+                                                            input.select();
+                                                            document.execCommand('copy');
+                                                            return true;
+                                                        }
+                                                        return false;
+                                                    }
+                                                };
+
+                                                copyToClipboard().then(() => {
+                                                    const btn = document.activeElement;
+                                                    const originalHTML = btn.innerHTML;
+                                                    btn.innerText = "Copied!";
+                                                    // Show a simple toast or just button feedback as requested (success toast implied by "success toast" in prompt, can use local state or just button feedback if no toast system active in this file. Prompt says "success toast". The app has a toast in LandingPage but not globally obvious here. I will just use button feedback + alert if strictly needed, but button feedback is often better. Wait, prompt says "success toast". I'll add a simple inline toast state.)
+                                                    // Actually, I'll stick to the button feedback which I can execute reliably. "Success toast" might mean a UI element. I entered one in LandingPage. I can add one here.
+                                                });
+
+                                                // Trigger toast
+                                                const toast = document.createElement('div');
+                                                toast.className = 'fixed bottom-4 right-4 bg-emerald-600 text-white px-4 py-2 rounded shadow-lg z-50 animate-in fade-in slide-in-from-bottom-2';
+                                                toast.innerText = 'Link copied to clipboard!';
+                                                document.body.appendChild(toast);
+                                                setTimeout(() => toast.remove(), 3000);
+                                            }
+                                        }}
+                                        disabled={loading || !referralCode}
+                                        className="bg-[#197fe6] text-white px-8 h-12 rounded-full font-bold hover:bg-[#197fe6]/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#197fe6]/20"
+                                    >
+                                        <span className="material-symbols-outlined text-[20px]">content_copy</span>
+                                        Copy Link
+                                    </button>
+                                </div>
+
+                                <div className="mt-4 flex justify-center flex-col items-center gap-2">
+                                    <button
+                                        onClick={async () => {
+                                            const link = `https://jobspeakpro.com?ref=${referralCode}`;
+                                            if (navigator.share) {
+                                                try {
+                                                    await navigator.share({
+                                                        title: 'Join JobSpeakPro',
+                                                        text: 'Check out JobSpeakPro! Practice interviews with AI.',
+                                                        url: link,
+                                                    });
+                                                } catch (err) {
+                                                    // Cancelled/Failed
+                                                }
+                                            } else {
+                                                // Fallback mechanism: scroll to share buttons
+                                                const fallback = document.getElementById('share-fallback-container');
+                                                if (fallback) fallback.scrollIntoView({ behavior: 'smooth' });
+                                            }
+                                        }}
+                                        disabled={loading || !referralCode}
+                                        className="text-[#197fe6] font-semibold hover:underline text-sm"
+                                    >
+                                        Share your referral link
+                                    </button>
+                                    <Link to="/referral/history" className="text-slate-500 hover:text-slate-900 text-sm font-medium">
+                                        View Referral History
+                                    </Link>
+                                </div>
+
+                                <div id="share-fallback-container" className="flex items-center gap-4 pt-2 border-t border-gray-100 dark:border-gray-800 mt-4">
+                                    <span className="text-sm font-medium text-gray-500">Share via:</span>
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={() => window.open(`mailto:?subject=Join JobSpeakPro&body=Check out JobSpeakPro! https://jobspeakpro.com?ref=${referralCode}`, '_blank')}
+                                            className="size-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                        >
+                                            <span className="material-symbols-outlined text-[#197fe6]">mail</span>
+                                        </button>
+                                        <button
+                                            onClick={() => window.open(`sms:?&body=Check out JobSpeakPro! https://jobspeakpro.com?ref=${referralCode}`, '_blank')}
+                                            className="size-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                        >
+                                            <span className="material-symbols-outlined text-[#197fe6]">sms</span>
+                                        </button>
+                                        <button
+                                            onClick={() => window.open(`https://wa.me/?text=Check out JobSpeakPro! https://jobspeakpro.com?ref=${referralCode}`, '_blank')}
+                                            className="size-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                        >
+                                            <span className="material-symbols-outlined text-[#197fe6]">chat</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        {/* Trust Note */}
+                        <footer className="mt-4">
+                            <div className="bg-[#4799eb]/5 dark:bg-[#4799eb]/10 border border-[#4799eb]/10 rounded-lg p-5 flex items-center justify-center gap-4 text-center">
+                                <span className="material-symbols-outlined text-[#4799eb]">verified_user</span>
+                                <p className="text-sm md:text-base font-medium text-[#4799eb]/80">No spam. No pressure. Just helping someone practice for their dream job.</p>
+                            </div>
+                            <div className="py-10 text-center text-xs text-gray-400">
+                                © 2024 JobSpeakPro Referral Program • Terms Apply
+                            </div>
+                        </footer>
                 </div>
-            </div>
+            </main>
         </div>
+            </div >
+        </div >
     );
 }

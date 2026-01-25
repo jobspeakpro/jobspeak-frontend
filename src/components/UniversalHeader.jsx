@@ -25,23 +25,7 @@ export default function UniversalHeader() {
                     <h2 className="text-xl font-bold leading-tight tracking-tight">JobSpeak Pro</h2>
                 </Link>
 
-                {/* Desktop Public Nav (Logged Out) */}
-                {!isAuthed && (
-                    <nav className="hidden md:flex items-center gap-6">
-                        <Link to="/how-it-works" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
-                            How It Works
-                        </Link>
-                        <Link to="/pricing" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
-                            Pricing
-                        </Link>
-                        <Link to="/support" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
-                            Support
-                        </Link>
-                        <Link to="/affiliate" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
-                            Affiliate
-                        </Link>
-                    </nav>
-                )}
+                {/* Desktop Public Nav Removed (Restoring Original simplified header) */}
 
                 {/* Right Side: Auth Buttons or Avatar */}
                 <div className="flex items-center gap-4">
