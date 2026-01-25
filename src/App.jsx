@@ -1216,18 +1216,20 @@ export default function App({ defaultTab = "interview" }) {
       </div>
 
       {/* Upgrade Modal */}
-      {showUpgradeModal && (
-        <UpgradeModal
-          onClose={() => {
-            setShowUpgradeModal(false);
-            setPaywallSource(null);
-          }}
-          source={paywallSource}
-        />
-      )}
+      {
+        showUpgradeModal && (
+          <UpgradeModal
+            onClose={() => {
+              setShowUpgradeModal(false);
+              setPaywallSource(null);
+            }}
+            source={paywallSource}
+          />
+        )
+      }
 
       {/* Dev Debug Banner */}
       <DevDebugBanner />
-    </div>
+    </div >
   );
 }
