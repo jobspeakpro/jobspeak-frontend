@@ -5,5 +5,8 @@
 [log] HTML MARKER LOADED: html-marker-live-1
 [log] Supabase Env Vars Present: {url: true, key: true, mode: production}
 [log] [BUILD_ID] prod-routes-v1
-[log] ROUTE: /referral
-[log] ROUTE: /signin
+[log] ROUTE: /affiliate/apply
+[error] Failed to load resource: the server responded with a status of 404 ()
+[error] Affiliate apply error: ApiError: Not found
+    at Le (https://jobspeakpro.com/assets/index-DycBRhG8.js:81:6041)
+    at async l (https://jobspeakpro.com/assets/index-DycBRhG8.js:187:106086)

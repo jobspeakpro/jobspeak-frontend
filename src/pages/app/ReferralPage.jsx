@@ -13,7 +13,7 @@ export default function ReferralPage() {
 
         async function fetchCode() {
             try {
-                const res = await apiClient("/referrals/me");
+                const res = await apiClient("/api/referrals/me");
                 setReferralCode(res?.data?.referralCode || res?.referralCode);
             } catch (err) {
                 console.error("Fetch referral code error:", err);

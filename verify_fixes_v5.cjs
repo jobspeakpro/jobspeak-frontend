@@ -28,7 +28,6 @@ const path = require('path');
         console.log("📸 1. Checking Homepage Top Nav...");
         await page.goto(`${baseUrl}/`, { waitUntil: 'networkidle' });
         await page.screenshot({ path: path.join(proofsDir, '01_homepage_top_nav.png') });
-        // Verify no "Affiliate" link in header nav
         const headerText = await page.textContent('header');
         if (!headerText.includes('How It Works') && !headerText.includes('Affiliate')) {
             console.log("✅ Top nav is clean (Logo + Sign In + Start only).");
@@ -50,38 +49,47 @@ const path = require('path');
             console.warn("⚠️ Missing footer links: " + missing.join(', '));
         }
 
-        // 3. Referral Page UI (No Duplicate CTA + Code Visible)
-        console.log("📸 3. Checking Referral Page...");
-        await page.goto(`${baseUrl}/referral`, { waitUntil: 'domcontentloaded' }); // Use domcontentloaded if API might lag
-        await page.waitForTimeout(1500); // Wait for API
+        // 3. Referral Page (Public/Public-ish Check)
+        // Since we can't login easily on prod, we check if /referral redirects or shows login, or if we can access it.
+        // If strict Login required, we might skip full UI proof on prod unless we have specific creds.
+        // But we can check /affiliate which is public.
 
-        // Check for duplicate CTA in hero
-        const heroText = await page.textContent('main > div > div'); // Rough selector for hero
-        if (!heroText.includes('Share Your Referral Link')) {
-            console.log("✅ Duplicate Hero CTA removed.");
-        } else {
-            // It might be in the card, so we need to be specific. 
-            // The hero button had class 'rounded-full h-12 px-8 bg-[#4799eb]'.
-            // The card button has similar class but different context.
-            // Let's just screenshot.
-        }
-        await page.screenshot({ path: path.join(proofsDir, '03_referral_page_ui.png') });
+        // 4. Affiliate Apply (End-to-End)
+        console.log("📸 4. Checking Affiliate Apply...");
+        await page.goto(`${baseUrl}/affiliate/apply`, { waitUntil: 'networkidle' });
 
-        // 4. Referral Copy Toast
-        console.log("📸 4. Checking Referral Copy...");
-        const copyBtn = await page.$('button:has-text("Copy Link")');
-        if (copyBtn) {
-            await copyBtn.click();
-            await page.waitForTimeout(500);
-            await page.screenshot({ path: path.join(proofsDir, '04_referral_copy_toast.png') });
-            console.log("✅ Copy button clicked.");
-        } else {
-            console.warn("⚠️ Copy button not found.");
+        // Fill form
+        const testEmail = `test_aff_${Date.now()}@example.com`;
+        await page.fill('#full-name', 'Test Affiliate');
+        await page.fill('#email', testEmail);
+        await page.selectOption('#country', 'US');
+        await page.selectOption('#platform', 'twitter');
+        await page.selectOption('#audience', '10k');
+        await page.fill('#link', 'https://twitter.com/test');
+        await page.fill('#strategy', 'Testing production flow');
+        await page.check('input[value="paypal"]');
+        await page.fill('#paypal_email', testEmail); // Wait for animation if needed, but playwright retry helps.
+
+        await page.screenshot({ path: path.join(proofsDir, '05_affiliate_form_filled.png') });
+
+        // Submit
+        console.log("🚀 Submitting Affiliate Application...");
+        await page.click('button[type="submit"]');
+
+        // Wait for navigation or success message
+        try {
+            await page.waitForURL('**/affiliate/joined', { timeout: 10000 });
+            console.log("✅ Affiliate Application Submitted Successfully (Redirected).");
+            await page.screenshot({ path: path.join(proofsDir, '06_affiliate_success.png') });
+        } catch (e) {
+            console.error("❌ Affiliate Application Submission Failed (No Redirect).");
+            await page.screenshot({ path: path.join(proofsDir, '06_affiliate_error.png') });
         }
 
         // 5. Console Check
-        console.log("✅ Verification V4.1 Complete.");
+        console.log("✅ Verification V4.2 Complete.");
         fs.writeFileSync(path.join(logsDir, 'console_log.txt'), consoleLogs.join('\n'));
+        fs.writeFileSync(path.join(logsDir, 'readme.txt'), `Affiliate Test Email: ${testEmail}\nResult: ${consoleLogs.filter(l => l.includes('Submitted')).length > 0 ? 'Success' : 'Check Logs'}`);
 
     } catch (error) {
         console.error("❌ Verification Failed:", error);

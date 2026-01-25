@@ -48,7 +48,7 @@ export default function AffiliateJoinPage() {
         }
 
         try {
-            await apiClient("/affiliate/apply", {
+            await apiClient("/api/affiliate/apply", {
                 method: "POST",
                 body: payload
             });
