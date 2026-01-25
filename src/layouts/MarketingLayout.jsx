@@ -104,6 +104,11 @@ export default function MarketingLayout({ children }) {
                       Affiliate
                     </Link>
                   </li>
+                  <li>
+                    <Link to="/referral" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
+                      Referrals
+                    </Link>
+                  </li>
                 </ul>
               </div>
             </div>

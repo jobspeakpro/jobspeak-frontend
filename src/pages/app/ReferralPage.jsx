@@ -109,7 +109,7 @@ export default function ReferralPage() {
                                                 className="w-full bg-gray-50 dark:bg-[#1c2630] border border-gray-200 dark:border-gray-700 rounded-full h-12 px-5 text-gray-600 dark:text-gray-300 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[#197fe6]"
                                                 readOnly
                                                 type="text"
-                                                value={loading ? "Loading..." : `jobspeakpro.com/ref/${referralCode || '...'}`}
+                                                value={loading ? "Loading..." : `https://jobspeakpro.com/ref/${referralCode || '...'}`}
                                             />
                                         </div>
                                         <button
@@ -117,7 +117,11 @@ export default function ReferralPage() {
                                                 if (referralCode) {
                                                     const link = `https://jobspeakpro.com/ref/${referralCode}`;
                                                     navigator.clipboard.writeText(link);
-                                                    alert("Link copied to clipboard!");
+                                                    // Simple toast-like feedback
+                                                    const btn = document.activeElement;
+                                                    const originalText = btn.innerText;
+                                                    btn.innerText = "Copied!";
+                                                    setTimeout(() => btn.innerText = originalText, 2000);
                                                 }
                                             }}
                                             disabled={loading || !referralCode}
@@ -127,26 +131,58 @@ export default function ReferralPage() {
                                             Copy Link
                                         </button>
                                     </div>
-                                    <div className="flex items-center gap-4 pt-2 border-t border-gray-100 dark:border-gray-800">
+
+                                    <div className="mt-4 flex justify-center">
+                                        <button
+                                            onClick={async () => {
+                                                const link = `https://jobspeakpro.com/ref/${referralCode}`;
+                                                if (navigator.share) {
+                                                    try {
+                                                        await navigator.share({
+                                                            title: 'Join JobSpeakPro',
+                                                            text: 'Check out JobSpeakPro! Practice interviews with AI.',
+                                                            url: link,
+                                                        });
+                                                    } catch (err) {
+                                                        // Fallback to copy if share fails/cancelled
+                                                        navigator.clipboard.writeText(link);
+                                                        alert("Link copied to clipboard!");
+                                                    }
+                                                } else {
+                                                    navigator.clipboard.writeText(link);
+                                                    alert("Link copied to clipboard!");
+                                                }
+                                            }}
+                                            disabled={loading || !referralCode}
+                                            className="text-[#197fe6] font-semibold hover:underline text-sm"
+                                        >
+                                            Share your referral link
+                                        </button>
+                                    </div>
+
+                                    <div className="flex items-center gap-4 pt-2 border-t border-gray-100 dark:border-gray-800 mt-4">
                                         <span className="text-sm font-medium text-gray-500">Share via:</span>
                                         <div className="flex gap-3">
                                             <button
                                                 onClick={() => window.open(`mailto:?subject=Join JobSpeakPro&body=Check out JobSpeakPro! https://jobspeakpro.com/ref/${referralCode}`, '_blank')}
                                                 className="size-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                                title="Share via Email"
                                             >
                                                 <span className="material-symbols-outlined text-[#197fe6]">mail</span>
                                             </button>
                                             <button
-                                                onClick={() => window.open(`https://wa.me/?text=Check out JobSpeakPro! https://jobspeakpro.com/ref/${referralCode}`, '_blank')}
+                                                onClick={() => window.open(`sms:?&body=Check out JobSpeakPro! https://jobspeakpro.com/ref/${referralCode}`, '_blank')}
                                                 className="size-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                                title="Share via SMS"
                                             >
-                                                <span className="material-symbols-outlined text-[#197fe6]">chat</span>
+                                                <span className="material-symbols-outlined text-[#197fe6]">sms</span>
                                             </button>
                                             <button
-                                                onClick={() => window.open(`https://twitter.com/intent/tweet?text=Check out JobSpeakPro!&url=https://jobspeakpro.com/ref/${referralCode}`, '_blank')}
+                                                onClick={() => window.open(`https://wa.me/?text=Check out JobSpeakPro! https://jobspeakpro.com/ref/${referralCode}`, '_blank')}
                                                 className="size-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                                title="Share via WhatsApp"
                                             >
-                                                <span className="material-symbols-outlined text-[#197fe6]">group</span>
+                                                <span className="material-symbols-outlined text-[#197fe6]">chat</span>
                                             </button>
                                         </div>
                                     </div>

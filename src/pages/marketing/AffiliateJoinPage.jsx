@@ -48,12 +48,17 @@ export default function AffiliateJoinPage() {
         }
 
         try {
-            await apiClient.post("/affiliate/apply", payload);
+            await apiClient("/affiliate/apply", {
+                method: "POST",
+                body: payload
+            });
             navigate('/affiliate/joined');
         } catch (err) {
             console.error("Affiliate apply error:", err);
             setLoading(false);
-            alert(err.response?.data?.error || "Something went wrong. Please check your inputs and try again.");
+            // Extract error message from response data if available
+            const errorMsg = err.data?.error || err.message || "Something went wrong. Please check your inputs and try again.";
+            alert(errorMsg);
         }
     };
 
