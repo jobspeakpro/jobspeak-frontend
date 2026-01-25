@@ -27,7 +27,14 @@ export default function AffiliatePage() {
                             <Link to="/affiliate/apply" className="bg-[#197fe6] text-white text-base font-bold px-8 py-4 rounded-xl hover:bg-[#197fe6]/90 transition-all shadow-lg hover:shadow-[#197fe6]/20 active:scale-95">
                                 Apply to Become a Founding Affiliate
                             </Link>
-                            <a href="#important-notes" className="bg-white dark:bg-gray-800 border border-[#dce0e5] dark:border-gray-700 text-base font-bold px-8 py-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95">
+                            <a
+                                href="#important-notes"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    document.getElementById('important-notes')?.scrollIntoView({ behavior: 'smooth' });
+                                }}
+                                className="bg-white dark:bg-gray-800 border border-[#dce0e5] dark:border-gray-700 text-base font-bold px-8 py-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95"
+                            >
                                 View Program Terms
                             </a>
                         </div>
@@ -113,12 +120,12 @@ export default function AffiliatePage() {
                             <div className="p-5 bg-[#f6f7f8] dark:bg-gray-800 rounded-2xl border border-[#dce0e5] dark:border-gray-700">
                                 <span className="material-symbols-outlined text-[#197fe6] mb-3">workspace_premium</span>
                                 <h4 className="font-bold mb-1">Founding Partner Status</h4>
-                                <p className="text-sm text-[#637588] dark:text-gray-400">Lock in your 30% rate for 12-24 months.</p>
+                                <p className="text-sm text-[#637588] dark:text-gray-400">Lock in your 30% rate for 24 months per active paying customer.</p>
                             </div>
                             <div className="p-5 bg-[#f6f7f8] dark:bg-gray-800 rounded-2xl border border-[#dce0e5] dark:border-gray-700">
                                 <span className="material-symbols-outlined text-[#197fe6] mb-3">calendar_month</span>
-                                <h4 className="font-bold mb-1">12-24 Month Duration</h4>
-                                <p className="text-sm text-[#637588] dark:text-gray-400">Extended commission windows for long-term customer retention.</p>
+                                <h4 className="font-bold mb-1">24 Month Duration</h4>
+                                <p className="text-sm text-[#637588] dark:text-gray-400">Commission applies per active paying customer for 24 months.</p>
                             </div>
                             <div className="p-5 bg-[#f6f7f8] dark:bg-gray-800 rounded-2xl border border-[#dce0e5] dark:border-gray-700">
                                 <span className="material-symbols-outlined text-[#197fe6] mb-3">query_stats</span>
@@ -183,7 +190,7 @@ export default function AffiliatePage() {
                                 </div>
                                 <div>
                                     <h4 className="font-bold">Multiple Methods</h4>
-                                    <p className="text-[#637588] dark:text-gray-400 text-sm">We support PayPal, Stripe Direct, and Crypto (USDT) for international partners.</p>
+                                    <p className="text-[#637588] dark:text-gray-400 text-sm">We support PayPal, Stripe Direct, and Crypto (USDT). Affiliate is responsible for all payment/network/processing fees.</p>
                                 </div>
                             </div>
                             <div className="flex gap-4">

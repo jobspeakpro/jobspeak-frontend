@@ -99,6 +99,11 @@ export default function MarketingLayout({ children }) {
                       Contact
                     </Link>
                   </li>
+                  <li>
+                    <Link to="/affiliate" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
+                      Affiliate
+                    </Link>
+                  </li>
                 </ul>
               </div>
             </div>

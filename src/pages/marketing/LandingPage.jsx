@@ -473,33 +473,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <section className="w-full bg-slate-50 border-t border-slate-200 py-16 px-6 lg:px-40">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center justify-center p-3 mb-6 bg-purple-100 rounded-full text-purple-600">
-            <span className="material-symbols-outlined">handshake</span>
-          </div>
-          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-4">
-            Become an Affiliate Partner
-          </h2>
-          <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">
-            Love JobSpeak Pro? Earn money by sharing it with your audience. Get paid for every new subscriber you refer.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-            <button
-              onClick={() => navigate("/affiliate")}
-              className="inline-flex items-center justify-center rounded-lg h-12 px-6 bg-white border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 transition-colors shadow-sm"
-            >
-              Learn More
-            </button>
-            <button
-              onClick={() => navigate("/affiliate/apply")}
-              className="inline-flex items-center justify-center rounded-lg h-12 px-6 bg-purple-600 text-white font-bold hover:bg-purple-700 transition-colors shadow-sm"
-            >
-              Apply Now
-            </button>
-          </div>
-        </div>
-      </section>
+
 
       <footer className="bg-white border-t border-[#e7ecf3] pt-12 pb-8">
         <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">

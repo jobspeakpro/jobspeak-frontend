@@ -106,7 +106,7 @@ export default function ReferralPage() {
                                     <div className="flex flex-col md:flex-row gap-3">
                                         <div className="relative flex-1">
                                             <input
-                                                className="w-full bg-gray-50 dark:bg-[#1c2630] border border-gray-200 dark:border-gray-700 rounded-full h-12 px-5 text-gray-600 dark:text-gray-300 font-mono text-sm focus:outline-none"
+                                                className="w-full bg-gray-50 dark:bg-[#1c2630] border border-gray-200 dark:border-gray-700 rounded-full h-12 px-5 text-gray-600 dark:text-gray-300 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[#197fe6]"
                                                 readOnly
                                                 type="text"
                                                 value={loading ? "Loading..." : `jobspeakpro.com/ref/${referralCode || '...'}`}
@@ -115,12 +115,13 @@ export default function ReferralPage() {
                                         <button
                                             onClick={() => {
                                                 if (referralCode) {
-                                                    navigator.clipboard.writeText(`https://jobspeakpro.com/ref/${referralCode}`);
-                                                    alert("Link copied!");
+                                                    const link = `https://jobspeakpro.com/ref/${referralCode}`;
+                                                    navigator.clipboard.writeText(link);
+                                                    alert("Link copied to clipboard!");
                                                 }
                                             }}
                                             disabled={loading || !referralCode}
-                                            className="bg-[#4799eb] text-white px-8 h-12 rounded-full font-bold hover:bg-[#4799eb]/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="bg-[#197fe6] text-white px-8 h-12 rounded-full font-bold hover:bg-[#197fe6]/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#197fe6]/20"
                                         >
                                             <span className="material-symbols-outlined text-[20px]">content_copy</span>
                                             Copy Link
@@ -129,14 +130,23 @@ export default function ReferralPage() {
                                     <div className="flex items-center gap-4 pt-2 border-t border-gray-100 dark:border-gray-800">
                                         <span className="text-sm font-medium text-gray-500">Share via:</span>
                                         <div className="flex gap-3">
-                                            <button className="size-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                                                <span className="material-symbols-outlined text-[#4799eb]">mail</span>
+                                            <button
+                                                onClick={() => window.open(`mailto:?subject=Join JobSpeakPro&body=Check out JobSpeakPro! https://jobspeakpro.com/ref/${referralCode}`, '_blank')}
+                                                className="size-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                            >
+                                                <span className="material-symbols-outlined text-[#197fe6]">mail</span>
                                             </button>
-                                            <button className="size-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                                                <span className="material-symbols-outlined text-[#4799eb]">chat</span>
+                                            <button
+                                                onClick={() => window.open(`https://wa.me/?text=Check out JobSpeakPro! https://jobspeakpro.com/ref/${referralCode}`, '_blank')}
+                                                className="size-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                            >
+                                                <span className="material-symbols-outlined text-[#197fe6]">chat</span>
                                             </button>
-                                            <button className="size-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                                                <span className="material-symbols-outlined text-[#4799eb]">group</span>
+                                            <button
+                                                onClick={() => window.open(`https://twitter.com/intent/tweet?text=Check out JobSpeakPro!&url=https://jobspeakpro.com/ref/${referralCode}`, '_blank')}
+                                                className="size-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                            >
+                                                <span className="material-symbols-outlined text-[#197fe6]">group</span>
                                             </button>
                                         </div>
                                     </div>
