@@ -1,7 +1,7 @@
 // src/layouts/MarketingLayout.jsx
 import React from "react";
 import { Link } from "react-router-dom";
-import AppHeader from "../components/AppHeader.jsx";
+import UniversalHeader from "../components/UniversalHeader.jsx";
 
 export default function MarketingLayout({ children }) {
 
@@ -9,7 +9,7 @@ export default function MarketingLayout({ children }) {
     <div className="marketing-root bg-white text-slate-900 font-display overflow-x-hidden">
       <div className="relative flex min-h-screen w-full flex-col group/design-root">
         {/* UNIVERSAL HEADER */}
-        <AppHeader />
+        <UniversalHeader />
 
         {/* MAIN CONTENT */}
         <main className="flex-1">

@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { apiClient } from '../../utils/apiClient.js';
+import UniversalHeader from '../../components/UniversalHeader.jsx';
 
 export default function AffiliateJoinPage() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [platform, setPlatform] = useState("");
+    const [payoutMethod, setPayoutMethod] = useState("");
 
     useEffect(() => {
         document.title = "Affiliate Application | JobSpeakPro";
@@ -14,16 +17,35 @@ export default function AffiliateJoinPage() {
         e.preventDefault();
         setLoading(true);
 
-        // Gather form data
         const form = e.target;
+
+        // Basic validation
+        if (!platform || !payoutMethod) {
+            alert("Please complete all required fields.");
+            setLoading(false);
+            return;
+        }
+
         const payload = {
             name: form['full-name'].value,
             email: form['email'].value,
-            platform: form['platform'].value,
+            country: form['country'].value,
+            platform: platform === 'other' ? form['platform_other'].value : platform,
             audienceSize: form['audience'].value,
             channelLink: form['link'].value,
-            promoPlan: form['strategy'].value
+            promoPlan: form['strategy'].value,
+            payoutMethod: payoutMethod,
+            payoutDetails: {}
         };
+
+        if (payoutMethod === 'paypal') {
+            payload.payoutDetails.email = form['paypal_email'].value;
+        } else if (payoutMethod === 'stripe') {
+            payload.payoutDetails.email = form['stripe_email'].value;
+        } else if (payoutMethod === 'crypto') {
+            payload.payoutDetails.wallet = form['crypto_wallet'].value;
+            payload.payoutDetails.network = form['crypto_network'].value;
+        }
 
         try {
             await apiClient.post("/affiliate/apply", payload);
@@ -31,29 +53,13 @@ export default function AffiliateJoinPage() {
         } catch (err) {
             console.error("Affiliate apply error:", err);
             setLoading(false);
-            alert("Something went wrong. Please try again.");
+            alert(err.response?.data?.error || "Something went wrong. Please check your inputs and try again.");
         }
     };
 
     return (
-        <div className="bg-[#f6f7f8] dark:bg-[#111921] font-display text-[#111418] dark:text-white transition-colors duration-200 min-h-screen flex flex-col">
-            <header className="w-full bg-white dark:bg-[#111921] border-b border-[#dce0e5] dark:border-gray-800">
-                <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="text-[#197fe6]">
-                            <svg className="size-8" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M36.7273 44C33.9891 44 31.6043 39.8386 30.3636 33.69C29.123 39.8386 26.7382 44 24 44C21.2618 44 18.877 39.8386 17.6364 33.69C16.3957 39.8386 14.0109 44 11.2727 44C7.25611 44 4 35.0457 4 24C4 12.9543 7.25611 4 11.2727 4C14.0109 4 16.3957 8.16144 17.6364 14.31C18.877 8.16144 21.2618 4 24 4C26.7382 4 29.123 8.16144 30.3636 14.31C31.6043 8.16144 33.9891 4 36.7273 4C40.7439 4 44 12.9543 44 24C44 35.0457 40.7439 44 36.7273 44Z" fill="currentColor"></path>
-                            </svg>
-                        </div>
-                        <h2 className="text-xl font-bold tracking-tight">JobSpeakPro</h2>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <Link to="/" className="text-sm font-medium text-[#637588] hover:text-[#197fe6] transition-colors">
-                            Back to Site
-                        </Link>
-                    </div>
-                </div>
-            </header>
+        <div className="bg-background-light dark:bg-background-dark font-display text-[#111418] dark:text-white transition-colors duration-200 min-h-screen flex flex-col">
+            <UniversalHeader />
 
             <main className="flex-grow flex flex-col items-center justify-center px-6 py-12">
                 <div className="w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-[#dce0e5] dark:border-gray-800 overflow-hidden">
@@ -77,24 +83,23 @@ export default function AffiliateJoinPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-sm font-semibold" htmlFor="full-name">Full Name</label>
-                                    <div className="relative">
-                                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl">person</span>
-                                        <input className="w-full pl-11 pr-4 py-2.5 rounded-lg border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="full-name" placeholder="John Doe" type="text" />
-                                    </div>
+                                    <input required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="full-name" placeholder="John Doe" type="text" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-semibold" htmlFor="email">Email Address</label>
-                                    <div className="relative">
-                                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl">mail</span>
-                                        <input className="w-full pl-11 pr-4 py-2.5 rounded-lg border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="email" placeholder="john@example.com" type="email" />
-                                    </div>
+                                    <input required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="email" placeholder="john@example.com" type="email" />
                                 </div>
                                 <div className="md:col-span-2 space-y-2">
                                     <label className="text-sm font-semibold" htmlFor="country">Country</label>
-                                    <div className="relative">
-                                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl">public</span>
-                                        <input className="w-full pl-11 pr-4 py-2.5 rounded-lg border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="country" placeholder="e.g. United States" type="text" />
-                                    </div>
+                                    <select required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="country">
+                                        <option value="">Select Country</option>
+                                        <option value="US">United States</option>
+                                        <option value="UK">United Kingdom</option>
+                                        <option value="CA">Canada</option>
+                                        <option value="AU">Australia</option>
+                                        <option value="IN">India</option>
+                                        <option value="other">Other</option>
+                                    </select>
                                 </div>
                             </div>
                         </section>
@@ -103,7 +108,13 @@ export default function AffiliateJoinPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-sm font-semibold" htmlFor="platform">Primary Platform</label>
-                                    <select className="w-full px-4 py-2.5 rounded-lg border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="platform">
+                                    <select
+                                        required
+                                        className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]"
+                                        id="platform"
+                                        value={platform}
+                                        onChange={(e) => setPlatform(e.target.value)}
+                                    >
                                         <option value="">Select Platform</option>
                                         <option value="youtube">YouTube</option>
                                         <option value="linkedin">LinkedIn</option>
@@ -113,9 +124,15 @@ export default function AffiliateJoinPage() {
                                         <option value="other">Other</option>
                                     </select>
                                 </div>
+                                {platform === 'other' && (
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-semibold" htmlFor="platform_other">Specify Platform</label>
+                                        <input required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="platform_other" placeholder="e.g. Instagram" type="text" />
+                                    </div>
+                                )}
                                 <div className="space-y-2">
                                     <label className="text-sm font-semibold" htmlFor="audience">Audience Size</label>
-                                    <select className="w-full px-4 py-2.5 rounded-lg border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="audience">
+                                    <select required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="audience">
                                         <option value="">Select Size</option>
                                         <option value="<5k">&lt;5k</option>
                                         <option value="5k-20k">5k-20k</option>
@@ -125,42 +142,74 @@ export default function AffiliateJoinPage() {
                                 </div>
                                 <div className="md:col-span-2 space-y-2">
                                     <label className="text-sm font-semibold" htmlFor="link">Link to Channel / Portfolio</label>
-                                    <div className="relative">
-                                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl">link</span>
-                                        <input className="w-full pl-11 pr-4 py-2.5 rounded-lg border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="link" placeholder="https://youtube.com/c/yourchannel" type="url" />
-                                    </div>
+                                    <input required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="link" placeholder="https://youtube.com/c/yourchannel" type="url" />
                                 </div>
                             </div>
                         </section>
                         <section>
                             <div className="space-y-2">
                                 <label className="text-sm font-semibold" htmlFor="strategy">How do you plan to promote JobSpeakPro?</label>
-                                <textarea className="w-full px-4 py-2.5 rounded-lg border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="strategy" placeholder="Tell us about your content strategy..." rows="4"></textarea>
+                                <textarea required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="strategy" placeholder="Tell us about your content strategy..." rows="4"></textarea>
                             </div>
                         </section>
                         <section>
                             <h3 className="text-sm font-bold uppercase tracking-wider text-[#637588] mb-4">Payout Preference</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <label className="relative flex flex-col items-center gap-3 p-4 border border-[#dce0e5] dark:border-gray-700 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                    <input className="absolute top-3 right-3 text-[#197fe6] focus:ring-[#197fe6] h-4 w-4" name="payout" type="radio" />
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                                <label className={`relative flex flex-col items-center gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${payoutMethod === 'paypal' ? 'border-[#197fe6] bg-blue-50 dark:bg-blue-900/20' : 'border-[#dce0e5] dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}>
+                                    <input className="absolute top-3 right-3 text-[#197fe6] focus:ring-[#197fe6] h-4 w-4" name="payout" type="radio" value="paypal" onChange={(e) => setPayoutMethod(e.target.value)} />
                                     <span className="material-symbols-outlined text-[#197fe6] text-3xl">account_balance_wallet</span>
                                     <span className="text-sm font-bold">PayPal</span>
                                 </label>
-                                <label className="relative flex flex-col items-center gap-3 p-4 border border-[#dce0e5] dark:border-gray-700 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                    <input className="absolute top-3 right-3 text-[#197fe6] focus:ring-[#197fe6] h-4 w-4" name="payout" type="radio" />
+                                <label className={`relative flex flex-col items-center gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${payoutMethod === 'stripe' ? 'border-[#197fe6] bg-blue-50 dark:bg-blue-900/20' : 'border-[#dce0e5] dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}>
+                                    <input className="absolute top-3 right-3 text-[#197fe6] focus:ring-[#197fe6] h-4 w-4" name="payout" type="radio" value="stripe" onChange={(e) => setPayoutMethod(e.target.value)} />
                                     <span className="material-symbols-outlined text-[#197fe6] text-3xl">credit_card</span>
                                     <span className="text-sm font-bold">Stripe</span>
                                 </label>
-                                <label className="relative flex flex-col items-center gap-3 p-4 border border-[#dce0e5] dark:border-gray-700 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                    <input className="absolute top-3 right-3 text-[#197fe6] focus:ring-[#197fe6] h-4 w-4" name="payout" type="radio" />
+                                <label className={`relative flex flex-col items-center gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${payoutMethod === 'crypto' ? 'border-[#197fe6] bg-blue-50 dark:bg-blue-900/20' : 'border-[#dce0e5] dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}>
+                                    <input className="absolute top-3 right-3 text-[#197fe6] focus:ring-[#197fe6] h-4 w-4" name="payout" type="radio" value="crypto" onChange={(e) => setPayoutMethod(e.target.value)} />
                                     <span className="material-symbols-outlined text-[#197fe6] text-3xl">currency_bitcoin</span>
                                     <span className="text-sm font-bold">Crypto (USDT)</span>
                                 </label>
                             </div>
+
+                            {/* Conditional Payout Fields */}
+                            {payoutMethod === 'paypal' && (
+                                <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                                    <label className="text-sm font-semibold" htmlFor="paypal_email">PayPal Email Address</label>
+                                    <input required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="paypal_email" type="email" placeholder="paypal@example.com" />
+                                </div>
+                            )}
+                            {payoutMethod === 'stripe' && (
+                                <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                                    <label className="text-sm font-semibold" htmlFor="stripe_email">Stripe Email Address</label>
+                                    <input required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="stripe_email" type="email" placeholder="stripe@example.com" />
+                                </div>
+                            )}
+                            {payoutMethod === 'crypto' && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-semibold" htmlFor="crypto_wallet">USDT Wallet Address</label>
+                                        <input required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="crypto_wallet" type="text" placeholder="0x..." />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-semibold" htmlFor="crypto_network">Network</label>
+                                        <select required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="crypto_network">
+                                            <option value="">Select Network</option>
+                                            <option value="ERC20">Ethereum (ERC20)</option>
+                                            <option value="TRC20">Tron (TRC20)</option>
+                                            <option value="BSC">Binance Smart Chain (BEP20)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
                         </section>
                         <div className="pt-6 border-t border-[#f0f2f4] dark:border-gray-800 space-y-6">
-                            <button className="w-full bg-[#197fe6] text-white font-bold py-4 rounded-xl hover:bg-[#197fe6]/90 shadow-lg shadow-[#197fe6]/20 transition-all active:scale-[0.98]" type="submit">
-                                Submit Application
+                            <button
+                                className="w-full bg-[#197fe6] text-white font-bold py-4 rounded-xl hover:bg-[#197fe6]/90 shadow-lg shadow-[#197fe6]/20 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                                type="submit"
+                                disabled={loading}
+                            >
+                                {loading ? "Submitting..." : "Submit Application"}
                             </button>
                             <div className="flex items-start gap-3 bg-blue-50/50 dark:bg-[#197fe6]/5 p-4 rounded-xl">
                                 <span className="material-symbols-outlined text-[#197fe6] text-xl">info</span>
@@ -175,9 +224,6 @@ export default function AffiliateJoinPage() {
             <footer className="bg-white dark:bg-[#111921] border-t border-[#dce0e5] dark:border-gray-800 py-8">
                 <div className="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="flex items-center gap-3 opacity-60 grayscale">
-                        <svg className="size-6" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M36.7273 44C33.9891 44 31.6043 39.8386 30.3636 33.69C29.123 39.8386 26.7382 44 24 44C21.2618 44 18.877 39.8386 17.6364 33.69C16.3957 39.8386 14.0109 44 11.2727 44C7.25611 44 4 35.0457 4 24C4 12.9543 7.25611 4 11.2727 4C14.0109 4 16.3957 8.16144 17.6364 14.31C18.877 8.16144 21.2618 4 24 4C26.7382 4 29.123 8.16144 30.3636 14.31C31.6043 8.16144 33.9891 4 36.7273 4C40.7439 4 44 12.9543 44 24C44 35.0457 40.7439 44 36.7273 44Z" fill="currentColor"></path>
-                        </svg>
                         <span className="font-bold">JobSpeakPro</span>
                     </div>
                     <div className="flex gap-8 text-xs font-medium text-[#637588] dark:text-gray-400">

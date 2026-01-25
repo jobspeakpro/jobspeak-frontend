@@ -1,30 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+import UniversalHeader from '../../components/UniversalHeader.jsx';
+
 export default function AffiliatePage() {
     return (
-        <div className="bg-[#f6f7f8] dark:bg-[#111921] font-display text-[#111418] dark:text-white transition-colors duration-200">
-            {/* Top Navigation Bar */}
-            <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-[#111921]/80 backdrop-blur-md border-b border-[#dce0e5] dark:border-gray-800">
-                <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="text-[#197fe6]">
-                            <svg className="size-8" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M36.7273 44C33.9891 44 31.6043 39.8386 30.3636 33.69C29.123 39.8386 26.7382 44 24 44C21.2618 44 18.877 39.8386 17.6364 33.69C16.3957 39.8386 14.0109 44 11.2727 44C7.25611 44 4 35.0457 4 24C4 12.9543 7.25611 4 11.2727 4C14.0109 4 16.3957 8.16144 17.6364 14.31C18.877 8.16144 21.2618 4 24 4C26.7382 4 29.123 8.16144 30.3636 14.31C31.6043 8.16144 33.9891 4 36.7273 4C40.7439 4 44 12.9543 44 24C44 35.0457 40.7439 44 36.7273 44Z" fill="currentColor"></path>
-                            </svg>
-                        </div>
-                        <h2 className="text-xl font-bold tracking-tight">JobSpeakPro</h2>
-                    </div>
-                    <nav className="hidden md:flex items-center gap-8">
-                        <a className="text-sm font-medium hover:text-[#197fe6] transition-colors" href="#benefits">Benefits</a>
-                        <a className="text-sm font-medium hover:text-[#197fe6] transition-colors" href="#how-it-works">How it Works</a>
-                        <a className="text-sm font-medium hover:text-[#197fe6] transition-colors" href="#payouts">Payouts</a>
-                        <Link to="/affiliate/apply" className="bg-[#197fe6] text-white text-sm font-bold px-5 py-2.5 rounded-lg hover:bg-[#197fe6]/90 transition-all shadow-md active:scale-95">
-                            Apply Now
-                        </Link>
-                    </nav>
-                </div>
-            </header>
+        <div className="bg-background-light dark:bg-background-dark font-display text-[#111418] dark:text-white transition-colors duration-200">
+            {/* Top Navigation Bar Replaced */}
+            <UniversalHeader />
 
             <main className="max-w-[1200px] mx-auto px-6 py-12 space-y-24">
                 {/* Hero Section */}
@@ -35,7 +18,7 @@ export default function AffiliatePage() {
                             Early Access Program
                         </div>
                         <h1 className="text-4xl md:text-6xl font-black tracking-tight max-w-4xl leading-[1.1]">
-                            Become a Founding Affiliate — <span className="text-[#197fe6]">Earn 30% Revenue Share</span>
+                            Become a Founding Affiliate <span className="text-[#197fe6]">Earn 30% Revenue Share</span>
                         </h1>
                         <p className="text-lg md:text-xl text-[#637588] dark:text-gray-400 max-w-2xl leading-relaxed">
                             Help professionals practice interviews. Earn recurring commission on every customer you refer to the world's leading AI-powered interview prep platform.
@@ -44,9 +27,9 @@ export default function AffiliatePage() {
                             <Link to="/affiliate/apply" className="bg-[#197fe6] text-white text-base font-bold px-8 py-4 rounded-xl hover:bg-[#197fe6]/90 transition-all shadow-lg hover:shadow-[#197fe6]/20 active:scale-95">
                                 Apply to Become a Founding Affiliate
                             </Link>
-                            <button className="bg-white dark:bg-gray-800 border border-[#dce0e5] dark:border-gray-700 text-base font-bold px-8 py-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95">
+                            <a href="#important-notes" className="bg-white dark:bg-gray-800 border border-[#dce0e5] dark:border-gray-700 text-base font-bold px-8 py-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95">
                                 View Program Terms
-                            </button>
+                            </a>
                         </div>
                     </div>
                     {/* Decorative background */}
@@ -129,8 +112,8 @@ export default function AffiliatePage() {
                             </div>
                             <div className="p-5 bg-[#f6f7f8] dark:bg-gray-800 rounded-2xl border border-[#dce0e5] dark:border-gray-700">
                                 <span className="material-symbols-outlined text-[#197fe6] mb-3">workspace_premium</span>
-                                <h4 className="font-bold mb-1">Lifetime Founding Status</h4>
-                                <p className="text-sm text-[#637588] dark:text-gray-400">Lock in your 30% rate even if we lower the commission for future cohorts.</p>
+                                <h4 className="font-bold mb-1">Founding Partner Status</h4>
+                                <p className="text-sm text-[#637588] dark:text-gray-400">Lock in your 30% rate for 12-24 months.</p>
                             </div>
                             <div className="p-5 bg-[#f6f7f8] dark:bg-gray-800 rounded-2xl border border-[#dce0e5] dark:border-gray-700">
                                 <span className="material-symbols-outlined text-[#197fe6] mb-3">calendar_month</span>

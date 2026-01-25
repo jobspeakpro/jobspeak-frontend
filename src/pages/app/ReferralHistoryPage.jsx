@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { apiClient } from '../../utils/apiClient.js';
 import RedeemCreditModal from '../../components/RedeemCreditModal';
 
+import UniversalHeader from '../../components/UniversalHeader.jsx';
+
 export default function ReferralHistoryPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [history, setHistory] = useState([]);
@@ -25,29 +27,11 @@ export default function ReferralHistoryPage() {
     }, []);
 
     return (
-        <div className="bg-[#f6f7f8] dark:bg-[#111921] text-[#111418] dark:text-white min-h-screen font-display">
-            <div className="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+        <div className="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white min-h-screen font-display flex flex-col">
+            <UniversalHeader />
+            <div className="relative flex h-auto w-full flex-col group/design-root overflow-x-hidden flex-grow">
                 <div className="layout-container flex h-full grow flex-col">
-                    {/* TopNavBar */}
-                    <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#f0f2f4] dark:border-slate-800 px-10 py-3 bg-white dark:bg-[#111921] sticky top-0 z-50">
-                        <div className="flex items-center gap-4 text-[#111418] dark:text-white">
-                            <div className="size-6 text-[#4799eb]">
-                                <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M36.7273 44C33.9891 44 31.6043 39.8386 30.3636 33.69C29.123 39.8386 26.7382 44 24 44C21.2618 44 18.877 39.8386 17.6364 33.69C16.3957 39.8386 14.0109 44 11.2727 44C7.25611 44 4 35.0457 4 24C4 12.9543 7.25611 4 11.2727 4C14.0109 4 16.3957 8.16144 17.6364 14.31C18.877 8.16144 21.2618 4 24 4C26.7382 4 29.123 8.16144 30.3636 14.31C31.6043 8.16144 33.9891 4 36.7273 4C40.7439 4 44 12.9543 44 24C44 35.0457 40.7439 44 36.7273 44Z" fill="currentColor"></path>
-                                </svg>
-                            </div>
-                            <h2 className="text-lg font-bold leading-tight tracking-[-0.015em]">JobSpeakPro</h2>
-                        </div>
-                        <div className="flex flex-1 justify-end gap-8">
-                            <div className="flex items-center gap-9">
-                                <Link className="text-[#111418] dark:text-slate-300 text-sm font-medium leading-normal hover:text-[#4799eb] transition-colors" to="/dashboard">Dashboard</Link>
-                                <Link className="text-[#111418] dark:text-slate-300 text-sm font-medium leading-normal hover:text-[#4799eb] transition-colors" to="/practice">Practice</Link>
-                                <a className="text-[#4799eb] text-sm font-bold leading-normal" href="#">Referrals</a>
-                                <a className="text-[#111418] dark:text-slate-300 text-sm font-medium leading-normal hover:text-[#4799eb] transition-colors" href="#">Settings</a>
-                            </div>
-                            <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-[#4799eb]/20" data-alt="User profile avatar" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuAHMsVI-HaQgYUCbTxEAyOHoQgfpwpcWJNRzlEz_185CopmkYDln2sq9gTVsiTfws674igcNTQSwRO9g1a2bemSSPCFCBAgIG-Ygpe80XrCYm02Q16f_B2XOMcbzcWuMs3imhhiHozYupXuHuJAWF3ZW9PGGrh7q8ScqkbVuw6RYS4J9F2IPP9f_qRAOHIkfdxG1Pi1HBGLEMviIldgRF1WlRaedZonEoCCuHBc3ngz6SzunWE42kkFq5x7c-mp6ucabrGxysXA6I9m")' }}></div>
-                        </div>
-                    </header>
+                    {/* TopNavBar Removed - Replaced by UniversalHeader */}
                     <main className="px-4 md:px-20 lg:px-40 flex flex-1 justify-center py-5">
                         <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
                             {/* Breadcrumbs */}
@@ -149,8 +133,8 @@ export default function ReferralHistoryPage() {
                                                             <td className="px-6 py-4 text-sm text-[#637588] dark:text-slate-400">{item.dateJoined ? new Date(item.dateJoined).toLocaleDateString() : "-"}</td>
                                                             <td className="px-6 py-4">
                                                                 <span className={`inline-flex items-center gap-1.5 py-1 px-3 rounded-full text-xs font-bold ${item.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                                                        item.status === 'trial_active' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                                                                            'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                                                    item.status === 'trial_active' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                                                                        'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
                                                                     }`}>
                                                                     <span className="material-symbols-outlined text-[14px]">
                                                                         {item.status === 'completed' ? 'check_circle' :

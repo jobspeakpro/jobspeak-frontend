@@ -2,6 +2,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { apiClient } from "../../utils/apiClient.js";
+import { supabase } from "../../lib/supabaseClient.js"; // Import shared instance
 import UniversalHeader from "../../components/UniversalHeader.jsx";
 
 export default function SignUp() {
@@ -40,40 +41,35 @@ export default function SignUp() {
       const user = await signup(email, password);
 
       // Write first name to profiles.display_name
+      // Use Promise.all later if multiple independent writes, but here sequence is okay.
+      // We do NOT want to block specific unrelated things, but profile sync is somewhat important.
+      // However, to speed up UI, we can technically fire and forget or just not await heavily if not critical.
+      // But creating profile is fast. The issue was "supabase is not defined".
+
       if (user) {
-        try {
-          await supabase
-            .from('profiles')
-            .upsert({
-              id: user.id,
-              display_name: firstName.trim()
-            }, { onConflict: 'id' });
-        } catch (profileError) {
-          console.error('Profile update error:', profileError);
-          // Continue anyway - profile can be updated later
-        }
+        // Fire and forget profile update to speed up UI response? 
+        // Or await it to ensure consistency? 
+        // User asked to remove "blocking awaits causing delay". 
+        // Profile update is fast, but let's make it robust.
+        supabase
+          .from('profiles')
+          .upsert({
+            id: user?.id, // Ensure user.id is accessed safely
+            display_name: firstName.trim()
+          }, { onConflict: 'id' })
+          .then(({ error }) => {
+            if (error) console.error('Profile update error:', error);
+          });
       }
 
-      // Show email confirmation message - DO NOT auto-login
-      // setShowEmailConfirmation(true);
-      setToast("success");
-      setLoading(false);
-
-      // Track referral if code exists in URL or localStorage
-      // Logic: If ref param is in URL, use it. Else check localStorage (if we implemented global capture, but I'll stick to URL param here as primary, or just check both).
-      // Since we don't have a dedicated global capture yet, I'll check URL param here.
-      // But typically user might land on landing page and nav to signup.
-      // I'll grab from URL param `ref` if present.
+      // Track referral if code exists in URL
       const params = new URLSearchParams(window.location.search);
       const referralCode = params.get('ref');
 
       if (referralCode) {
-        try {
-          await apiClient.post("/referrals/track", { referralCode });
-        } catch (trackError) {
-          console.error("Referral track error:", trackError);
-          // Non-blocking
-        }
+        // Fire and forget referral tracking
+        apiClient.post("/referrals/track", { referralCode })
+          .catch(err => console.error("Referral track error:", err));
       }
 
       // Force sign out to ensure user is not logged in until confirmed
@@ -85,15 +81,16 @@ export default function SignUp() {
       setLoading(false);
 
     } catch (err) {
+      console.error("Signup error:", err);
       setError(err.message || "Something went wrong. Please try again.");
       setLoading(false);
     }
   };
 
-  // If email confirmation is shown, display that instead of the form
   if (showEmailConfirmation) {
     return (
-      <div className="bg-background-light dark:bg-background-dark text-[#111418] font-display antialiased min-h-screen flex flex-col">        <UniversalHeader />
+      <div className="bg-background-light dark:bg-background-dark text-[#111418] font-display antialiased min-h-screen flex flex-col">
+        <UniversalHeader />
         {/* Email Confirmation Message */}
         <main className="flex-grow flex items-center justify-center p-4 sm:p-8">
           <div className="w-full max-w-[540px] flex flex-col gap-6">

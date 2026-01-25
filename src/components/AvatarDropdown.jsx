@@ -59,6 +59,8 @@ export default function AvatarDropdown() {
         { label: "Dashboard", onClick: () => navigate("/dashboard") },
         { label: "Practice", onClick: () => navigate("/practice") },
         { label: "My Progress", onClick: () => navigate("/progress") },
+        { label: "Referrals", onClick: () => navigate("/referral") },
+        { label: "Affiliate", onClick: () => navigate("/affiliate") },
         { label: "Profile", onClick: () => navigate("/profile") },
         { label: "Billing / Upgrade", onClick: () => navigate("/pricing") },
         { label: "Sign out", onClick: handleLogout, danger: true },

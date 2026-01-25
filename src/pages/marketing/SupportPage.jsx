@@ -1,6 +1,7 @@
 ﻿import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
+import UniversalHeader from "../../components/UniversalHeader.jsx";
 
 export default function SupportPage() {
   const navigate = useNavigate();
@@ -8,66 +9,7 @@ export default function SupportPage() {
 
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col">
-      <header className="sticky top-0 z-50 w-full border-b border-[#e7ecf3] dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="flex size-8 items-center justify-center rounded bg-primary/10 text-primary">
-              <span className="material-symbols-outlined text-[24px]">graphic_eq</span>
-            </div>
-            <span className="text-lg font-bold tracking-tight text-[#0d131b] dark:text-white">JobSpeak Pro</span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-8">
-            <Link to="/how-it-works" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
-              How It Works
-            </Link>
-            <Link to="/#pricing" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
-              Pricing
-            </Link>
-            <Link to="/support" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
-              Support
-            </Link>
-            <Link to="/dashboard" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
-              Dashboard
-            </Link>
-          </nav>
-          <div className="flex items-center gap-4">
-            {isAuthed ? (
-              <>
-                <Link
-                  to="/dashboard"
-                  className="hidden sm:flex h-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 px-4 text-sm font-bold text-slate-700 dark:text-white transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  to="/interview"
-                  className="hidden sm:flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-bold text-white transition-colors hover:bg-blue-600"
-                >
-                  Start Practicing
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link
-                  to="/signin"
-                  className="hidden sm:flex h-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 px-4 text-sm font-bold text-slate-700 dark:text-white transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  to="/interview"
-                  className="hidden sm:flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-bold text-white transition-colors hover:bg-blue-600"
-                >
-                  Start Practicing
-                </Link>
-              </>
-            )}
-            <button className="md:hidden p-2 text-slate-600 dark:text-slate-400">
-              <span className="material-symbols-outlined">menu</span>
-            </button>
-          </div>
-        </div>
-      </header>
+      <UniversalHeader />
 
 
       <main className="flex-1 flex justify-center py-12 px-4 md:px-8">

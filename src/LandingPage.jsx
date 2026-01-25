@@ -25,7 +25,7 @@ export default function LandingPage() {
           {/* Gradient glow behind hero */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-blue-50 opacity-50 -z-0"></div>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-br from-blue-200/30 via-purple-200/30 to-blue-200/30 rounded-full blur-3xl -z-0"></div>
-          
+
           <div className="max-w-6xl mx-auto flex flex-col items-center text-center relative z-10">
             {/* Centered Hero */}
             <div className="flex flex-col gap-6 items-center max-w-4xl">
@@ -44,7 +44,7 @@ export default function LandingPage() {
               </h2>
 
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-center pt-4">
-                <button 
+                <button
                   onClick={() => {
                     gaEvent("start_speaking_click", { page: "landing" });
                     handlePracticeNow();
@@ -53,7 +53,7 @@ export default function LandingPage() {
                 >
                   Start Speaking (Free)
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     gaEvent("how_it_works_click", { page: "landing" });
                     navigate("/how-it-works");
@@ -63,7 +63,7 @@ export default function LandingPage() {
                   How it works
                 </button>
               </div>
-              
+
               {/* Helper text */}
               <p className="text-sm text-slate-500 mt-2">
                 No credit card required • Free to start
@@ -224,7 +224,7 @@ export default function LandingPage() {
               Join professionals transforming their careers with better English.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-              <button 
+              <button
                 onClick={() => {
                   gaEvent("start_speaking_now_click", { page: "landing" });
                   handlePracticeNow();
@@ -233,7 +233,7 @@ export default function LandingPage() {
               >
                 Start practicing free
               </button>
-              <button 
+              <button
                 onClick={() => {
                   gaEvent("view_pricing_click", { page: "landing" });
                   navigate("/pricing");
@@ -246,13 +246,42 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* AFFILIATE SECTION */}
+        <section className="w-full bg-slate-50 border-t border-slate-200 py-16 px-6 lg:px-40">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="inline-flex items-center justify-center p-3 mb-6 bg-purple-100 rounded-full text-purple-600">
+              <span className="material-symbols-outlined">handshake</span>
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-4">
+              Become an Affiliate Partner
+            </h2>
+            <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">
+              Love JobSpeak Pro? Earn money by sharing it with your audience. Get paid for every new subscriber you refer.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+              <button
+                onClick={() => navigate("/affiliate")}
+                className="inline-flex items-center justify-center rounded-lg h-12 px-6 bg-white border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 transition-colors shadow-sm"
+              >
+                Learn More
+              </button>
+              <button
+                onClick={() => navigate("/affiliate/apply")}
+                className="inline-flex items-center justify-center rounded-lg h-12 px-6 bg-purple-600 text-white font-bold hover:bg-purple-700 transition-colors shadow-sm"
+              >
+                Apply Now
+              </button>
+            </div>
+          </div>
+        </section>
+
         {/* Demo Modal */}
         {showDemoModal && (
-          <div 
+          <div
             className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
             onClick={() => setShowDemoModal(false)}
           >
-            <div 
+            <div
               className="bg-white dark:bg-[#2a1a1a] rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
