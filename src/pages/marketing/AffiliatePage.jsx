@@ -267,19 +267,7 @@ export default function AffiliatePage() {
                     </div>
                 </section>
 
-                {/* Final CTA Section */}
-                <section className="text-center py-20 border-t border-[#dce0e5] dark:border-gray-800">
-                    <h2 className="text-4xl font-black mb-6">Ready to help your audience win?</h2>
-                    <p className="text-lg text-[#637588] dark:text-gray-400 mb-10 max-w-2xl mx-auto">
-                        Join our founding cohort and start earning passive income while helping professionals land their dream jobs with AI-driven practice.
-                    </p>
-                    <Link to="/affiliate/apply" className="inline-block bg-[#197fe6] text-white text-lg font-bold px-12 py-5 rounded-2xl hover:bg-[#197fe6]/90 transition-all shadow-xl hover:shadow-[#197fe6]/30 active:scale-95">
-                        Apply to Become a Founding Affiliate
-                    </Link>
-                    <p className="mt-6 text-sm text-[#637588] dark:text-gray-400">
-                        Application takes 2 minutes. No credit card required.
-                    </p>
-                </section>
+                {/* Final CTA Section Removed */}
             </main>
 
             {/* Footer */}
@@ -301,6 +289,6 @@ export default function AffiliatePage() {
                     </div>
                 </div>
             </footer>
-        </div>
+        </div >
     );
 }

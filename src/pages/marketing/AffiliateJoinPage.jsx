@@ -364,29 +364,28 @@ export default function AffiliateJoinPage() {
                                     >
                                         <option value="">Select Platform</option>
                                         <option value="youtube">YouTube</option>
-                                        <option value="linkedin">LinkedIn</option>
                                         <option value="tiktok">TikTok</option>
+                                        <option value="instagram">Instagram</option>
+                                        <option value="twitter">Twitter/X</option>
+                                        <option value="linkedin">LinkedIn</option>
                                         <option value="blog">Blog</option>
-                                        <option value="community">Community</option>
                                         <option value="other">Other</option>
                                     </select>
                                 </div>
                                 {platform === 'other' && (
                                     <div className="space-y-2">
                                         <label className="text-sm font-semibold" htmlFor="platform_other">Specify Platform</label>
-                                        <input required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="platform_other" placeholder="e.g. Instagram" type="text" />
+                                        <input required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="platform_other" placeholder="e.g. Newsletter" type="text" />
                                     </div>
                                 )}
                                 <div className="space-y-2">
                                     <label className="text-sm font-semibold" htmlFor="audience">Audience Size</label>
                                     <select required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="audience">
                                         <option value="">Select Size</option>
-                                        <option value="<5k">&lt;5k</option>
-                                        <option value="5k-20k">5k-20k</option>
-                                        <option value="20k-50k">20k-50k</option>
-                                        <option value="50k-100k">50k-100k</option>
-                                        <option value="100k-200k">100k-200k</option>
-                                        <option value="200k-500k">200k-500k</option>
+                                        <option value="10k">10k</option>
+                                        <option value="50k">50k</option>
+                                        <option value="100k">100k</option>
+                                        <option value="200k">200k</option>
                                         <option value="500k+">500k+</option>
                                     </select>
                                 </div>

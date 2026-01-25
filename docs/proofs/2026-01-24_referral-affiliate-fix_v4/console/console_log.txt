@@ -1,0 +1,88 @@
+[log] HTML MARKER LOADED: html-marker-live-1
+[debug] [vite] connecting...
+[debug] [vite] connected.
+[info] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold
+[log] Supabase Env Vars Present: {url: true, key: true, mode: development}
+[log] [BUILD_ID] prod-routes-v1
+[log] ROUTE: /
+[log] [Sanity] Pinging GET /health...
+[log] ROUTE: /
+[log] [Sanity] Pinging GET /health...
+[log] [Sanity] /health status: 200
+[log] [Sanity] /health status: 200
+[log] HTML MARKER LOADED: html-marker-live-1
+[debug] [vite] connecting...
+[debug] [vite] connected.
+[info] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold
+[log] Supabase Env Vars Present: {url: true, key: true, mode: development}
+[log] [BUILD_ID] prod-routes-v1
+[log] ROUTE: /referral
+[log] [Sanity] Pinging GET /health...
+[log] ROUTE: /referral
+[log] [Sanity] Pinging GET /health...
+[log] ROUTE: /signin
+[log] [Sanity] /health status: 200
+[log] [Sanity] /health status: 200
+[log] HTML MARKER LOADED: html-marker-live-1
+[debug] [vite] connecting...
+[debug] [vite] connected.
+[info] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold
+[log] Supabase Env Vars Present: {url: true, key: true, mode: development}
+[log] [BUILD_ID] prod-routes-v1
+[log] ROUTE: /referral/history
+[log] [Sanity] Pinging GET /health...
+[log] ROUTE: /referral/history
+[log] [Sanity] Pinging GET /health...
+[log] ROUTE: /signin
+[error] Error checking billing status: ApiError: Failed to fetch
+    at apiClient (http://localhost:5173/src/utils/apiClient.js:157:11)
+    at async checkBillingStatus (http://localhost:5173/src/contexts/ProContext.jsx:32:20)
+[error] [Sanity] Connection failed: TypeError: Failed to fetch
+    at http://localhost:5173/src/main.jsx?t=1769311280508:75:7
+    at commitHookEffectListMount (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=7eba6d5f:16915:34)
+    at commitPassiveMountOnFiber (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=7eba6d5f:18156:19)
+    at commitPassiveMountEffects_complete (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=7eba6d5f:18129:17)
+    at commitPassiveMountEffects_begin (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=7eba6d5f:18119:15)
+    at commitPassiveMountEffects (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=7eba6d5f:18109:11)
+    at flushPassiveEffectsImpl (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=7eba6d5f:19490:11)
+    at flushPassiveEffects (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=7eba6d5f:19447:22)
+    at http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=7eba6d5f:19328:17
+    at workLoop (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=7eba6d5f:197:42)
+[error] [Sanity] Connection failed: TypeError: Failed to fetch
+    at http://localhost:5173/src/main.jsx?t=1769311280508:75:7
+    at commitHookEffectListMount (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=7eba6d5f:16915:34)
+    at invokePassiveEffectMountInDEV (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=7eba6d5f:18324:19)
+    at invokeEffectsInDev (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=7eba6d5f:19701:19)
+    at commitDoubleInvokeEffectsInDEV (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=7eba6d5f:19686:15)
+    at flushPassiveEffectsImpl (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=7eba6d5f:19503:13)
+    at flushPassiveEffects (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=7eba6d5f:19447:22)
+    at http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=7eba6d5f:19328:17
+    at workLoop (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=7eba6d5f:197:42)
+    at flushWork (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=7eba6d5f:176:22)
+[error] Error checking billing status: ApiError: Failed to fetch
+    at apiClient (http://localhost:5173/src/utils/apiClient.js:157:11)
+    at async checkBillingStatus (http://localhost:5173/src/contexts/ProContext.jsx:32:20)
+[log] HTML MARKER LOADED: html-marker-live-1
+[debug] [vite] connecting...
+[debug] [vite] connected.
+[info] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold
+[log] Supabase Env Vars Present: {url: true, key: true, mode: development}
+[log] [BUILD_ID] prod-routes-v1
+[log] ROUTE: /affiliate
+[log] [Sanity] Pinging GET /health...
+[log] ROUTE: /affiliate
+[log] [Sanity] Pinging GET /health...
+[log] [Sanity] /health status: 200
+[log] [Sanity] /health status: 200
+[log] HTML MARKER LOADED: html-marker-live-1
+[debug] [vite] connecting...
+[info] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold
+[log] Supabase Env Vars Present: {url: true, key: true, mode: development}
+[log] [BUILD_ID] prod-routes-v1
+[debug] [vite] connected.
+[log] ROUTE: /affiliate/apply
+[log] [Sanity] Pinging GET /health...
+[log] ROUTE: /affiliate/apply
+[log] [Sanity] Pinging GET /health...
+[log] [Sanity] /health status: 200
+[log] [Sanity] /health status: 200

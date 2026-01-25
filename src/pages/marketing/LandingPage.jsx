@@ -453,27 +453,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="bg-background-light py-20 border-t border-slate-200">
-          <div className="mx-auto max-w-[800px] px-4 text-center">
-            <div className="mb-8 flex flex-col items-center gap-2">
-              <span className="material-symbols-outlined text-slate-400 text-[32px]">lock</span>
-              <p className="text-slate-500 font-medium max-w-lg mx-auto">
-                Your practice sessions are private. JobSpeak Pro is built to support your learning, not judge or evaluate you.
-              </p>
-            </div>
-            <div className="mt-12">
-              <Link
-                to="/interview"
-                className="inline-flex h-14 min-w-[200px] items-center justify-center rounded-lg bg-primary px-8 text-lg font-bold text-white shadow-lg shadow-blue-200 transition-transform hover:scale-105"
-              >
-                Start Practicing
-              </Link>
-            </div>
-          </div>
-        </section>
       </main>
-
-
 
       <footer className="bg-white border-t border-[#e7ecf3] pt-12 pb-8">
         <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">
@@ -494,6 +474,12 @@ export default function LandingPage() {
               <Link to="/support" className="text-sm text-slate-600 hover:text-primary">
                 Support
               </Link>
+              <Link to="/affiliate" className="text-sm text-slate-600 hover:text-primary">
+                Affiliate
+              </Link>
+              <Link to="/referral" className="text-sm text-slate-600 hover:text-primary">
+                Referrals
+              </Link>
               <Link to="/privacy" className="text-sm text-slate-600 hover:text-primary">
                 Privacy Policy
               </Link>
@@ -503,7 +489,7 @@ export default function LandingPage() {
             </nav>
           </div>
           <div className="border-t border-slate-100 pt-8 text-center md:text-left">
-            <p className="text-xs text-slate-400">© 2023 JobSpeak Pro. All rights reserved.</p>
+            <p className="text-xs text-slate-400">© 2024 JobSpeak Pro. All rights reserved.</p>
           </div>
         </div>
       </footer>

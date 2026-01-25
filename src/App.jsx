@@ -19,6 +19,7 @@ import { getUserKey } from "./utils/userKey.js";
 import { isBlocked } from "./utils/usage.js";
 import { gaEvent } from "./utils/ga.js";
 import ActivityDebugOverlay from "./components/ActivityDebugOverlay.jsx";
+import ReferralHistoryPage from "./pages/app/ReferralHistoryPage.jsx";
 
 export default function App({ defaultTab = "interview" }) {
   const { isPro, refreshProStatus } = usePro();
