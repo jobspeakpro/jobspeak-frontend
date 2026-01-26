@@ -108,6 +108,7 @@ export default function ReferralPage() {
                                             readOnly
                                             type="text"
                                             id="referral-link-input"
+                                            data-testid="referral-code"
                                             value={loading ? "Loading..." : `https://jobspeakpro.com?ref=${referralCode || '...'}`}
                                         />
                                     </div>
@@ -142,6 +143,7 @@ export default function ReferralPage() {
                                             }
                                         }}
                                         disabled={loading || !referralCode}
+                                        data-testid="referral-copy"
                                         className="bg-[#197fe6] text-white px-8 h-12 rounded-full font-bold hover:bg-[#197fe6]/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#197fe6]/20"
                                     >
                                         <span className="material-symbols-outlined text-[20px]">content_copy</span>

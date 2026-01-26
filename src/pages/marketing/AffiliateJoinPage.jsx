@@ -89,15 +89,15 @@ export default function AffiliateJoinPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-sm font-semibold" htmlFor="full-name">Full Name</label>
-                                    <input required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="full-name" placeholder="John Doe" type="text" />
+                                    <input required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="full-name" data-testid="affiliate-name" placeholder="John Doe" type="text" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-semibold" htmlFor="email">Email Address</label>
-                                    <input required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="email" placeholder="john@example.com" type="email" />
+                                    <input required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="email" data-testid="affiliate-email" placeholder="john@example.com" type="email" />
                                 </div>
                                 <div className="md:col-span-2 space-y-2">
                                     <label className="text-sm font-semibold" htmlFor="country">Country</label>
-                                    <select required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="country">
+                                    <select required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="country" data-testid="affiliate-country">
                                         <option value="">Select Country</option>
                                         <option value="AF">Afghanistan</option>
                                         <option value="AX">Åland Islands</option>
@@ -360,6 +360,7 @@ export default function AffiliateJoinPage() {
                                         required
                                         className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]"
                                         id="platform"
+                                        data-testid="affiliate-platform"
                                         value={platform}
                                         onChange={(e) => setPlatform(e.target.value)}
                                     >
@@ -381,7 +382,7 @@ export default function AffiliateJoinPage() {
                                 )}
                                 <div className="space-y-2">
                                     <label className="text-sm font-semibold" htmlFor="audience">Audience Size</label>
-                                    <select required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="audience">
+                                    <select required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="audience" data-testid="affiliate-audience">
                                         <option value="">Select Size</option>
                                         <option value="10k">10k</option>
                                         <option value="50k">50k</option>
@@ -392,21 +393,21 @@ export default function AffiliateJoinPage() {
                                 </div>
                                 <div className="md:col-span-2 space-y-2">
                                     <label className="text-sm font-semibold" htmlFor="link">Link to Channel / Portfolio</label>
-                                    <input required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="link" placeholder="https://youtube.com/c/yourchannel" type="url" />
+                                    <input required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="link" data-testid="affiliate-link" placeholder="https://youtube.com/c/yourchannel" type="url" />
                                 </div>
                             </div>
                         </section>
                         <section>
                             <div className="space-y-2">
                                 <label className="text-sm font-semibold" htmlFor="strategy">How do you plan to promote JobSpeakPro?</label>
-                                <textarea required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="strategy" placeholder="Tell us about your content strategy..." rows="4"></textarea>
+                                <textarea required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="strategy" data-testid="affiliate-strategy" placeholder="Tell us about your content strategy..." rows="4"></textarea>
                             </div>
                         </section>
                         <section>
                             <h3 className="text-sm font-bold uppercase tracking-wider text-[#637588] mb-4">Payout Preference</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                                 <label className={`relative flex flex-col items-center gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${payoutMethod === 'paypal' ? 'border-[#197fe6] bg-blue-50 dark:bg-blue-900/20' : 'border-[#dce0e5] dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}>
-                                    <input className="absolute top-3 right-3 text-[#197fe6] focus:ring-[#197fe6] h-4 w-4" name="payout" type="radio" value="paypal" onChange={(e) => setPayoutMethod(e.target.value)} />
+                                    <input className="absolute top-3 right-3 text-[#197fe6] focus:ring-[#197fe6] h-4 w-4" name="payout" type="radio" value="paypal" data-testid="payout-paypal" onChange={(e) => setPayoutMethod(e.target.value)} />
                                     <span className="material-symbols-outlined text-[#197fe6] text-3xl">account_balance_wallet</span>
                                     <span className="text-sm font-bold">PayPal</span>
                                 </label>
@@ -426,7 +427,7 @@ export default function AffiliateJoinPage() {
                             {payoutMethod === 'paypal' && (
                                 <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
                                     <label className="text-sm font-semibold" htmlFor="paypal_email">PayPal Email Address</label>
-                                    <input required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="paypal_email" type="email" placeholder="paypal@example.com" />
+                                    <input required className="w-full px-4 py-2.5 rounded-lg border border-[#dce0e5] dark:border-gray-700 dark:bg-gray-800 text-sm focus:ring-[#197fe6] focus:border-[#197fe6]" id="paypal_email" data-testid="affiliate-paypal-email" type="email" placeholder="paypal@example.com" />
                                 </div>
                             )}
                             {payoutMethod === 'stripe' && (
@@ -457,6 +458,7 @@ export default function AffiliateJoinPage() {
                             <button
                                 className="w-full bg-[#197fe6] text-white font-bold py-4 rounded-xl hover:bg-[#197fe6]/90 shadow-lg shadow-[#197fe6]/20 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                                 type="submit"
+                                data-testid="affiliate-submit"
                                 disabled={loading}
                             >
                                 {loading ? "Submitting..." : "Submit Application"}

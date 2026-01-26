@@ -6,7 +6,7 @@
 - MODE: production
 
 ## Request Info
-- Test Email: test_aff_1769315010155@example.com
+- Test Email: test_aff_1769316948107@example.com
 - Request URL (captured): See logs
 
 ## Console Logs
@@ -24,6 +24,6 @@
 [log] ROUTE: /affiliate/apply
 [error] Failed to load resource: the server responded with a status of 404 ()
 [error] Affiliate apply error: ApiError: Not found
-    at Le (https://jobspeakpro.com/assets/index-DycBRhG8.js:81:6041)
-    at async l (https://jobspeakpro.com/assets/index-DycBRhG8.js:187:106086)
+    at Le (https://jobspeakpro.com/assets/index-DtOsjPKs.js:81:6041)
+    at async l (https://jobspeakpro.com/assets/index-DtOsjPKs.js:187:106086)
         

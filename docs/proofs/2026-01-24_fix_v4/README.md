@@ -1,10 +1,11 @@
 # Verification Proofs (V4.2)
 
-## Status
-- **Frontend Fixes**: Deployed (`32cde70`).
-- **Affiliate Apply**: Frontend correctly calls `POST /api/affiliate/apply`.
-  - **Current Result**: 404 Not Found (Production Backend appears to be missing the route or migration).
-  - **Action Required**: Apply SQL Migration (below) and ensure Backend Route exists.
+## Status Summary
+- **Frontend**: Fix `0934124` (V4.4) is **LIVE**.
+- **Request URL**: `https://jobspeak-backend-production.up.railway.app/api/affiliate/apply` (Correctly proxied with `/api`).
+- **Response**: 404 (Backend Error).
+  - The Frontend is now correctly sending traffic to the expected API endpoint.
+  - The Backend (Railway) is returning 404, indicating the route `/api/affiliate/apply` is not handled or the Backend is down/misconfigured.
 
 ## SQL Migration (Immediate Requirement)
 **File**: `jobspeak-backend/supabase-migrations/20240124_affiliate_payout_fields.sql`
@@ -32,10 +33,10 @@ ADD CONSTRAINT profiles_referral_code_key UNIQUE (referral_code);
 - `06_affiliate_error.png`: Submission returns 404 (Backend Missing).
 
 ## Request URL
-- **Captured URL**: `https://jobspeak-backend-production.up.railway.app/affiliate/apply`
+- **Captured URL**: `https://jobspeak-backend-production.up.railway.app/api/affiliate/apply`
 - **Method**: POST
 - **Payload**: `{"name":"Test Affiliate","email":"...","platform":"twitter", ...}`
-- **Note**: The captured URL is missing `/api` prefix, which confirms **Deployment V4.3 is NOT yet live** (Old code is running).
+- **Note**: The captured URL **contains** `/api` prefix. **Deployment V4.4 is LIVE**.
 
 ## Configuration
 - **VITE_API_BASE_URL**: `https://jobspeak-backend-production.up.railway.app`
