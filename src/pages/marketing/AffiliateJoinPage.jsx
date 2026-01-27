@@ -466,7 +466,7 @@ export default function AffiliateJoinPage() {
                             <div className="flex items-start gap-3 bg-blue-50/50 dark:bg-[#197fe6]/5 p-4 rounded-xl">
                                 <span className="material-symbols-outlined text-[#197fe6] text-xl">info</span>
                                 <p className="text-xs text-[#637588] dark:text-gray-400 leading-relaxed">
-                                    We manually review every application within 48 hours to ensure a high-quality partnership. You will receive an email once your application has been processed.
+                                    We review every application to ensure a high-quality partnership. Our team will contact you after review.
                                 </p>
                             </div>
                         </div>

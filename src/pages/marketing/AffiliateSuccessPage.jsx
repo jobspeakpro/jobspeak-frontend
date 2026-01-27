@@ -52,7 +52,7 @@ export default function AffiliateSuccessPage() {
                                     <span className="text-xs font-bold">1</span>
                                 </div>
                                 <p className="text-zinc-700 dark:text-zinc-300 text-sm leading-normal">
-                                    We received your application. We’ll email you after review.
+                                    We received your application. Our team will review it and contact you.
                                 </p>
                             </div>
                             <div className="flex items-start gap-4">
