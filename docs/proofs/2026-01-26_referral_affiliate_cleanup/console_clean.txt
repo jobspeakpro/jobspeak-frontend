@@ -1,0 +1,25 @@
+[log] HTML MARKER LOADED: html-marker-live-1
+[log] Supabase Env Vars Present: {url: true, key: true, mode: production}
+[log] [BUILD_ID] prod-routes-v1
+[log] ROUTE: /affiliate
+[log] HTML MARKER LOADED: html-marker-live-1
+[log] Supabase Env Vars Present: {url: true, key: true, mode: production}
+[log] [BUILD_ID] prod-routes-v1
+[log] ROUTE: /how-it-works
+[log] HTML MARKER LOADED: html-marker-live-1
+[log] Supabase Env Vars Present: {url: true, key: true, mode: production}
+[log] [BUILD_ID] prod-routes-v1
+[log] ROUTE: /signup
+[error] Failed to load resource: the server responded with a status of 400 ()
+[error] Signup error: AuthApiError: Email address "test.ref.ui.1769487637349@example.com" is invalid
+    at Kx (https://jobspeakpro.com/assets/index-B9THmL3i.js:107:8423)
+    at async HC (https://jobspeakpro.com/assets/index-B9THmL3i.js:107:9412)
+    at async le (https://jobspeakpro.com/assets/index-B9THmL3i.js:107:9073)
+    at async O4.signUp (https://jobspeakpro.com/assets/index-B9THmL3i.js:122:18477)
+    at async signup (https://jobspeakpro.com/assets/index-B9THmL3i.js:123:46581)
+    at async y (https://jobspeakpro.com/assets/index-B9THmL3i.js:131:136805)
+[log] HTML MARKER LOADED: html-marker-live-1
+[log] Supabase Env Vars Present: {url: true, key: true, mode: production}
+[log] [BUILD_ID] prod-routes-v1
+[log] ROUTE: /referral
+[log] ROUTE: /signin
