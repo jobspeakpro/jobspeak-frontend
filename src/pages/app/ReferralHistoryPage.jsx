@@ -1,17 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import UniversalHeader from '../../components/UniversalHeader.jsx';
+import { apiClient } from '../../utils/apiClient.js';
 
 export default function ReferralHistoryPage() {
     const navigate = useNavigate();
     const [modalOpen, setModalOpen] = useState(false);
+    const [history, setHistory] = useState([]);
+    const [stats, setStats] = useState({ credits: 0, total_referred: 0 });
+    const [loading, setLoading] = useState(true);
+    const [redeeming, setRedeeming] = useState(false);
 
-    // Mock history data (or fetch from API if available, user didn't specify API for history, just UI)
-    // "Buttons on history page must function"
-    const history = [
-        { id: 1, user: "john.d@example.com", date: "2024-01-20", status: "Joined", creditDetails: "Pending" },
-        { id: 2, user: "sarah.m@gmail.com", date: "2024-01-15", status: "Pro Plan", creditDetails: "+1 Mock Interview Credit" },
-    ];
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [historyRes, statsRes] = await Promise.all([
+                    apiClient("/api/referrals/history").catch(() => []),
+                    apiClient("/api/referrals/stats").catch(() => ({ credits: 0, total_referred: 0 }))
+                ]);
+
+                // Handle various response shapes defensively
+                const historyData = Array.isArray(historyRes) ? historyRes : (historyRes?.data || []);
+                setHistory(historyData);
+                setStats(statsRes?.data || statsRes || { credits: 0, total_referred: 0 });
+            } catch (err) {
+                console.error("Failed to load referral data", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    const handleRedeem = async () => {
+        setRedeeming(true);
+        try {
+            await apiClient("/api/referrals/redeem", { method: "POST" });
+            // Refresh stats
+            const statsRes = await apiClient("/api/referrals/stats");
+            setStats(statsRes?.data || statsRes || { credits: 0 });
+            setModalOpen(false);
+            alert("Credit redeemed successfully! A mock interview session has been added to your account.");
+        } catch (err) {
+            console.error("Redeem error:", err);
+            alert(err.message || "Failed to redeem credit.");
+        } finally {
+            setRedeeming(false);
+        }
+    };
 
     return (
         <div className="bg-background-light dark:bg-background-dark font-display text-[#111418] dark:text-white transition-colors duration-300 min-h-screen flex flex-col">
@@ -27,7 +63,9 @@ export default function ReferralHistoryPage() {
                 </div>
 
                 <div className="bg-white dark:bg-[#111921] rounded-xl border border-[#dce0e5] dark:border-gray-800 overflow-hidden shadow-sm">
-                    {history.length > 0 ? (
+                    {loading ? (
+                        <div className="p-12 text-center text-gray-500">Loading...</div>
+                    ) : history.length > 0 ? (
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
                                 <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-[#dce0e5] dark:border-gray-800">
@@ -39,16 +77,16 @@ export default function ReferralHistoryPage() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-[#dce0e5] dark:divide-gray-800">
-                                    {history.map((item) => (
-                                        <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                            <td className="px-6 py-4">{item.user}</td>
-                                            <td className="px-6 py-4">{item.date}</td>
+                                    {history.map((item, idx) => (
+                                        <tr key={item.id || idx} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                            <td className="px-6 py-4">{item.referred_email || item.email || "Hidden"}</td>
+                                            <td className="px-6 py-4">{item.created_at ? new Date(item.created_at).toLocaleDateString() : "-"}</td>
                                             <td className="px-6 py-4">
-                                                <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold ${item.status === 'Pro Plan' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                    {item.status}
+                                                <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold ${item.status === 'converted' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                    {item.status || 'Pending'}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4">{item.creditDetails}</td>
+                                            <td className="px-6 py-4">{item.reward_status || (item.status === 'converted' ? 'Credit Earned' : 'Pending')}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -67,7 +105,9 @@ export default function ReferralHistoryPage() {
                             <span className="material-symbols-outlined">redeem</span>
                         </div>
                         <div>
-                            <h3 className="font-bold text-lg">You have credits available!</h3>
+                            <h3 className="font-bold text-lg">
+                                You have {stats.credits || 0} credit{(stats.credits !== 1) && 's'} available!
+                            </h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400">Use your credits to unlock more mock interviews.</p>
                         </div>
                     </div>
@@ -80,7 +120,8 @@ export default function ReferralHistoryPage() {
                         </button>
                         <button
                             onClick={() => setModalOpen(true)}
-                            className="px-6 py-3 rounded-lg font-bold bg-[#197fe6] text-white hover:bg-[#197fe6]/90 transition-colors shadow-lg shadow-[#197fe6]/20"
+                            disabled={!stats.credits || stats.credits <= 0}
+                            className="px-6 py-3 rounded-lg font-bold bg-[#197fe6] text-white hover:bg-[#197fe6]/90 transition-colors shadow-lg shadow-[#197fe6]/20 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Use Credit Now
                         </button>
@@ -101,11 +142,16 @@ export default function ReferralHistoryPage() {
                                 You are about to use 1 Referral Credit for a Mock Interview session.
                             </p>
                             <div className="flex flex-col gap-3">
-                                <button className="w-full py-3 bg-[#197fe6] text-white font-bold rounded-xl hover:bg-[#197fe6]/90 transition-colors">
-                                    Confirm & Start Session
+                                <button
+                                    onClick={handleRedeem}
+                                    disabled={redeeming}
+                                    className="w-full py-3 bg-[#197fe6] text-white font-bold rounded-xl hover:bg-[#197fe6]/90 transition-colors disabled:opacity-70"
+                                >
+                                    {redeeming ? "Redeeming..." : "Confirm & Start Session"}
                                 </button>
                                 <button
                                     onClick={() => setModalOpen(false)}
+                                    disabled={redeeming}
                                     className="w-full py-3 text-slate-500 font-bold hover:bg-slate-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
                                 >
                                     Cancel
