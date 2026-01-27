@@ -35,6 +35,16 @@ export default function SignIn() {
 
     try {
       await signin(email, password);
+      // Check for pending referral in localStorage (auto-claim)
+      const pendingRef = localStorage.getItem("referralCode");
+      if (pendingRef) {
+        apiClient.post("/referrals/claim", { referralCode: pendingRef })
+          .then(() => {
+            console.log("Referral claimed successfully on login");
+            localStorage.removeItem("referralCode");
+          })
+          .catch(e => console.error("Auto-claim referral failed:", e));
+      }
       // Track successful sign in
       if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
         window.gtag('event', 'sign_up');

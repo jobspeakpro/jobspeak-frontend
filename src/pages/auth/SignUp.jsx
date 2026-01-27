@@ -62,13 +62,18 @@ export default function SignUp() {
           });
       }
 
-      // Track referral if code exists in URL
+      // Track referral if code exists in URL or localStorage (new fix)
       const params = new URLSearchParams(window.location.search);
-      const referralCode = params.get('ref');
+      const referralCode = params.get('ref') || localStorage.getItem('referralCode');
 
       if (referralCode) {
         // Fire and forget referral tracking
         apiClient.post("/referrals/track", { referralCode })
+          .then(() => {
+            console.log("Referral tracked successfully during signup");
+            // Clear from storage so it doesn't persist forever
+            localStorage.removeItem("referralCode");
+          })
           .catch(err => console.error("Referral track error:", err));
       }
 
