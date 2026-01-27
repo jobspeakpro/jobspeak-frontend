@@ -31,11 +31,11 @@ export default function AffiliateJoinPage() {
             name: form['full-name'].value,
             email: form['email'].value,
             country: form['country'].value,
-            platform: platform === 'other' ? form['platform_other'].value : platform,
+            primaryPlatform: platform === 'other' ? form['platform_other'].value : platform,
             audienceSize: form['audience'].value,
             channelLink: form['link'].value,
             promoPlan: form['strategy'].value,
-            payoutMethod: payoutMethod,
+            payoutPreference: payoutMethod,
             payoutDetails: {}
         };
 
