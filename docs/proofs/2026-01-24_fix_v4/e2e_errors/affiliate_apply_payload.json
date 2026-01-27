@@ -1,0 +1,13 @@
+{
+    "name": "E2E Success Test User",
+    "email": "e2e_success_1738031880342@example.com",
+    "country": "US",
+    "primaryPlatform": "twitter",
+    "audienceSize": "10k",
+    "channelLink": "https://twitter.com/e2esuccessuser",
+    "promoPlan": "E2E automated SUCCESS test strategy content for production verification",
+    "payoutPreference": "paypal",
+    "payoutDetails": {
+        "email": "paypal_success_1738031880342@example.com"
+    }
+}
