@@ -20,6 +20,10 @@ import { isBlocked } from "./utils/usage.js";
 import { gaEvent } from "./utils/ga.js";
 import ActivityDebugOverlay from "./components/ActivityDebugOverlay.jsx";
 import ReferralHistoryPage from "./pages/app/ReferralHistoryPage.jsx";
+import AffiliatePage from "./pages/marketing/AffiliatePage.jsx";
+import AffiliateJoinPage from "./pages/marketing/AffiliateJoinPage.jsx";
+import AffiliateSuccessPage from "./pages/marketing/AffiliateSuccessPage.jsx";
+import AffiliateTermsPage from "./pages/marketing/AffiliateTermsPage.jsx";
 
 export default function App({ defaultTab = "interview" }) {
   const { isPro, refreshProStatus } = usePro();

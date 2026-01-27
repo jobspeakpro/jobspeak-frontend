@@ -473,21 +473,7 @@ export default function AffiliateJoinPage() {
                     </form>
                 </div>
             </main>
-            <footer className="bg-white dark:bg-[#111921] border-t border-[#dce0e5] dark:border-gray-800 py-8">
-                <div className="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-                    <div className="flex items-center gap-3 opacity-60 grayscale">
-                        <span className="font-bold">JobSpeakPro</span>
-                    </div>
-                    <div className="flex gap-8 text-xs font-medium text-[#637588] dark:text-gray-400">
-                        <a className="hover:text-[#197fe6] transition-colors" href="#">Affiliate Terms</a>
-                        <a className="hover:text-[#197fe6] transition-colors" href="#">Privacy Policy</a>
-                        <a className="hover:text-[#197fe6] transition-colors" href="#">Support</a>
-                    </div>
-                    <div className="text-xs text-[#637588] dark:text-gray-400">
-                        © 2024 JobSpeakPro Inc.
-                    </div>
-                </div>
-            </footer>
+
         </div>
     );
 }

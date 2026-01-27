@@ -29,6 +29,7 @@ import PracticeSummary from "./pages/app/PracticeSummary.jsx";
 import AffiliatePage from "./pages/marketing/AffiliatePage.jsx";
 import AffiliateJoinPage from "./pages/marketing/AffiliateJoinPage.jsx";
 import AffiliateSuccessPage from "./pages/marketing/AffiliateSuccessPage.jsx";
+import AffiliateTermsPage from "./pages/marketing/AffiliateTermsPage.jsx";
 import ReferralPage from "./pages/app/ReferralPage.jsx";
 import ReferralHistoryPage from "./pages/app/ReferralHistoryPage.jsx";
 import { ProProvider } from "./contexts/ProContext.jsx";
@@ -113,6 +114,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                   <Route path="/affiliate" element={<AffiliatePage />} />
                   <Route path="/affiliate/apply" element={<AffiliateJoinPage />} />
                   <Route path="/affiliate/joined" element={<AffiliateSuccessPage />} />
+                  <Route path="/affiliate/terms" element={<AffiliateTermsPage />} />
 
                   {/* App routes (practice pages) */}
                   <Route path="/practice" element={<PracticeSpeakingPage />} />

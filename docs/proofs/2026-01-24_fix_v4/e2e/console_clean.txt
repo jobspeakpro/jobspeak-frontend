@@ -1,0 +1,17 @@
+=== CONSOLE LOGS ===
+
+[log] HTML MARKER LOADED: html-marker-live-1
+[log] Supabase Env Vars Present: {url: true, key: true, mode: production}
+[log] [BUILD_ID] prod-routes-v1
+[log] ROUTE: /affiliate/apply
+[error] Failed to load resource: the server responded with a status of 400 ()
+[error] Affiliate apply error: ApiError: validation_failed
+    at Le (https://jobspeakpro.com/assets/index-BZej9pjb.js:81:6041)
+    at async l (https://jobspeakpro.com/assets/index-BZej9pjb.js:187:106086)
+
+=== CONSOLE ERRORS ===
+
+[error] Failed to load resource: the server responded with a status of 400 ()
+[error] Affiliate apply error: ApiError: validation_failed
+    at Le (https://jobspeakpro.com/assets/index-BZej9pjb.js:81:6041)
+    at async l (https://jobspeakpro.com/assets/index-BZej9pjb.js:187:106086)

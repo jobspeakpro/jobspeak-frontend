@@ -27,16 +27,12 @@ export default function AffiliatePage() {
                             <Link to="/affiliate/apply" className="bg-[#197fe6] text-white text-base font-bold px-8 py-4 rounded-xl hover:bg-[#197fe6]/90 transition-all shadow-lg hover:shadow-[#197fe6]/20 active:scale-95">
                                 Apply to Become a Founding Affiliate
                             </Link>
-                            <a
-                                href="#important-notes"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    document.getElementById('important-notes')?.scrollIntoView({ behavior: 'smooth' });
-                                }}
+                            <Link
+                                to="/affiliate/terms"
                                 className="bg-white dark:bg-gray-800 border border-[#dce0e5] dark:border-gray-700 text-base font-bold px-8 py-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95"
                             >
                                 View Program Terms
-                            </a>
+                            </Link>
                         </div>
                     </div>
                     {/* Decorative background */}
@@ -237,35 +233,7 @@ export default function AffiliatePage() {
                     </div>
                 </section>
 
-                {/* Important Notes Section */}
-                <section className="bg-[#f0f2f4] dark:bg-gray-800/30 rounded-3xl p-8 border-l-4 border-[#197fe6]">
-                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[#197fe6]">gavel</span>
-                        Important Notes (Plain English)
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-4">
-                            <div>
-                                <h4 className="font-bold text-sm uppercase tracking-wide text-[#197fe6]">Ownership & Equity</h4>
-                                <p className="text-sm text-[#637588] dark:text-gray-400 leading-relaxed">This is a revenue-share partnership, not a grant of equity. Affiliates do not own customer data or have any legal claim to the company assets.</p>
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-sm uppercase tracking-wide text-[#197fe6]">Fraud Policy</h4>
-                                <p className="text-sm text-[#637588] dark:text-gray-400 leading-relaxed">We have zero tolerance for self-referrals, coupon site spamming, or fraudulent activity. Accounts found violating these will be terminated immediately.</p>
-                            </div>
-                        </div>
-                        <div className="space-y-4">
-                            <div>
-                                <h4 className="font-bold text-sm uppercase tracking-wide text-[#197fe6]">Verification</h4>
-                                <p className="text-sm text-[#637588] dark:text-gray-400 leading-relaxed">We reserve the right to request proof of traffic sources or audience verification at any time to maintain program integrity.</p>
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-sm uppercase tracking-wide text-[#197fe6]">Relationship</h4>
-                                <p className="text-sm text-[#637588] dark:text-gray-400 leading-relaxed">You are an independent contractor. Participation does not create an employer-employee relationship or a formal partnership/joint venture.</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+
 
                 {/* Final CTA Section Removed */}
             </main>
