@@ -95,7 +95,7 @@ export default function App({ defaultTab = "interview" }) {
       const refCode = params.get("ref");
       if (refCode) {
         console.log("[Referral] Captured code:", refCode);
-        localStorage.setItem("referralCode", refCode);
+        localStorage.setItem("jsp_ref_code", refCode);
       }
 
       // 2. Check query params for Stripe

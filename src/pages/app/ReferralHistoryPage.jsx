@@ -20,7 +20,7 @@ export default function ReferralHistoryPage() {
                 ]);
 
                 // Handle various response shapes defensively
-                const historyData = Array.isArray(historyRes) ? historyRes : (historyRes?.data || []);
+                const historyData = Array.isArray(historyRes) ? historyRes : (historyRes?.history || historyRes?.data || []);
                 setHistory(historyData);
                 setStats(statsRes?.data || statsRes || { credits: 0, total_referred: 0 });
             } catch (err) {

@@ -26,7 +26,7 @@ export default function ReferralPage() {
     const linkUrl = referralCode ? `https://jobspeakpro.com?ref=${referralCode}` : 'Loading...';
 
     return (
-        <div className="bg-background-light dark:bg-background-dark font-display text-[#111418] dark:text-white transition-colors duration-300 min-h-screen flex flex-col">
+        <div className="bg-white dark:bg-[#0d1117] font-display text-[#111418] dark:text-white transition-colors duration-300 min-h-screen flex flex-col">
             <UniversalHeader />
 
             <main className="flex-1 w-full max-w-[1024px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">

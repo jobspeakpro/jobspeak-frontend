@@ -8,7 +8,7 @@ export default function AffiliateSuccessPage() {
     }, []);
 
     return (
-        <div className="bg-[#f6f8f6] dark:bg-[#102216] min-h-screen flex flex-col font-display transition-colors duration-300">
+        <div className="bg-white dark:bg-[#0d1117] min-h-screen flex flex-col font-display transition-colors duration-300">
             {/* TopNavBar */}
             <UniversalHeader />
 

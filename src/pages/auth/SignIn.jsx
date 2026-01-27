@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { apiClient } from "../../utils/apiClient.js";
 import UniversalHeader from "../../components/UniversalHeader.jsx";
 
 export default function SignIn() {
@@ -36,12 +37,16 @@ export default function SignIn() {
     try {
       await signin(email, password);
       // Check for pending referral in localStorage (auto-claim)
-      const pendingRef = localStorage.getItem("referralCode");
+      // Check for pending referral in localStorage (auto-claim)
+      const pendingRef = localStorage.getItem("jsp_ref_code");
       if (pendingRef) {
-        apiClient.post("/referrals/claim", { referralCode: pendingRef })
+        apiClient("/api/referrals/claim", {
+          method: "POST",
+          body: { referralCode: pendingRef }
+        })
           .then(() => {
             console.log("Referral claimed successfully on login");
-            localStorage.removeItem("referralCode");
+            localStorage.removeItem("jsp_ref_code");
           })
           .catch(e => console.error("Auto-claim referral failed:", e));
       }

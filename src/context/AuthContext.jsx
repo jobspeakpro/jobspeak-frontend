@@ -58,7 +58,7 @@ export function AuthProvider({ children }) {
       if (!user) return;
 
       // 1. Claim Referral Code (if any)
-      const referralCode = localStorage.getItem("referralCode");
+      const referralCode = localStorage.getItem("jsp_ref_code");
       if (referralCode) {
         console.log("[Referral] Claiming code:", referralCode);
         try {
@@ -67,12 +67,12 @@ export function AuthProvider({ children }) {
             body: { referralCode }
           });
           console.log("[Referral] Claim success");
-          localStorage.removeItem("referralCode"); // Clear to prevent re-claim
+          localStorage.removeItem("jsp_ref_code"); // Clear to prevent re-claim
         } catch (err) {
           console.warn("[Referral] Claim failed or already claimed:", err);
           // If 400 (already claimed, or self-referral), we should also clear to stop retrying
           if (err?.status >= 400 && err?.status < 500) {
-            localStorage.removeItem("referralCode");
+            localStorage.removeItem("jsp_ref_code");
           }
         }
       }
