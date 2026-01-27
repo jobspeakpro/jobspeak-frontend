@@ -1,0 +1,18 @@
+NO ERRORS DETECTED ✅
+
+
+=== FULL LOGS ===
+[log] HTML MARKER LOADED: html-marker-live-1
+[log] Supabase Env Vars Present: {url: true, key: true, mode: production}
+[log] [BUILD_ID] prod-routes-v1
+[log] ROUTE: /affiliate/apply
+[log] ROUTE: /affiliate/joined
+[log] HTML MARKER LOADED: html-marker-live-1
+[log] Supabase Env Vars Present: {url: true, key: true, mode: production}
+[log] [BUILD_ID] prod-routes-v1
+[log] ROUTE: /signup
+[log] HTML MARKER LOADED: html-marker-live-1
+[log] Supabase Env Vars Present: {url: true, key: true, mode: production}
+[log] [BUILD_ID] prod-routes-v1
+[log] ROUTE: /referral
+[log] ROUTE: /signin
