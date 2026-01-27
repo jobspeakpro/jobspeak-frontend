@@ -1,0 +1,15 @@
+[log] HTML MARKER LOADED: html-marker-live-1
+[log] Supabase Env Vars Present: {url: true, key: true, mode: production}
+[log] [BUILD_ID] prod-routes-v1
+[log] ROUTE: /affiliate
+[log] ROUTE: /affiliate/terms
+[log] ROUTE: /affiliate
+[log] HTML MARKER LOADED: html-marker-live-1
+[log] Supabase Env Vars Present: {url: true, key: true, mode: production}
+[log] [BUILD_ID] prod-routes-v1
+[log] ROUTE: /affiliate/apply
+[log] HTML MARKER LOADED: html-marker-live-1
+[log] Supabase Env Vars Present: {url: true, key: true, mode: production}
+[log] [BUILD_ID] prod-routes-v1
+[log] ROUTE: /affiliate/joined
+[log] ROUTE: /
