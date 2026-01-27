@@ -57,6 +57,26 @@ export function AuthProvider({ children }) {
     const syncReferralData = async () => {
       if (!user) return;
 
+      // 1. Claim Referral Code (if any)
+      const referralCode = localStorage.getItem("referralCode");
+      if (referralCode) {
+        console.log("[Referral] Claiming code:", referralCode);
+        try {
+          await apiClient("/api/referrals/claim", {
+            method: "POST",
+            body: { referralCode }
+          });
+          console.log("[Referral] Claim success");
+          localStorage.removeItem("referralCode"); // Clear to prevent re-claim
+        } catch (err) {
+          console.warn("[Referral] Claim failed or already claimed:", err);
+          // If 400 (already claimed, or self-referral), we should also clear to stop retrying
+          if (err?.status >= 400 && err?.status < 500) {
+            localStorage.removeItem("referralCode");
+          }
+        }
+      }
+
       // Check if guest answered referral question in localStorage
       const guestValue = localStorage.getItem("jsp_heard_about_value");
       const guestAnswered = localStorage.getItem("jsp_heard_about_answered");

@@ -85,13 +85,20 @@ export default function App({ defaultTab = "interview" }) {
   // Ref to track if GA events have been fired for this page load (prevent duplicates)
   const hasTrackedStripeReturn = useRef(false);
 
-  // Handle Stripe redirect params (query params or path)
+  // Handle Stripe redirect params and Referral codes
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
       const pathname = window.location.pathname.toLowerCase();
 
-      // Check query params
+      // 1. Capture Referral Code (if any)
+      const refCode = params.get("ref");
+      if (refCode) {
+        console.log("[Referral] Captured code:", refCode);
+        localStorage.setItem("referralCode", refCode);
+      }
+
+      // 2. Check query params for Stripe
       const success = params.get("success");
       const canceled = params.get("canceled");
 

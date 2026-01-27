@@ -54,24 +54,26 @@ export default function ReferralPage() {
                         <span className="material-symbols-outlined text-[#197fe6]">redeem</span>
                         The Reward Offer
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Strict Grid Container */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                         {/* For Them */}
-                        <div className="flex flex-1 gap-4 rounded-xl border border-[#dce0e5] dark:border-[#2a343f] bg-white dark:bg-[#1A222C] p-6 shadow-sm hover:border-[#197fe6]/30 transition-colors">
-                            <div className="bg-[#197fe6]/10 text-[#197fe6] w-12 h-12 rounded-full flex items-center justify-center shrink-0">
+                        <div className="w-full min-w-0 flex flex-col sm:flex-row gap-4 rounded-xl border border-[#dce0e5] dark:border-[#2a343f] bg-white dark:bg-[#1A222C] p-6 shadow-sm hover:border-[#197fe6]/30 transition-colors overflow-hidden relative">
+                            {/* Icon */}
+                            <div className="bg-[#197fe6]/10 text-[#197fe6] size-12 rounded-full flex items-center justify-center shrink-0">
                                 <span className="material-symbols-outlined text-2xl">celebration</span>
                             </div>
-                            <div className="flex flex-col gap-1">
-                                <h3 className="text-[#111418] dark:text-white text-lg font-bold leading-tight">For them</h3>
+                            <div className="flex flex-col gap-1 z-10 relative">
+                                <h3 className="text-[#111418] dark:text-white text-lg font-bold leading-tight truncate">For them</h3>
                                 <p className="text-[#637588] dark:text-gray-400 text-base">7 days of full Pro access to all premium tools</p>
                             </div>
                         </div>
                         {/* For You */}
-                        <div className="flex flex-1 gap-4 rounded-xl border border-[#dce0e5] dark:border-[#2a343f] bg-white dark:bg-[#1A222C] p-6 shadow-sm hover:border-[#197fe6]/30 transition-colors">
-                            <div className="bg-[#197fe6]/10 text-[#197fe6] w-12 h-12 rounded-full flex items-center justify-center shrink-0">
+                        <div className="w-full min-w-0 flex flex-col sm:flex-row gap-4 rounded-xl border border-[#dce0e5] dark:border-[#2a343f] bg-white dark:bg-[#1A222C] p-6 shadow-sm hover:border-[#197fe6]/30 transition-colors overflow-hidden relative">
+                            <div className="bg-[#197fe6]/10 text-[#197fe6] size-12 rounded-full flex items-center justify-center shrink-0">
                                 <span className="material-symbols-outlined text-2xl">wallet_giftcard</span>
                             </div>
-                            <div className="flex flex-col gap-1">
-                                <h3 className="text-[#111418] dark:text-white text-lg font-bold leading-tight">For you</h3>
+                            <div className="flex flex-col gap-1 z-10 relative">
+                                <h3 className="text-[#111418] dark:text-white text-lg font-bold leading-tight truncate">For you</h3>
                                 <p className="text-[#637588] dark:text-gray-400 text-base">1 free mock interview credit for your next session</p>
                             </div>
                         </div>

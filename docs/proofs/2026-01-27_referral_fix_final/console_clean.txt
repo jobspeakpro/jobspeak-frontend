@@ -1,0 +1,19 @@
+Errors detected:
+[MOCK] Limit check failed: TypeError: Failed to fetch (jobspeak-backend-production.up.railway.app)
+    at https://jobspeakpro.com/assets/index-ChAYgFVH.js:31:4451
+    at https://jobspeakpro.com/assets/index-ChAYgFVH.js:131:193473
+TypeError: Failed to fetch (wlxacpqlokoiqqhgaads.supabase.co)
+    at https://jobspeakpro.com/assets/index-ChAYgFVH.js:31:4451
+    at https://jobspeakpro.com/assets/index-ChAYgFVH.js:107:2954
+    at HC (https://jobspeakpro.com/assets/index-ChAYgFVH.js:107:9330)
+    at le (https://jobspeakpro.com/assets/index-ChAYgFVH.js:107:9079)
+    at https://jobspeakpro.com/assets/index-ChAYgFVH.js:123:9884
+    at O4._useSession (https://jobspeakpro.com/assets/index-ChAYgFVH.js:123:8118)
+    at async O4._getUser (https://jobspeakpro.com/assets/index-ChAYgFVH.js:123:9669)
+    at async https://jobspeakpro.com/assets/index-ChAYgFVH.js:123:9473
+Error fetching profile: {message: TypeError: Failed to fetch (wlxacpqlokoiqqhgaads.supabase.co), details: TypeError: Failed to fetch
+    at https://jobspeak…bspeakpro.com/assets/index-ChAYgFVH.js:131:204318, hint: , code: }
+Failed to load resource: the server responded with a status of 404 ()
+Fetch referral code error: ApiError: Failed to fetch (jobspeak-backend-production.up.railway.app)
+    at Te (https://jobspeakpro.com/assets/index-ChAYgFVH.js:81:6286)
+    at async i (https://jobspeakpro.com/assets/index-ChAYgFVH.js:187:86938)

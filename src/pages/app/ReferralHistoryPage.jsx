@@ -36,14 +36,23 @@ export default function ReferralHistoryPage() {
         setRedeeming(true);
         try {
             await apiClient("/api/referrals/redeem", { method: "POST" });
-            // Refresh stats
-            const statsRes = await apiClient("/api/referrals/stats");
-            setStats(statsRes?.data || statsRes || { credits: 0 });
+
+            // Success! Redirect to practice
             setModalOpen(false);
-            alert("Credit redeemed successfully! A mock interview session has been added to your account.");
+
+            // Create toast or alert
+            // We'll just alert for now as requested or simple toast
+            // Ideally we redirect to /interview
+            navigate('/interview');
+
+            // If we could show a toast on the next page that would be great, but alert is fine for now as per "show success + navigate"
+            // Actually, let's just navigate. The user will see their unlimited access (if that's what credit gives) or credit count (if it's a consumptive model).
+            // User requirement: "If 200: redirect to mock interview start (or show success + navigate to correct page)"
+
         } catch (err) {
             console.error("Redeem error:", err);
-            alert(err.message || "Failed to redeem credit.");
+            // "If 400: show toast “Not eligible / no credits” and do NOT redirect."
+            alert(err.message || "Not eligible or no credits available.");
         } finally {
             setRedeeming(false);
         }
