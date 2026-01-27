@@ -1,0 +1,26 @@
+{
+  "url": "https://jobspeak-backend-production.up.railway.app/api/affiliate/apply",
+  "method": "POST",
+  "headers": {
+    "x-guest-key": "99178652-4a23-45e5-bb91-ddf9d912d370",
+    "sec-ch-ua-platform": "\"Windows\"",
+    "Referer": "https://jobspeakpro.com/",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sec-ch-ua": "\"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+    "Content-Type": "application/json",
+    "sec-ch-ua-mobile": "?0"
+  },
+  "payload": {
+    "name": "DevTools Capture Test",
+    "email": "devtools_1769481446707@example.com",
+    "country": "US",
+    "primaryPlatform": "twitter",
+    "audienceSize": "10k",
+    "channelLink": "https://twitter.com/devtoolstest",
+    "promoPlan": "DevTools network capture test",
+    "payoutPreference": "paypal",
+    "payoutDetails": {
+      "email": "paypal_devtools_1769481446707@example.com"
+    }
+  }
+}

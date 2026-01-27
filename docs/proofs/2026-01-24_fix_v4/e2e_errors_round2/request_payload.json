@@ -1,0 +1,13 @@
+{
+  "name": "DevTools Capture Test",
+  "email": "devtools_1769481446707@example.com",
+  "country": "US",
+  "primaryPlatform": "twitter",
+  "audienceSize": "10k",
+  "channelLink": "https://twitter.com/devtoolstest",
+  "promoPlan": "DevTools network capture test",
+  "payoutPreference": "paypal",
+  "payoutDetails": {
+    "email": "paypal_devtools_1769481446707@example.com"
+  }
+}
