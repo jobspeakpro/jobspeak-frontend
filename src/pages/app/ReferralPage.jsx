@@ -69,6 +69,7 @@ export default function ReferralPage() {
                         </div>
                         {/* For You */}
                         <div className="w-full min-w-0 flex flex-col sm:flex-row gap-4 rounded-xl border border-[#dce0e5] dark:border-[#2a343f] bg-white dark:bg-[#1A222C] p-6 shadow-sm hover:border-[#197fe6]/30 transition-colors overflow-hidden relative h-full">
+                            {/* Icon - Same style as 'For them' */}
                             <div className="bg-[#197fe6]/10 text-[#197fe6] size-12 rounded-full flex items-center justify-center shrink-0">
                                 <span className="material-symbols-outlined text-2xl">wallet_giftcard</span>
                             </div>

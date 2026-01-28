@@ -90,8 +90,15 @@ export default function SignUp() {
 
     } catch (err) {
       console.error("Signup error:", err);
-      setError(err.message || "Something went wrong. Please try again.");
-      setLoading(false);
+      // Check for rate limit error (Supabase usually returns 429 or specific message)
+      if (err.message && (err.message.includes("rate limit") || err.message.includes("too many requests") || err.status === 429)) {
+        setError("Sign up rate limit exceeded. Please try again later. Do not retry immediately.");
+        // Disable form to prevent retry spam
+        setLoading(true);
+      } else {
+        setError(err.message || "Something went wrong. Please try again.");
+        setLoading(false);
+      }
     }
   };
 
