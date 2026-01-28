@@ -15,41 +15,31 @@ export default function ReferralHistoryPage() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Get current user
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) return; // Should be handled by protected route, but safety first
+                // Fetch history and stats from backend API
+                // Defensive: Provide fallbacks in case of catch
+                const [historyRes, statsRes] = await Promise.all([
+                    apiClient("/api/referrals/history").catch(err => {
+                        console.error("History fetch error:", err);
+                        return { history: [] };
+                    }),
+                    apiClient("/api/referrals/stats").catch(err => {
+                        console.error("Stats fetch error:", err);
+                        return { credits: 0, total_referred: 0 };
+                    })
+                ]);
 
-                // 1. Fetch History from 'referrals' table
-                // We want rows where current user is referrer OR referee
-                const { data: historyRows, error: historyError } = await supabase
-                    .from('referrals')
-                    .select('*, profiles:referred_user_id(email, display_name)')
-                    .or(`referrer_user_id.eq.${user.id},referred_user_id.eq.${user.id}`)
-                    .order('created_at', { ascending: false });
+                // Handle various response shapes (backend usually returns { history: [] })
+                const historyData = historyRes?.history || (Array.isArray(historyRes) ? historyRes : []);
+                setHistory(historyData);
 
-                if (historyError) throw historyError;
-
-                // 2. Fetch Credits from 'profiles' table
-                const { data: profileData, error: profileError } = await supabase
-                    .from('profiles')
-                    .select('recruiter_credits')
-                    .eq('id', user.id)
-                    .single();
-
-                if (profileError) throw profileError;
-
-                setHistory(historyRows || []);
-
-                // Calculate total referred from rows where user is referrer
-                const totalReferred = (historyRows || []).filter(r => r.referrer_user_id === user.id).length;
-
+                // Handle stats response (backend returns { credits: n, total_referred: n })
                 setStats({
-                    credits: profileData?.recruiter_credits || 0,
-                    total_referred: totalReferred
+                    credits: statsRes?.credits || statsRes?.data?.credits || 0,
+                    total_referred: statsRes?.total_referred || statsRes?.data?.total_referred || 0
                 });
 
             } catch (err) {
-                console.error("Failed to load referral data (Supabase):", err);
+                console.error("Failed to load referral data", err);
             } finally {
                 setLoading(false);
             }
@@ -62,21 +52,15 @@ export default function ReferralHistoryPage() {
         try {
             await apiClient("/api/referrals/redeem", { method: "POST" });
 
-            // Success! Redirect to practice
+            // Success! 
             setModalOpen(false);
 
-            // Create toast or alert
-            // We'll just alert for now as requested or simple toast
-            // Ideally we redirect to /interview
+            // Redirect to interview as requested
             navigate('/interview');
-
-            // If we could show a toast on the next page that would be great, but alert is fine for now as per "show success + navigate"
-            // Actually, let's just navigate. The user will see their unlimited access (if that's what credit gives) or credit count (if it's a consumptive model).
-            // User requirement: "If 200: redirect to mock interview start (or show success + navigate to correct page)"
 
         } catch (err) {
             console.error("Redeem error:", err);
-            // "If 400: show toast “Not eligible / no credits” and do NOT redirect."
+            // Show alert if not eligible
             alert(err.message || "Not eligible or no credits available.");
         } finally {
             setRedeeming(false);
