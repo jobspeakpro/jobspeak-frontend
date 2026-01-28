@@ -68,15 +68,13 @@ export default function ReferralPage() {
                             </div>
                         </div>
                         {/* For You */}
-                        <div className="w-full min-w-0 rounded-xl border border-[#dce0e5] dark:border-[#2a343f] bg-white dark:bg-[#1A222C] p-6 shadow-sm hover:border-[#197fe6]/30 transition-colors overflow-hidden relative h-full">
-                            <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                                    <span className="material-symbols-outlined text-slate-600 text-[20px]">card_giftcard</span>
-                                </div>
-                                <div className="flex flex-col gap-1 z-10 relative">
-                                    <h3 className="text-[#111418] dark:text-white text-lg font-bold leading-tight break-words">For you</h3>
-                                    <p className="text-[#637588] dark:text-gray-400 text-base">1 free mock interview credit for your next session</p>
-                                </div>
+                        <div className="w-full min-w-0 flex flex-col sm:flex-row gap-4 rounded-xl border border-[#dce0e5] dark:border-[#2a343f] bg-white dark:bg-[#1A222C] p-6 shadow-sm hover:border-[#197fe6]/30 transition-colors overflow-hidden relative h-full">
+                            <div className="bg-[#197fe6]/10 text-[#197fe6] size-12 rounded-full flex items-center justify-center shrink-0">
+                                <span className="material-symbols-outlined text-2xl">wallet_giftcard</span>
+                            </div>
+                            <div className="flex flex-col gap-1 z-10 relative">
+                                <h3 className="text-[#111418] dark:text-white text-lg font-bold leading-tight break-words">For you</h3>
+                                <p className="text-[#637588] dark:text-gray-400 text-base">1 free mock interview credit for your next session</p>
                             </div>
                         </div>
                     </div>
