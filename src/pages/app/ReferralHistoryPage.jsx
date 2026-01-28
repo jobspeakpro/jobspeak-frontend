@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import UniversalHeader from '../../components/UniversalHeader.jsx';
 import { apiClient } from '../../utils/apiClient.js';
+import { supabase } from '../../lib/supabaseClient.js';
 
 export default function ReferralHistoryPage() {
     const navigate = useNavigate();
@@ -14,17 +15,41 @@ export default function ReferralHistoryPage() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [historyRes, statsRes] = await Promise.all([
-                    apiClient("/api/referrals/history").catch(() => []),
-                    apiClient("/api/referrals/stats").catch(() => ({ credits: 0, total_referred: 0 }))
-                ]);
+                // Get current user
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return; // Should be handled by protected route, but safety first
 
-                // Handle various response shapes defensively
-                const historyData = Array.isArray(historyRes) ? historyRes : (historyRes?.history || historyRes?.data || []);
-                setHistory(historyData);
-                setStats(statsRes?.data || statsRes || { credits: 0, total_referred: 0 });
+                // 1. Fetch History from 'referrals' table
+                // We want rows where current user is referrer OR referee
+                const { data: historyRows, error: historyError } = await supabase
+                    .from('referrals')
+                    .select('*, profiles:referred_user_id(email, display_name)')
+                    .or(`referrer_user_id.eq.${user.id},referred_user_id.eq.${user.id}`)
+                    .order('created_at', { ascending: false });
+
+                if (historyError) throw historyError;
+
+                // 2. Fetch Credits from 'profiles' table
+                const { data: profileData, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('recruiter_credits')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profileError) throw profileError;
+
+                setHistory(historyRows || []);
+
+                // Calculate total referred from rows where user is referrer
+                const totalReferred = (historyRows || []).filter(r => r.referrer_user_id === user.id).length;
+
+                setStats({
+                    credits: profileData?.recruiter_credits || 0,
+                    total_referred: totalReferred
+                });
+
             } catch (err) {
-                console.error("Failed to load referral data", err);
+                console.error("Failed to load referral data (Supabase):", err);
             } finally {
                 setLoading(false);
             }
