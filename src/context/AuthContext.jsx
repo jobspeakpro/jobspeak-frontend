@@ -57,25 +57,9 @@ export function AuthProvider({ children }) {
     const syncReferralData = async () => {
       if (!user) return;
 
-      // 1. Claim Referral Code (if any)
-      const referralCode = localStorage.getItem("jsp_ref_code");
-      if (referralCode) {
-        console.log("[Referral] Claiming code:", referralCode);
-        try {
-          await apiClient("/api/referrals/claim", {
-            method: "POST",
-            body: { referralCode }
-          });
-          console.log("[Referral] Claim success");
-          localStorage.removeItem("jsp_ref_code"); // Clear to prevent re-claim
-        } catch (err) {
-          console.warn("[Referral] Claim failed or already claimed:", err);
-          // If 400 (already claimed, or self-referral), we should also clear to stop retrying
-          if (err?.status >= 400 && err?.status < 500) {
-            localStorage.removeItem("jsp_ref_code");
-          }
-        }
-      }
+      // 1. Referral Code is now handled solely via signup metadata (see SignUp.jsx)
+      // We do not claim it separately here to avoid double-counting or side effects.
+      // The backend handles attribution via the user metadata.
 
       // Check if guest answered referral question in localStorage
       const guestValue = localStorage.getItem("jsp_heard_about_value");
@@ -226,10 +210,11 @@ export function AuthProvider({ children }) {
     return data.user;
   };
 
-  const signup = async (email, password) => {
+  const signup = async (email, password, options = {}) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options,
     });
 
     if (error) {

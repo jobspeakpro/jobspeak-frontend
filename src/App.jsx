@@ -24,6 +24,7 @@ import AffiliatePage from "./pages/marketing/AffiliatePage.jsx";
 import AffiliateJoinPage from "./pages/marketing/AffiliateJoinPage.jsx";
 import AffiliateSuccessPage from "./pages/marketing/AffiliateSuccessPage.jsx";
 import AffiliateTermsPage from "./pages/marketing/AffiliateTermsPage.jsx";
+import { setCookie } from "./utils/cookie.js";
 
 export default function App({ defaultTab = "interview" }) {
   const { isPro, refreshProStatus } = usePro();
@@ -96,6 +97,7 @@ export default function App({ defaultTab = "interview" }) {
       if (refCode) {
         console.log("[Referral] Captured code:", refCode);
         localStorage.setItem("jsp_ref_code", refCode);
+        setCookie("jsp_ref_code", refCode, 60); // 60 days
       }
 
       // 2. Check query params for Stripe

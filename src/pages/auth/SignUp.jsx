@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext.jsx";
 import { apiClient } from "../../utils/apiClient.js";
 import { supabase } from "../../lib/supabaseClient.js"; // Import shared instance
 import UniversalHeader from "../../components/UniversalHeader.jsx";
+import { getCookie } from "../../utils/cookie.js";
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -38,23 +39,28 @@ export default function SignUp() {
     }
 
     try {
-      const user = await signup(email, password);
+      // 1. Get referral code from URL, localStorage, or cookie
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('ref') || localStorage.getItem('jsp_ref_code') || getCookie('jsp_ref_code');
 
-      // Write first name to profiles.display_name
-      // Use Promise.all later if multiple independent writes, but here sequence is okay.
-      // We do NOT want to block specific unrelated things, but profile sync is somewhat important.
-      // However, to speed up UI, we can technically fire and forget or just not await heavily if not critical.
-      // But creating profile is fast. The issue was "supabase is not defined".
+      const options = {
+        data: {
+          display_name: firstName.trim(),
+        }
+      };
 
+      if (code) {
+        options.data.affiliate_code = code;
+      }
+
+      const user = await signup(email, password, options);
+
+      // Write first name to profiles.display_name ( redundancy for safety, though metadata often handles it via triggers)
       if (user) {
-        // Fire and forget profile update to speed up UI response? 
-        // Or await it to ensure consistency? 
-        // User asked to remove "blocking awaits causing delay". 
-        // Profile update is fast, but let's make it robust.
         supabase
           .from('profiles')
           .upsert({
-            id: user?.id, // Ensure user.id is accessed safely
+            id: user.id,
             display_name: firstName.trim()
           }, { onConflict: 'id' })
           .then(({ error }) => {
@@ -62,22 +68,17 @@ export default function SignUp() {
           });
       }
 
-      // Track referral if code exists in URL or localStorage (new fix)
-      const params = new URLSearchParams(window.location.search);
-      const referralCode = params.get('ref') || localStorage.getItem('jsp_ref_code');
-
-      if (referralCode) {
-        // Fire and forget referral tracking
-        apiClient("/api/referrals/track", {
-          method: "POST",
-          body: { referralCode }
-        })
-          .then(() => {
-            console.log("Referral tracked successfully during signup");
-            // Clear from storage so it doesn't persist forever
-            localStorage.removeItem("jsp_ref_code");
-          })
-          .catch(err => console.error("Referral track error:", err));
+      // Cleanup storage
+      if (code) {
+        localStorage.removeItem("jsp_ref_code");
+        // We might want to keep the cookie for a bit or clear it. 
+        // Usually good practice to clear if fully consumed, but user said 'survives refresh' not necessarily 'survives signup'. 
+        // Clearing is cleaner.
+        // But user constraint: "Store it in localStorage + cookie (30–60 days)"
+        // And "Backend receives correct code". 
+        // If we clear it here, it's done.
+        // Let's NOT clear the cookie explicitly unless requested, but clearing localStorage is fine.
+        // Actually, let's keep it simple.
       }
 
       // Force sign out to ensure user is not logged in until confirmed

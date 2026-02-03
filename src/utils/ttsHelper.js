@@ -78,7 +78,7 @@ export async function fetchTtsBlobUrl({ text, voiceId = "DEFAULT", speed = 1.0 }
     };
 
     // Low-noise debug log
-    console.log("TTS payload (/api/tts)", payload);
+    console.log("[TTS Debug] Payload:", payload);
 
     const res = await apiClient("/api/tts", {
       method: "POST",
@@ -124,6 +124,8 @@ export async function fetchTtsBlobUrl({ text, voiceId = "DEFAULT", speed = 1.0 }
 
         // Check if response contains audioUrl field
         if (jsonData.audioUrl) {
+          console.log("[TTS Debug] Response:", jsonData);
+          console.log("[TTS Debug] Resolved audioUrl:", jsonData.audioUrl);
           // Cache the data URI directly
           ttsCache.set(cacheKey, jsonData.audioUrl);
           return { url: jsonData.audioUrl, contentType: "audio/mpeg", error: null };
@@ -243,91 +245,17 @@ export function clearTtsCacheEntry(text, voiceId = "DEFAULT") {
 }
 
 
-/**
- * Fallback: Play text using browser's native SpeechSynthesis
- * @param {string} text - Text to speak
- * @param {string} preferredVoiceId - Optional preference (e.g. "us_female_emma") to try matching gender/locale
- * @param {number} rate - Playback rate (0.1 - 10)
- */
-export function playFallbackTTS(text, preferredVoiceId = "DEFAULT", rate = 1.0) {
-  return new Promise((resolve, reject) => {
-    if (!window.speechSynthesis) {
-      console.warn("Browser does not support SpeechSynthesis");
-      resolve(false); // Not treated as error, just "did not play"
-      return;
-    }
-
-    // Cancel any current speaking
-    window.speechSynthesis.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = rate;
-
-    // Try to select a voice
-    const voices = window.speechSynthesis.getVoices();
-    let selectedVoice = null;
-
-    const vIdLow = (preferredVoiceId || "").toLowerCase();
-    const isUK = vIdLow.includes("uk") || vIdLow.includes("gb");
-    const isMale = vIdLow.includes("male") && !vIdLow.includes("female");
-
-    // 1. Try exact locale match + gender heuristic
-    // Note: Browser voices don't always expose gender reliably, so we check names
-    const locale = isUK ? "en-GB" : "en-US";
-
-    // Heuristic descriptors in voice names
-    const genderKeywords = isMale ? ["male", "david", "daniel"] : ["female", "samantha", "zira", "google"];
-
-    // Find best match
-    selectedVoice = voices.find(v =>
-      v.lang.includes(locale) &&
-      genderKeywords.some(k => v.name.toLowerCase().includes(k))
-    );
-
-    // 2. Fallback to any voice with correct locale
-    if (!selectedVoice) {
-      selectedVoice = voices.find(v => v.lang.includes(locale));
-    }
-
-    // 3. Fallback to any English voice
-    if (!selectedVoice) {
-      selectedVoice = voices.find(v => v.lang.includes("en"));
-    }
-
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
-    }
-
-    utterance.onend = () => {
-      resolve(true);
-    };
-
-    utterance.onerror = (e) => {
-      console.error("SpeechSynthesis error:", e);
-      // Don't reject, just resolve false so UI can decide to show toast or not
-      // But typically fallback failure is silent or logged
-      resolve(false);
-    };
-
-    window.speechSynthesis.speak(utterance);
-  });
+// Fallback functions are strictly disabled per requirements.
+export function playFallbackTTS() {
+  console.warn("Browser TTS fallback is disabled.");
+  return Promise.resolve(false);
 }
 
-/**
- * Synchronous check if browser supports TTS
- */
 export function hasBrowserTTS() {
-  return !!window.speechSynthesis;
+  return false;
 }
 
-/**
- * Trigger immediate browser fallback
- * Returns true if started, false if not supported
- */
-export function triggerBrowserFallback(text, preferredVoiceId = "DEFAULT", rate = 1.0) {
-  if (!window.speechSynthesis) return false;
-
-  // Fire and forget - but we return boolean for UI updates
-  playFallbackTTS(text, preferredVoiceId, rate).catch(err => console.error("Fallback error", err));
-  return true;
+export function triggerBrowserFallback() {
+  console.warn("Browser TTS fallback is disabled.");
+  return false;
 }

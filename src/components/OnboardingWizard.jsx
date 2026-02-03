@@ -245,7 +245,7 @@ function OnboardingWizard({ onComplete }) {
 
                     if (playPromise !== undefined) {
                         await playPromise;
-                        console.log("[ONBOARDING] ✅ Audio playing successfully!");
+                        console.log("[ONBOARDING] ✅ Audio playing — Promise resolved");
                         setIsPlayingPrompt(true);
                         setAutoplayBlocked(false); // Autoplay worked
                     }
@@ -255,7 +255,9 @@ function OnboardingWizard({ onComplete }) {
                     setAutoplayBlocked(true); // Show tap to play prompt
                 }
             } else {
-                console.error("[ONBOARDING] No TTS URL returned from fetchTtsBlobUrl");
+                console.error("!!! TTS FAILURE — AUDIO SKIPPED !!!", { text, step });
+                setIsPlayingPrompt(false);
+                setAutoplayBlocked(false); // Not blocked by browser, just failed
             }
         } catch (err) {
             console.error("[ONBOARDING] Prompt TTS error:", err);
