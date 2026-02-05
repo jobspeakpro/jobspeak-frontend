@@ -267,9 +267,11 @@ export function AuthProvider({ children }) {
       console.log('[SIGNUP] Success - check email for verification');
 
       // Return success indicator for UI to show "Check your email" message
+      // If backend sends actionLink (QA mode), pass it through
       return {
         requiresEmailVerification: true,
-        email: data.email || email
+        email: data.email || email,
+        actionLink: data.actionLink
       };
     } catch (error) {
       // If it's already our friendly error, rethrow it

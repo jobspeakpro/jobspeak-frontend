@@ -16,6 +16,7 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
+  const [qaVerifyLink, setQaVerifyLink] = useState(null);
 
   // Auto-dismiss toast - INCREASED TO 6000ms (+3000ms)
   useEffect(() => {
@@ -67,6 +68,10 @@ export default function SignUp() {
       // Show email confirmation message
       if (result.requiresEmailVerification) {
         setShowEmailConfirmation(true);
+        // If QA mode returned a link, save it to state to show the button
+        if (result.actionLink) {
+          setQaVerifyLink(result.actionLink);
+        }
         setToast("success");
       }
 
@@ -74,9 +79,13 @@ export default function SignUp() {
 
     } catch (err) {
       console.error("Signup error:", err);
-      // AuthContext now throws friendly errors, so we can display them directly.
-      // We explicitly avoid showing "rate limit" messages to the user as requested.
-      setError(err.message || "Signup temporarily unavailable. Try again.");
+      // AuthContext throws friendly errors. Ensure we NEVER show raw errors.
+      // Explicitly mask any potential lingering rate limit text just in case.
+      let msg = err.message || "Signup temporarily unavailable. Try again.";
+      if (msg.toLowerCase().includes("rate limit") || msg.toLowerCase().includes("too many requests")) {
+        msg = "Signup temporarily unavailable. Try again.";
+      }
+      setError(msg);
       setLoading(false);
     }
   };
@@ -101,6 +110,20 @@ export default function SignUp() {
                   Email will be sent from Supabase (noreply@supabase.io). If you don't see it, check spam or promotions.
                 </p>
               </div>
+
+              {/* QA / Dev Mode Verification Link */}
+              {qaVerifyLink && (
+                <div className="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 text-center">
+                  <p className="text-amber-800 dark:text-amber-200 text-sm font-semibold mb-2">⚡ QA / Debug Mode Detected</p>
+                  <a
+                    href={qaVerifyLink}
+                    className="inline-flex items-center justify-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-lg transition-colors"
+                  >
+                    Verify Account Now
+                  </a>
+                </div>
+              )}
+
               <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 rounded-lg p-4 text-sm leading-relaxed border border-blue-100 dark:border-blue-800/50 mb-6">
                 <p className="font-semibold mb-2">Next steps:</p>
                 <ol className="list-decimal list-inside space-y-1">
