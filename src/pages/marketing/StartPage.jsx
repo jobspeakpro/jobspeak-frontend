@@ -7,7 +7,8 @@ export default function StartPage() {
   const navigate = useNavigate();
 
   return (
-    <>`n      <UniversalHeader />
+    <>
+      <UniversalHeader />
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center py-10 px-4 md:px-0">
         <div className="w-full max-w-[640px] flex flex-col gap-10">
@@ -81,7 +82,7 @@ export default function StartPage() {
           </div>
           {/* Primary CTA */}
           <div className="flex flex-col items-center gap-6 pb-12">
-            <button 
+            <button
               onClick={() => navigate("/practice")}
               className="bg-primary hover:bg-primary/90 text-white text-lg font-bold py-4 px-12 rounded-full shadow-lg shadow-blue-500/20 transition-all duration-200 transform hover:scale-[1.02] focus:ring-4 focus:ring-blue-500/30 outline-none"
             >
@@ -91,7 +92,7 @@ export default function StartPage() {
               <p className="text-[#617289] dark:text-gray-500 text-sm">
                 You can explore pricing later if you choose.
               </p>
-              <Link 
+              <Link
                 to="/pricing"
                 className="text-primary dark:text-blue-400 text-sm font-medium hover:underline"
               >

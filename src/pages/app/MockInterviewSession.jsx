@@ -8,6 +8,7 @@ import VoiceRecorder from "../../components/VoiceRecorder.jsx";
 import MockInterviewGate from "../../components/MockInterviewGate.jsx";
 import interviewerAvatar from "../../assets/avatars/SarahJ.png";
 import { trackActivityStart, isActivityTracked, markActivityTracked, getTabId } from "../../utils/activityClient.js";
+import { requestServerTTS } from "../../utils/ttsClient.js";
 
 // LOCAL HISTORY TEST #2 - 2025-12-31 09:30 - Second verification attempt
 // Adding debug Logging for Persistence
@@ -18,6 +19,7 @@ export default function MockInterviewSession() {
     const { user } = useAuth();
     const type = searchParams.get("type") || "short";
     const [elig, setElig] = useState({ loading: true, canStartMock: false, reason: null, isGuest: false });
+    const [entitlements, setEntitlements] = useState(null); // Entitlements check
 
     // Route guard: redirect if user tries to access long interview
     useEffect(() => {
@@ -26,6 +28,34 @@ export default function MockInterviewSession() {
             navigate('/mock-interview/session?type=short', { replace: true });
         }
     }, [type, navigate]);
+
+    // --- ENTITLEMENTS CHECK (Runtime) ---
+    useEffect(() => {
+        const fetchEntitlements = async () => {
+            try {
+                const response = await apiClient.get('/api/entitlements');
+                setEntitlements(response.data);
+                console.log('[ENTITLEMENTS] Mock interview allowed:', response.data.mockInterview?.allowed);
+
+                // Set eligibility based on entitlements
+                if (response.data.mockInterview?.allowed) {
+                    setElig({ loading: false, canStartMock: true, reason: null, isGuest: false });
+                } else {
+                    setElig({
+                        loading: false,
+                        canStartMock: false,
+                        reason: response.data.mockInterview?.reason || 'NO_CREDITS',
+                        isGuest: !user
+                    });
+                }
+            } catch (err) {
+                console.error('[ENTITLEMENTS] Failed to fetch:', err);
+                setElig({ loading: false, canStartMock: false, reason: 'ERROR', isGuest: !user });
+                setEntitlements({ mockInterview: { allowed: false, reason: 'ERROR' } });
+            }
+        };
+        fetchEntitlements();
+    }, [user]);
 
     // Check mock interview limit status on mount
     useEffect(() => {
@@ -78,6 +108,10 @@ export default function MockInterviewSession() {
     const [questionSpeed, setQuestionSpeed] = useState(() => {
         const stored = localStorage.getItem("mock_question_speed");
         return stored ? Number(stored) : 1.0;
+    });
+    const [questionVoiceId, setQuestionVoiceId] = useState(() => {
+        const stored = localStorage.getItem("mock_question_voiceId");
+        return stored || "us_female_emma";
     });
 
     // Questions state - fetched from API
@@ -537,30 +571,29 @@ export default function MockInterviewSession() {
 
     // Skip functionality removed - users must submit answers to proceed
 
-    // TTS: Play question audio
+    // TTS: Play question audio using same system as practice page
     const playQuestionAudio = async () => {
         if (!currentQuestion?.text) return;
 
         try {
-            const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8080';
-            const response = await fetch(`${API_BASE}/voice/generate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    text: currentQuestion.text,
-                    voice: 'alloy' // Sarah Jenkins voice
-                })
+            console.log('[MOCK] Playing question audio with voice:', questionVoiceId);
+            const server = await requestServerTTS({
+                text: currentQuestion.text,
+                voiceId: questionVoiceId,
+                speed: questionSpeed
             });
 
-            if (response.ok) {
-                const blob = await response.blob();
-                const url = URL.createObjectURL(blob);
+            if (server.ok && (server.audioBase64 || server.audioUrl)) {
+                const url = server.audioUrl || `data:audio/mp3;base64,${server.audioBase64}`;
                 questionAudioRef.current.src = url;
-                questionAudioRef.current.playbackRate = questionSpeed; // Apply speed
-                questionAudioRef.current.play();
+                questionAudioRef.current.playbackRate = questionSpeed;
+                await questionAudioRef.current.play();
+                console.log('[MOCK] Question audio playing successfully');
+            } else {
+                console.error('[MOCK] TTS failed:', server.error);
             }
         } catch (err) {
-            console.error('[MOCK] TTS failed:', err);
+            console.error('[MOCK] TTS error:', err);
         }
     };
 
@@ -614,19 +647,26 @@ export default function MockInterviewSession() {
     }, []);
 
     // ✅ RENDER BRANCHES AFTER HOOKS
+    // Show loading while checking entitlements
     if (elig.loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-slate-50">
                 <div className="text-center">
                     <span className="material-symbols-outlined animate-spin text-4xl text-primary mb-4">progress_activity</span>
-                    <p className="text-slate-600 font-medium">Checking eligibility...</p>
+                    <p className="text-slate-600 font-medium">Loading...</p>
                 </div>
             </div>
         );
     }
 
-    if (elig.reason === "AUTH_REQUIRED" || elig.isGuest) {
-        return <MockInterviewGate />;
+    // Show gate if not allowed (based on entitlements)
+    if (!elig.canStartMock) {
+        return (
+            <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col">
+                <UniversalHeader />
+                <MockInterviewGate entitlements={entitlements} />
+            </div>
+        );
     }
 
     if (elig.canStartMock === false) {
@@ -774,6 +814,26 @@ export default function MockInterviewSession() {
                                                     </button>
                                                 ))}
                                             </div>
+                                        </div>
+
+                                        {/* Voice Selector */}
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs text-slate-600 dark:text-slate-400">Voice:</span>
+                                            <select
+                                                value={questionVoiceId}
+                                                onChange={(e) => {
+                                                    setQuestionVoiceId(e.target.value);
+                                                    localStorage.setItem("mock_question_voiceId", e.target.value);
+                                                }}
+                                                className="px-2.5 py-1 rounded text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-none focus:ring-2 focus:ring-primary"
+                                            >
+                                                <option value="us_female_emma">US Female — Emma</option>
+                                                <option value="us_female_ava">US Female — Ava</option>
+                                                <option value="us_male_jake">US Male — Jake</option>
+                                                <option value="uk_female_amelia">UK Female — Amelia</option>
+                                                <option value="uk_male_oliver">UK Male — Oliver</option>
+                                                <option value="uk_male_harry">UK Male — Harry</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>

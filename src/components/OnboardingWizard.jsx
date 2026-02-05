@@ -58,6 +58,13 @@ function OnboardingWizard({ onComplete }) {
     const [isPlayingPrompt, setIsPlayingPrompt] = useState(false);
     const [autoplayBlocked, setAutoplayBlocked] = useState(false);
 
+    // Prefetch cache: Map of step index -> audioUrl (for step-based prefetch)
+    const prefetchCacheRef = useRef(new Map());
+    // Voice-specific cache: Map of "voiceName:text" -> audioUrl (for voice-change prefetch)
+    const voiceCacheRef = useRef(new Map());
+    const [isFetchingAudio, setIsFetchingAudio] = useState(false);
+    const currentVoiceRef = useRef("female"); // Track current voice selection
+
     // INSTRUMENTATION: Track mount/unmount
     useEffect(() => {
         console.log("[WIZARD] mounted");
@@ -165,6 +172,21 @@ function OnboardingWizard({ onComplete }) {
         };
     }, []);
 
+    // AUTOPLAY EFFECT: Trigger audio playback on step change
+    useEffect(() => {
+        const text = steps[step]?.question;
+        if (!text) return;
+
+        console.log("[ONBOARDING] stepChanged ->", step, "-> autoplay attempt");
+
+        // Small delay to let UI settle
+        const timer = setTimeout(() => {
+            playCurrentPrompt(false);
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [step]); // Trigger on step change
+
     const stopTts = () => {
         const audio = audioRef.current;
         if (!audio.paused) {
@@ -206,8 +228,29 @@ function OnboardingWizard({ onComplete }) {
             lastPlayedRef.current = { step, text };
             lastPromptTextRef.current = text;
 
-            console.log("[ONBOARDING] Fetching TTS for:", text.substring(0, 50));
-            const { url } = await fetchTtsBlobUrl({ text, speed: 1.0 });
+            // Check voice-specific cache first (voiceName:text key)
+            const voiceCacheKey = `female:${text}`;
+            let url = voiceCacheRef.current.get(voiceCacheKey);
+
+            // Fallback to step cache
+            if (!url) {
+                url = prefetchCacheRef.current.get(step);
+            }
+
+            if (!url) {
+                console.log("[ONBOARDING] Fetching TTS for:", text.substring(0, 50));
+                setIsFetchingAudio(true);
+                const result = await fetchTtsBlobUrl({ text, speed: 1.0, voiceName: "female" });
+                url = result.url;
+                setIsFetchingAudio(false);
+
+                // Store in voice cache
+                if (url) {
+                    voiceCacheRef.current.set(voiceCacheKey, url);
+                }
+            } else {
+                console.log("[ONBOARDING] Using cached audio for step", step);
+            }
 
             if (url) {
                 console.log("[ONBOARDING] TTS URL received:", url.substring(0, 100));
@@ -218,7 +261,29 @@ function OnboardingWizard({ onComplete }) {
                 }
 
                 lastBlobUrlRef.current = url; // Store for repeat functionality
-                audioRef.current.src = url;
+
+                // Only update src if it's different (optimization)
+                if (audioRef.current.src !== url) {
+                    // Cache-bust only when changing URLs
+                    audioRef.current.pause();
+                    audioRef.current.src = "";
+                    audioRef.current.load();
+                    audioRef.current.src = url;
+
+                    // Audio priming: Wait for audio to be ready before playing
+                    await new Promise((resolve) => {
+                        const onReady = () => {
+                            audioRef.current.removeEventListener('loadeddata', onReady);
+                            audioRef.current.removeEventListener('canplaythrough', onReady);
+                            resolve();
+                        };
+                        audioRef.current.addEventListener('loadeddata', onReady);
+                        audioRef.current.addEventListener('canplaythrough', onReady);
+                        audioRef.current.load();
+                    });
+                } else {
+                    console.log("[ONBOARDING] Reusing same audio src");
+                }
 
                 // CRITICAL: Ensure audio is not muted and volume is set
                 audioRef.current.muted = false;
@@ -245,12 +310,12 @@ function OnboardingWizard({ onComplete }) {
 
                     if (playPromise !== undefined) {
                         await playPromise;
-                        console.log("[ONBOARDING] ✅ Audio playing — Promise resolved");
+                        console.log("[ONBOARDING] autoplay success");
                         setIsPlayingPrompt(true);
                         setAutoplayBlocked(false); // Autoplay worked
                     }
                 } catch (e) {
-                    console.warn("[ONBOARDING] ❌ Autoplay blocked:", e.name, e.message);
+                    console.warn("[ONBOARDING] autoplay blocked:", e.name, e.message);
                     setIsPlayingPrompt(false);
                     setAutoplayBlocked(true); // Show tap to play prompt
                 }
@@ -258,9 +323,32 @@ function OnboardingWizard({ onComplete }) {
                 console.error("!!! TTS FAILURE — AUDIO SKIPPED !!!", { text, step });
                 setIsPlayingPrompt(false);
                 setAutoplayBlocked(false); // Not blocked by browser, just failed
+                setIsFetchingAudio(false);
+            }
+
+            // Prefetch next step's audio in background
+            const nextStep = step + 1;
+            if (nextStep < steps.length) {
+                const nextText = steps[nextStep].question;
+                const nextVoiceCacheKey = `female:${nextText}`;
+
+                // Only prefetch if not already in voice cache
+                if (!voiceCacheRef.current.has(nextVoiceCacheKey)) {
+                    console.log("[ONBOARDING] Prefetching audio for next step:", nextStep);
+                    fetchTtsBlobUrl({ text: nextText, speed: 1.0, voiceName: "female" })
+                        .then(({ url: nextUrl }) => {
+                            if (nextUrl) {
+                                voiceCacheRef.current.set(nextVoiceCacheKey, nextUrl);
+                                prefetchCacheRef.current.set(nextStep, nextUrl);
+                                console.log("[ONBOARDING] Prefetch complete for step", nextStep);
+                            }
+                        })
+                        .catch(err => console.warn("[ONBOARDING] Prefetch failed:", err));
+                }
             }
         } catch (err) {
             console.error("[ONBOARDING] Prompt TTS error:", err);
+            setIsFetchingAudio(false);
         }
     };
 
@@ -275,16 +363,16 @@ function OnboardingWizard({ onComplete }) {
         };
     }, []);
 
-    // Helper for manual repeat - reuses existing blob URL
-    const handleRepeatQuestion = (e) => {
+    // Helper for manual repeat - reuses existing blob URL with priming
+    const handleRepeatQuestion = async (e) => {
         e.preventDefault();
         console.log("[ONBOARDING] Repeat question clicked");
         stopTts(); // Stop current playback
 
-        // Try to replay existing blob URL first (avoids regeneration)
         if (lastBlobUrlRef.current && audioRef.current) {
             console.log("[ONBOARDING] Replaying existing audio URL");
-            audioRef.current.src = lastBlobUrlRef.current;
+            audioRef.current.src = lastBlobUrlRef.current; // Ensure src is set
+            audioRef.current.currentTime = 0;
 
             // CRITICAL: Ensure audio is not muted and volume is set
             audioRef.current.muted = false;
@@ -311,6 +399,24 @@ function OnboardingWizard({ onComplete }) {
             playCurrentPrompt(true);
         } else {
             console.error("[ONBOARDING] No audio URL or text available for replay");
+        }
+    };
+
+    // Hover/focus prefetch for repeat button
+    const handleRepeatHover = () => {
+        const text = steps[step].question;
+        const voiceCacheKey = `female:${text}`;
+
+        // Prefetch if not cached
+        if (!voiceCacheRef.current.has(voiceCacheKey) && !lastBlobUrlRef.current) {
+            console.log("[ONBOARDING] Hover prefetch triggered");
+            fetchTtsBlobUrl({ text, speed: 1.0, voiceName: "female" })
+                .then(({ url }) => {
+                    if (url) {
+                        voiceCacheRef.current.set(voiceCacheKey, url);
+                    }
+                })
+                .catch(err => console.warn("[ONBOARDING] Hover prefetch failed:", err));
         }
     };
 
@@ -456,7 +562,7 @@ function OnboardingWizard({ onComplete }) {
     // AssistantBubble component - memoized to prevent remounting during typing
     // CRITICAL: Only depends on step - isPlayingPrompt changes should NOT cause remount
     // MOVED OUTSIDE to prevent re-creation on every render
-    const AssistantBubble = memo(({ currentStep, playing, onRepeat, steps, autoplayBlocked: blocked }) => {
+    const AssistantBubble = memo(({ currentStep, playing, onRepeat, onHover, steps, autoplayBlocked: blocked }) => {
         // Debug: Track mounts/unmounts
         useEffect(() => {
             // console.log("[AVATAR] MOUNT");
@@ -499,6 +605,8 @@ function OnboardingWizard({ onComplete }) {
                     {blocked && !playing && (
                         <button
                             onClick={onRepeat}
+                            onMouseEnter={onHover}
+                            onFocus={onHover}
                             className="flex items-center gap-2 mt-3 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white font-bold rounded-lg shadow-md transition-all animate-pulse"
                         >
                             <span className="material-symbols-outlined text-lg">volume_up</span>
@@ -510,6 +618,8 @@ function OnboardingWizard({ onComplete }) {
                     {(!blocked || playing) && (
                         <button
                             onClick={onRepeat}
+                            onMouseEnter={onHover}
+                            onFocus={onHover}
                             className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-primary hover:text-primary-hover transition-colors ml-1"
                         >
                             <span className="material-symbols-outlined text-[14px]">replay</span>
@@ -823,7 +933,7 @@ function OnboardingWizard({ onComplete }) {
 
     // CRITICAL: Memoize AssistantBubble to prevent remounting on every render
     const MemoizedAssistantBubble = useMemo(() => {
-        return <AssistantBubble currentStep={step} playing={isPlayingPrompt} onRepeat={handleRepeatQuestion} steps={steps} autoplayBlocked={autoplayBlocked} />;
+        return <AssistantBubble currentStep={step} playing={isPlayingPrompt} onRepeat={handleRepeatQuestion} onHover={handleRepeatHover} steps={steps} autoplayBlocked={autoplayBlocked} />;
     }, [step, isPlayingPrompt, autoplayBlocked]);
 
     // CRITICAL: Memoize renderInput to prevent recreating JSX on every render
@@ -852,6 +962,9 @@ function OnboardingWizard({ onComplete }) {
                 {/* Body - DISABLE ANIMATIONS */}
                 <div className="flex-1 overflow-y-auto px-6 py-8 flex flex-col items-center" style={{ animation: 'none', transition: 'none' }}>
                     {MemoizedAssistantBubble}
+                    {isFetchingAudio && (
+                        <p className="text-xs text-slate-400 italic mb-2">Loading voice…</p>
+                    )}
                     {MemoizedInput}
                 </div>
 

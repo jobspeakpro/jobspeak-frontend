@@ -39,7 +39,7 @@ export default function UniversalHeader() {
                                 Sign In
                             </Link>
                             <Link
-                                to="/start"
+                                to="/practice"
                                 className="h-9 px-4 flex items-center justify-center rounded-full bg-primary text-sm font-bold text-white hover:bg-blue-600 transition-colors shadow-sm"
                             >
                                 Start Practicing
