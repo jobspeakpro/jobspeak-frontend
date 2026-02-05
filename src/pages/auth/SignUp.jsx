@@ -67,25 +67,26 @@ export default function SignUp() {
 
       // Show email confirmation message
       if (result.requiresEmailVerification) {
-        setShowEmailConfirmation(true);
-        // If QA mode returned a link, save it to state to show the button
+        // PRIORITY: Auto-open verification link if available (QA/Dev flow)
         if (result.actionLink) {
-          setQaVerifyLink(result.actionLink);
+          console.log('[SIGNUP] Auto-redirecting to verification...');
+          // Use window.location.href for immediate same-tab redirect as requested
+          window.location.href = result.actionLink;
+          return;
         }
+
+        setShowEmailConfirmation(true);
         setToast("success");
       }
 
       setLoading(false);
 
     } catch (err) {
-      console.error("Signup error:", err);
-      // AuthContext throws friendly errors. Ensure we NEVER show raw errors.
-      // Explicitly mask any potential lingering rate limit text just in case.
-      let msg = err.message || "Signup temporarily unavailable. Try again.";
-      if (msg.toLowerCase().includes("rate limit") || msg.toLowerCase().includes("too many requests")) {
-        msg = "Signup temporarily unavailable. Try again.";
-      }
-      setError(msg);
+      // Reduced console spam
+      console.warn("Signup failed (handled):", err.code || "UNKNOWN");
+
+      // Friendly, neutral error message (NO RED BANNER)
+      setError("Signup is unavailable right now. Please try again.");
       setLoading(false);
     }
   };
@@ -110,19 +111,6 @@ export default function SignUp() {
                   Email will be sent from Supabase (noreply@supabase.io). If you don't see it, check spam or promotions.
                 </p>
               </div>
-
-              {/* QA / Dev Mode Verification Link */}
-              {qaVerifyLink && (
-                <div className="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 text-center">
-                  <p className="text-amber-800 dark:text-amber-200 text-sm font-semibold mb-2">⚡ QA / Debug Mode Detected</p>
-                  <a
-                    href={qaVerifyLink}
-                    className="inline-flex items-center justify-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-lg transition-colors"
-                  >
-                    Verify Account Now
-                  </a>
-                </div>
-              )}
 
               <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 rounded-lg p-4 text-sm leading-relaxed border border-blue-100 dark:border-blue-800/50 mb-6">
                 <p className="font-semibold mb-2">Next steps:</p>
@@ -205,8 +193,15 @@ export default function SignUp() {
               {/* Email Form */}
               <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
                 {error && (
-                  <div className="bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 rounded-lg p-3 text-sm border border-red-100 dark:border-red-800/50">
-                    {error}
+                  <div className="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg p-3 text-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+                    <span>{error}</span>
+                    <button
+                      type="button"
+                      onClick={() => setError("")}
+                      className="text-primary hover:text-blue-600 text-xs font-bold uppercase tracking-wide px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                    >
+                      Retry
+                    </button>
                   </div>
                 )}
                 <div className="flex flex-col gap-1.5">
