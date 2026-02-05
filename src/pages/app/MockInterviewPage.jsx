@@ -16,6 +16,7 @@ export default function MockInterviewPage() {
     // Entitlements check
     const [entitlements, setEntitlements] = useState(null);
     const [checkingEntitlements, setCheckingEntitlements] = useState(true);
+    const [entitlementsError, setEntitlementsError] = useState(false);
 
     // Route guard: redirect if user tries to access long interview
     useEffect(() => {
@@ -28,22 +29,23 @@ export default function MockInterviewPage() {
 
     // Check entitlements on mount
     useEffect(() => {
-        const fetchEntitlements = async () => {
-            try {
-                const response = await apiClient.get('/api/entitlements');
-                setEntitlements(response.data);
-                console.log('[ENTITLEMENTS] Mock interview allowed:', response.data.mockInterview?.allowed);
-            } catch (err) {
-                console.error('[ENTITLEMENTS] Failed to fetch:', err);
-                // Default to blocked on error
-                setEntitlements({ mockInterview: { allowed: false, reason: 'ERROR' } });
-            } finally {
-                setCheckingEntitlements(false);
-            }
-        };
-
         fetchEntitlements();
     }, []);
+
+    const fetchEntitlements = async () => {
+        setCheckingEntitlements(true);
+        setEntitlementsError(false);
+        try {
+            const response = await apiClient.get('/api/entitlements');
+            setEntitlements(response.data);
+            console.log('[ENTITLEMENTS] Mock interview allowed:', response.data.mockInterview?.allowed);
+        } catch (err) {
+            console.error('[ENTITLEMENTS] Failed to fetch:', err);
+            setEntitlementsError(true);
+        } finally {
+            setCheckingEntitlements(false);
+        }
+    };
 
     const handleStartMockInterview = () => {
         if (!entitlements?.mockInterview?.allowed) {
@@ -63,6 +65,40 @@ export default function MockInterviewPage() {
                     <div className="text-center">
                         <span className="material-symbols-outlined animate-spin text-4xl text-primary mb-4">progress_activity</span>
                         <p className="text-slate-600 dark:text-slate-400 font-medium">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Show error state with retry if entitlements API failed
+    if (entitlementsError) {
+        return (
+            <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col">
+                <UniversalHeader />
+                <div className="flex-1 flex items-center justify-center px-4">
+                    <div className="text-center max-w-md">
+                        <div className="text-6xl mb-4">⚠️</div>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                            Mock Interview Temporarily Unavailable
+                        </h2>
+                        <p className="text-slate-600 dark:text-slate-400 mb-6">
+                            We're having trouble connecting to our servers. Practice mode still works!
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                            <button
+                                onClick={fetchEntitlements}
+                                className="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+                            >
+                                Try Again
+                            </button>
+                            <button
+                                onClick={() => navigate('/practice')}
+                                className="px-6 py-3 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-semibold rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                            >
+                                Go to Practice Mode
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -187,7 +223,6 @@ export default function MockInterviewPage() {
                     </div>
                 </div>
             </main>
-            )}
 
             {/* Upgrade Modal */}
             {showUpgradeModal && (
