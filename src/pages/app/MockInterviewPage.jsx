@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { usePro } from "../../contexts/ProContext.jsx";
-import { apiClient } from "../../utils/apiClient.js";
 import UniversalHeader from "../../components/UniversalHeader.jsx";
 import PaywallModal from "../../components/PaywallModal.jsx";
 import MockInterviewGate from "../../components/MockInterviewGate.jsx";
@@ -36,9 +35,21 @@ export default function MockInterviewPage() {
         setCheckingEntitlements(true);
         setEntitlementsError(false);
         try {
-            const response = await apiClient.get('/api/entitlements');
-            setEntitlements(response.data);
-            console.log('[ENTITLEMENTS] Mock interview allowed:', response.data.mockInterview?.allowed);
+            const response = await fetch('/api/entitlements', {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+            setEntitlements(data);
+            console.log('[ENTITLEMENTS] Mock interview allowed:', data.mockInterview?.allowed);
         } catch (err) {
             console.error('[ENTITLEMENTS] Failed to fetch:', err);
             setEntitlementsError(true);

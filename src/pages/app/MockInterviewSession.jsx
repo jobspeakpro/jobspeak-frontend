@@ -33,18 +33,30 @@ export default function MockInterviewSession() {
     useEffect(() => {
         const fetchEntitlements = async () => {
             try {
-                const response = await apiClient.get('/api/entitlements');
-                setEntitlements(response.data);
-                console.log('[ENTITLEMENTS] Mock interview allowed:', response.data.mockInterview?.allowed);
+                const response = await fetch('/api/entitlements', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                setEntitlements(data);
+                console.log('[ENTITLEMENTS] Mock interview allowed:', data.mockInterview?.allowed);
 
                 // Set eligibility based on entitlements
-                if (response.data.mockInterview?.allowed) {
+                if (data.mockInterview?.allowed) {
                     setElig({ loading: false, canStartMock: true, reason: null, isGuest: false });
                 } else {
                     setElig({
                         loading: false,
                         canStartMock: false,
-                        reason: response.data.mockInterview?.reason || 'NO_CREDITS',
+                        reason: data.mockInterview?.reason || 'NO_CREDITS',
                         isGuest: !user
                     });
                 }
