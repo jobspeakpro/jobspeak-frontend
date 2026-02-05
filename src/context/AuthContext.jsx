@@ -211,17 +211,78 @@ export function AuthProvider({ children }) {
   };
 
   const signup = async (email, password, options = {}) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options,
-    });
+    try {
+      // Extract firstName and inviteCode from options
+      const firstName = options.data?.firstName || '';
+      const inviteCode = options.data?.inviteCode || '';
 
-    if (error) {
-      throw error;
+      // Call backend signup endpoint
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          firstName,
+          inviteCode
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Map backend error codes to friendly messages
+        const errorCode = data.code || data.error || 'UNKNOWN';
+        console.error('[SIGNUP] Backend error:', errorCode, data);
+
+        let friendlyMessage;
+        switch (errorCode) {
+          case 'INVITE_REQUIRED':
+            friendlyMessage = 'Invite code required';
+            break;
+          case 'EMAIL_EXISTS':
+          case 'USER_ALREADY_EXISTS':
+            friendlyMessage = 'Email already in use. Please sign in.';
+            break;
+          case 'VALIDATION_ERROR':
+          case 'INVALID_EMAIL':
+          case 'WEAK_PASSWORD':
+            friendlyMessage = 'Please check your details.';
+            break;
+          case 'RATE_LIMIT':
+            friendlyMessage = 'Too many attempts. Please try again later.';
+            break;
+          default:
+            friendlyMessage = 'Signup temporarily unavailable. Try again.';
+        }
+
+        const error = new Error(friendlyMessage);
+        error.code = errorCode;
+        throw error;
+      }
+
+      console.log('[SIGNUP] Success - check email for verification');
+
+      // Return success indicator for UI to show "Check your email" message
+      return {
+        requiresEmailVerification: true,
+        email: data.email || email
+      };
+    } catch (error) {
+      // If it's already our friendly error, rethrow it
+      if (error.code) {
+        throw error;
+      }
+
+      // Network or unexpected errors
+      console.error('[SIGNUP] Unexpected error:', error);
+      const friendlyError = new Error('Signup temporarily unavailable. Try again.');
+      friendlyError.code = 'NETWORK_ERROR';
+      throw friendlyError;
     }
-
-    return data.user;
   };
 
   const logout = async () => {

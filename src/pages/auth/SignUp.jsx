@@ -45,61 +45,39 @@ export default function SignUp() {
 
       const options = {
         data: {
-          display_name: firstName.trim(),
+          firstName: firstName.trim(), // Backend expects firstName
+          display_name: firstName.trim(), // Legacy support if backend looks for this too
         }
       };
 
       if (code) {
-        options.data.affiliate_code = code;
+        options.data.inviteCode = code; // Backend expects inviteCode
       }
 
-      const user = await signup(email, password, options);
-
-      // Write first name to profiles.display_name ( redundancy for safety, though metadata often handles it via triggers)
-      if (user) {
-        supabase
-          .from('profiles')
-          .upsert({
-            id: user.id,
-            display_name: firstName.trim()
-          }, { onConflict: 'id' })
-          .then(({ error }) => {
-            if (error) console.error('Profile update error:', error);
-          });
-      }
+      const result = await signup(email, password, options);
 
       // Cleanup storage
       if (code) {
         localStorage.removeItem("jsp_ref_code");
-        // We might want to keep the cookie for a bit or clear it. 
-        // Usually good practice to clear if fully consumed, but user said 'survives refresh' not necessarily 'survives signup'. 
-        // Clearing is cleaner.
-        // But user constraint: "Store it in localStorage + cookie (30–60 days)"
-        // And "Backend receives correct code". 
-        // If we clear it here, it's done.
-        // Let's NOT clear the cookie explicitly unless requested, but clearing localStorage is fine.
-        // Actually, let's keep it simple.
       }
 
       // Force sign out to ensure user is not logged in until confirmed
       await supabase.auth.signOut();
 
-      // Show email confirmation message - DO NOT auto-login
-      setShowEmailConfirmation(true);
-      setToast("success");
+      // Show email confirmation message
+      if (result.requiresEmailVerification) {
+        setShowEmailConfirmation(true);
+        setToast("success");
+      }
+
       setLoading(false);
 
     } catch (err) {
       console.error("Signup error:", err);
-      // Check for rate limit error (Supabase usually returns 429 or specific message)
-      if (err.message && (err.message.includes("rate limit") || err.message.includes("too many requests") || err.status === 429)) {
-        setError("Sign up rate limit exceeded. Please try again later. Do not retry immediately.");
-        // Disable form to prevent retry spam
-        setLoading(true);
-      } else {
-        setError(err.message || "Something went wrong. Please try again.");
-        setLoading(false);
-      }
+      // AuthContext now throws friendly errors, so we can display them directly.
+      // We explicitly avoid showing "rate limit" messages to the user as requested.
+      setError(err.message || "Signup temporarily unavailable. Try again.");
+      setLoading(false);
     }
   };
 
