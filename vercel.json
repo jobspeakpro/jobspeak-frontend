@@ -1,10 +1,6 @@
 {
   "rewrites": [
     {
-      "source": "/api/auth/signup",
-      "destination": "/api/auth/signup"
-    },
-    {
       "source": "/api/(.*)",
       "destination": "https://jobspeak-backend-production.up.railway.app/api/$1"
     },
