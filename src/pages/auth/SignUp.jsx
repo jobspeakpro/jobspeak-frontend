@@ -86,7 +86,7 @@ export default function SignUp() {
       console.warn("Signup failed (handled):", err.code || "UNKNOWN");
 
       // Friendly, neutral error message (NO RED BANNER)
-      setError("Signup unavailable. Try again in a moment.");
+      setError("Signup is unavailable right now. Please try again.");
       setLoading(false);
     }
   };
