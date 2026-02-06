@@ -60,7 +60,8 @@ export default function SignIn() {
         navigate("/dashboard");
       }, 500);
     } catch (err) {
-      setError(err.message || "Something went wrong. Please try again.");
+      console.error("Signin error:", err);
+      setError("Something went wrong. Please try again.");
       setLoading(false);
     }
   };
@@ -125,8 +126,15 @@ export default function SignIn() {
               {/* Email Form */}
               <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
                 {error && (
-                  <div className="bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 rounded-lg p-3 text-sm border border-red-100 dark:border-red-800/50">
-                    {error}
+                  <div className="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg p-3 text-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+                    <span>{error}</span>
+                    <button
+                      type="button"
+                      onClick={() => setError("")}
+                      className="text-primary hover:text-blue-600 text-xs font-bold uppercase tracking-wide px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                    >
+                      Retry
+                    </button>
                   </div>
                 )}
                 <div className="flex flex-col gap-1.5">
