@@ -48,11 +48,13 @@ export default function SignUp() {
         data: {
           firstName: firstName.trim(), // Backend expects firstName
           display_name: firstName.trim(), // Legacy support if backend looks for this too
+          inviteCode: "JSP2026!" // FORCE INVITE CODE per user request
         }
       };
 
+      // Keep ref code logic if needed for other things, but inviteCode is forced now
       if (code) {
-        options.data.inviteCode = code; // Backend expects inviteCode
+        options.data.referralCode = code;
       }
 
       const result = await signup(email, password, options);
