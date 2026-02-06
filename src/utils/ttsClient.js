@@ -17,11 +17,15 @@ export function stopAllTTS() {
     }
 }
 
-export async function requestServerTTS({ text, voiceId, speed = 1 }) {
-    const res = await fetch("/api/tts", {
+export async function requestServerTTS({ text, voiceId, speed = 1, context = null, feature = null }) {
+    // Determine context-specific logic
+    const isMockInterview = context === 'mock_interview' || feature === 'mock_interview';
+    const endpoint = isMockInterview ? "/api/tts/mock-interview" : "/api/tts";
+
+    const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, voiceId, speed }),
+        body: JSON.stringify({ text, voiceId, speed, context, feature }),
     });
 
     // Always try to parse JSON, even on non-200
@@ -42,6 +46,8 @@ export async function requestServerTTS({ text, voiceId, speed = 1 }) {
         mode: "server",
         audioBase64: data.audioBase64 || null,
         audioUrl: data.audioUrl || null,
+        resolvedVoice: data.resolvedVoice,
+        provider: data.provider
     };
 }
 

@@ -1127,6 +1127,16 @@ export default function MockInterviewSummary() {
                             {checkingLimit ? 'Checking...' : mockLimitStatus?.isGuest ? 'Create Free Account' : 'Upgrade to Pro'}
                         </button>
                     )}
+
+                    {/* Fallback for when mockLimitStatus fails to load or is null */}
+                    {!checkingLimit && !mockLimitStatus && (
+                        <button
+                            onClick={handleDashboard}
+                            className="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm w-full sm:w-auto"
+                        >
+                            Return to Dashboard
+                        </button>
+                    )}
                 </div>
 
                 <p className="text-center text-xs text-slate-600 dark:text-slate-400 mt-[-1rem]">

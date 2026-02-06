@@ -164,11 +164,15 @@ function OnboardingWizard({ onComplete }) {
         audio.addEventListener("pause", handlePause);
 
         // Global TTS stop on mount/unmount
+        document.body.appendChild(audio);
         return () => {
             stopTts();
             audio.removeEventListener("play", handlePlay);
             audio.removeEventListener("ended", handleEnd);
             audio.removeEventListener("pause", handlePause);
+            if (document.body.contains(audio)) {
+                document.body.removeChild(audio);
+            }
         };
     }, []);
 
