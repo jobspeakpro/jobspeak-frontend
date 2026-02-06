@@ -238,9 +238,13 @@ function OnboardingWizard({ onComplete }) {
             }
 
             if (!url) {
+                // CRITICAL: Force female voice for onboarding - hardcoded, no client override
+                const onboardingVoiceId = "us_female_emma"; // Maps to "nova" on backend
                 console.log("[ONBOARDING] Fetching TTS for:", text.substring(0, 50));
+                console.log("[ONBOARDING] FORCED VOICE:", onboardingVoiceId, "→ backend will resolve to 'nova'");
+
                 setIsFetchingAudio(true);
-                const result = await fetchTtsBlobUrl({ text, speed: 1.0, voiceName: "female" });
+                const result = await fetchTtsBlobUrl({ text, speed: 1.0, voiceId: onboardingVoiceId });
                 url = result.url;
                 setIsFetchingAudio(false);
 
@@ -335,7 +339,7 @@ function OnboardingWizard({ onComplete }) {
                 // Only prefetch if not already in voice cache
                 if (!voiceCacheRef.current.has(nextVoiceCacheKey)) {
                     console.log("[ONBOARDING] Prefetching audio for next step:", nextStep);
-                    fetchTtsBlobUrl({ text: nextText, speed: 1.0, voiceName: "female" })
+                    fetchTtsBlobUrl({ text: nextText, speed: 1.0, voiceId: "us_female_emma" })
                         .then(({ url: nextUrl }) => {
                             if (nextUrl) {
                                 voiceCacheRef.current.set(nextVoiceCacheKey, nextUrl);
@@ -410,7 +414,7 @@ function OnboardingWizard({ onComplete }) {
         // Prefetch if not cached
         if (!voiceCacheRef.current.has(voiceCacheKey) && !lastBlobUrlRef.current) {
             console.log("[ONBOARDING] Hover prefetch triggered");
-            fetchTtsBlobUrl({ text, speed: 1.0, voiceName: "female" })
+            fetchTtsBlobUrl({ text, speed: 1.0, voiceId: "us_female_emma" })
                 .then(({ url }) => {
                     if (url) {
                         voiceCacheRef.current.set(voiceCacheKey, url);

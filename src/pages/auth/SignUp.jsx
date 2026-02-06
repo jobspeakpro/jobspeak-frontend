@@ -12,6 +12,7 @@ export default function SignUp() {
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [inviteCode, setInviteCode] = useState("JSP2026!"); // Default to known code
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
@@ -48,7 +49,7 @@ export default function SignUp() {
         data: {
           firstName: firstName.trim(), // Backend expects firstName
           display_name: firstName.trim(), // Legacy support if backend looks for this too
-          inviteCode: "JSP2026!" // FORCE INVITE CODE per user request
+          inviteCode: inviteCode.trim() // Use user input
         }
       };
 
@@ -241,6 +242,20 @@ export default function SignUp() {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-[#111418] dark:text-slate-200" htmlFor="inviteCode">
+                    Invite Code
+                  </label>
+                  <input
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 h-12 text-[#111418] dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                    id="inviteCode"
+                    placeholder="Enter invite code"
+                    type="text"
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value)}
+                    required
                   />
                 </div>
                 <button
