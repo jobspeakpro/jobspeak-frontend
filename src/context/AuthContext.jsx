@@ -217,7 +217,7 @@ export function AuthProvider({ children }) {
       const inviteCode = options.data?.inviteCode || '';
 
       // Call backend signup endpoint
-      const response = await fetch('/api/auth/signup', {
+      const response = await fetch('https://jobspeak-backend-production.up.railway.app/api/auth/signup', {
         method: 'POST',
         credentials: 'include',
         headers: {
