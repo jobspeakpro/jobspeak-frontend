@@ -23,13 +23,23 @@ const buildInfo = {
     env: process.env.NODE_ENV || 'development'
 };
 
-const outputPath = path.resolve(process.cwd(), targetDir, 'build-info.json');
 
-// Ensure directory exists
-if (!fs.existsSync(path.dirname(outputPath))) {
-    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+const outputPathSrc = path.resolve(process.cwd(), targetDir, 'build-info.json');
+const outputPathPublic = path.resolve(process.cwd(), 'public', 'build-info.json');
+
+// Ensure directories exist
+if (!fs.existsSync(path.dirname(outputPathSrc))) {
+    fs.mkdirSync(path.dirname(outputPathSrc), { recursive: true });
+}
+if (!fs.existsSync(path.dirname(outputPathPublic))) {
+    fs.mkdirSync(path.dirname(outputPathPublic), { recursive: true });
 }
 
-fs.writeFileSync(outputPath, JSON.stringify(buildInfo, null, 2));
-console.log(`[BUILD] Generated build-info.json at ${outputPath}`);
+fs.writeFileSync(outputPathSrc, JSON.stringify(buildInfo, null, 2));
+fs.writeFileSync(outputPathPublic, JSON.stringify(buildInfo, null, 2));
+
+console.log(`[BUILD] Generated build-info.json at:`);
+console.log(`  - ${outputPathSrc}`);
+console.log(`  - ${outputPathPublic}`);
 console.log(`[BUILD] SHA: ${buildInfo.gitSha} | Time: ${buildInfo.buildTime}`);
+

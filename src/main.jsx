@@ -68,10 +68,13 @@ function SanityPing() {
 }
 
 // --- Build ID for production verification ---
-const BUILD_ID = "prod-routes-v1";
-console.log(`[BUILD_ID] ${BUILD_ID}`);
+// --- Build ID for production verification ---
+import buildInfo from './build-info.json';
+
+console.log(`[BUILD_INFO] SHA: ${buildInfo.gitSha} | Time: ${buildInfo.buildTime}`);
+
 if (typeof window !== 'undefined') {
-  window.__BUILD_ID__ = BUILD_ID;
+  window.__BUILD_INFO__ = buildInfo;
 }
 
 // --- Sentry setup ---
