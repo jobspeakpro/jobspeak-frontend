@@ -382,6 +382,7 @@ function PayoutsTab({ summary }) {
                             <th style={styles.th}>Total Referrals</th>
                             <th style={styles.th}>Converted</th>
                             <th style={styles.th}>Pending</th>
+                            <th style={styles.th}>Last Active</th>
                             <th style={styles.th}>Credits</th>
                         </tr>
                     </thead>
@@ -396,6 +397,7 @@ function PayoutsTab({ summary }) {
                                 <td style={{ ...styles.td, fontWeight: 700 }}>{row.total_referrals}</td>
                                 <td style={{ ...styles.td, color: '#16a34a', fontWeight: 600 }}>{row.converted}</td>
                                 <td style={{ ...styles.td, color: '#f59e0b', fontWeight: 600 }}>{row.pending}</td>
+                                <td style={styles.tdMuted}>{formatDate(row.last_active)}</td>
                                 <td style={styles.td}>
                                     <span style={{ ...styles.badge, background: '#dbeafe', color: '#1d4ed8' }}>{row.credits}</span>
                                 </td>
@@ -436,7 +438,10 @@ function StatusBadge({ status }) {
 
 function formatDate(dateStr) {
     if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return new Date(dateStr).toLocaleString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric',
+        hour: 'numeric', minute: '2-digit'
+    });
 }
 
 // ==================== STYLES ====================
