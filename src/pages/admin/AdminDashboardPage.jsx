@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { apiClient } from '../../utils/apiClient.js';
 import UniversalHeader from '../../components/UniversalHeader.jsx';
 import SortableTable from '../../components/SortableTable.jsx';
+import DateRangeFilter from '../../components/DateRangeFilter.jsx';
 
 export default function AdminDashboardPage() {
     const [tab, setTab] = useState('overview');
@@ -12,6 +13,7 @@ export default function AdminDashboardPage() {
     const [usersLoading, setUsersLoading] = useState(false);
     const [error, setError] = useState(null);
     const [actionMsg, setActionMsg] = useState(null);
+    const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
     const fetchDashboard = useCallback(async () => {
         try {
@@ -83,6 +85,36 @@ export default function AdminDashboardPage() {
 
     const { referralLogs, affiliateApplications, payoutSummary, totals, totalUsers } = data;
 
+    // Filter Data Helper
+    const filterByDate = (items, key) => {
+        if (!items || (!dateRange.start && !dateRange.end)) return items;
+        const start = dateRange.start ? new Date(dateRange.start) : null;
+        const end = dateRange.end ? new Date(dateRange.end) : null;
+        if (end) end.setHours(23, 59, 59, 999);
+
+        return items.filter(i => {
+            if (!i[key]) return true;
+            const d = new Date(i[key]);
+            if (start && d < start) return false;
+            if (end && d > end) return false;
+            return true;
+        });
+    };
+
+    const filteredLogs = filterByDate(referralLogs, 'created_at');
+    const filteredApps = filterByDate(affiliateApplications, 'created_at');
+    const filteredPayouts = filterByDate(payoutSummary, 'last_active');
+    const filteredUsers = filterByDate(users, 'created_at');
+
+    const filteredTotals = {
+        totalReferrals: (filteredLogs || []).length,
+        totalAffiliateApps: (filteredApps || []).length,
+        totalConverted: (filteredLogs || []).filter(l => l.status === 'converted').length,
+        totalPending: (filteredLogs || []).filter(l => l.status === 'pending').length,
+        approvedAffiliates: (filteredApps || []).filter(a => a.status === 'approved').length,
+        pendingAffiliates: (filteredApps || []).filter(a => a.status === 'pending').length
+    };
+
     const tabs = [
         { id: 'overview', label: '📊 Overview', icon: '📊' },
         { id: 'users', label: '👥 Users', icon: '👥' },
@@ -101,13 +133,15 @@ export default function AdminDashboardPage() {
                     <div>
                         <h1 style={styles.title}>Admin Dashboard</h1>
                         <p style={styles.subtitle}>
-                            {totalUsers || 0} users · {totals.totalReferrals} referrals · {totals.totalAffiliateApps} affiliate apps
+                            {filteredUsers ? filteredUsers.length : 0} users · {filteredTotals.totalReferrals} referrals · {filteredTotals.totalAffiliateApps} affiliate apps
                         </p>
                     </div>
                     <div style={styles.adminBadge}>
                         🛡️ Admin
                     </div>
                 </div>
+
+                <DateRangeFilter onFilterChange={setDateRange} />
 
                 {/* Toast */}
                 {actionMsg && (
@@ -136,11 +170,18 @@ export default function AdminDashboardPage() {
 
                 {/* Tab Content */}
                 <div style={styles.card}>
-                    {tab === 'overview' && <OverviewTab totals={totals} totalUsers={totalUsers} referralLogs={referralLogs} affiliateApplications={affiliateApplications} />}
-                    {tab === 'users' && <UsersTab users={users} loading={usersLoading} />}
-                    {tab === 'affiliates' && <AffiliatesTab applications={affiliateApplications} onAction={handleAffiliateAction} />}
-                    {tab === 'referrals' && <ReferralsTab logs={referralLogs} />}
-                    {tab === 'payouts' && <PayoutsTab summary={payoutSummary} />}
+                    {tab === 'overview' && (
+                        <OverviewTab
+                            totals={filteredTotals}
+                            totalUsers={filteredUsers ? filteredUsers.length : 0}
+                            referralLogs={filteredLogs}
+                            affiliateApplications={filteredApps}
+                        />
+                    )}
+                    {tab === 'users' && <UsersTab users={filteredUsers} loading={usersLoading} />}
+                    {tab === 'affiliates' && <AffiliatesTab applications={filteredApps} onAction={handleAffiliateAction} />}
+                    {tab === 'referrals' && <ReferralsTab logs={filteredLogs} />}
+                    {tab === 'payouts' && <PayoutsTab summary={filteredPayouts} />}
                 </div>
             </main>
         </div>

@@ -5,7 +5,9 @@ export default function SortableTable({
     data,
     loading,
     emptyMessage = "No data available",
-    defaultSortStr = "created_at"
+    defaultSortStr = "created_at",
+    dateKey,
+    dateRange
 }) {
     // Default to sorting by the first column's key if not specified, usually 'created_at' in desc
     const [sort, setSort] = useState({ key: defaultSortStr, direction: 'desc' });
@@ -33,7 +35,24 @@ export default function SortableTable({
             );
         }
 
-        // 2. Sort
+        // 2. Date Filter
+        if (dateRange && dateKey && (dateRange.start || dateRange.end)) {
+            const start = dateRange.start ? new Date(dateRange.start) : null;
+            const end = dateRange.end ? new Date(dateRange.end) : null;
+
+            // Adjust end date to end of day to include the full day
+            if (end) end.setHours(23, 59, 59, 999);
+
+            items = items.filter(item => {
+                if (!item[dateKey]) return true; // keep items without date? or filter out? usually keep or filter. default keep.
+                const d = new Date(item[dateKey]);
+                if (start && d < start) return false;
+                if (end && d > end) return false;
+                return true;
+            });
+        }
+
+        // 3. Sort
         if (sort.key) {
             items.sort((a, b) => {
                 const aVal = a[sort.key];
