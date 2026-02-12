@@ -39,7 +39,7 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import StripeCancelHandler from "./components/StripeCancelHandler.jsx";
 import SupabaseConfigError from "./components/SupabaseConfigError.jsx";
 import { isSupabaseConfigured } from "./lib/supabaseClient.js";
-import DevDebugBanner from "./components/DevDebugBanner.jsx";
+
 import "./styles/globals.css";
 
 // Route logger to track all route changes
@@ -98,7 +98,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 <RouteLogger />
                 <SanityPing />
                 <StripeCancelHandler />
-                <DevDebugBanner />
+
                 <Routes>
                   {/* Marketing routes */}
                   <Route path="/" element={<LandingPage />} />
