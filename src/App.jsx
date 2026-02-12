@@ -11,7 +11,7 @@ import PricingPage from "./components/PricingPage.jsx";
 import ProGuard from "./components/ProGuard.jsx";
 import Navigation from "./components/Navigation.jsx";
 import InlineError from "./components/InlineError.jsx";
-import DevDebugBanner from "./components/DevDebugBanner.jsx";
+
 import { usePro } from "./contexts/ProContext.jsx";
 import { isNetworkError } from "./utils/networkError.js";
 import { apiClient, ApiError } from "./utils/apiClient.js";
@@ -1241,8 +1241,7 @@ export default function App({ defaultTab = "interview" }) {
         )
       }
 
-      {/* Dev Debug Banner */}
-      <DevDebugBanner />
+
     </div >
   );
 }
