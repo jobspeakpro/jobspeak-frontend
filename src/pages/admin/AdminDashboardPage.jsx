@@ -1,35 +1,66 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../../utils/apiClient.js';
 import UniversalHeader from '../../components/UniversalHeader.jsx';
 
 export default function AdminDashboardPage() {
-    const [tab, setTab] = useState('referrals');
+    const [tab, setTab] = useState('overview');
     const [data, setData] = useState(null);
+    const [users, setUsers] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [usersLoading, setUsersLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [actionMsg, setActionMsg] = useState(null);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const res = await apiClient('/api/admin/dashboard');
-                setData(res);
-            } catch (err) {
-                console.error('Admin dashboard error:', err);
-                setError(err.message || 'Unauthorized or failed to load');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
+    const fetchDashboard = useCallback(async () => {
+        try {
+            const res = await apiClient('/api/admin/dashboard');
+            setData(res);
+        } catch (err) {
+            setError(err.message || 'Unauthorized or failed to load');
+        } finally {
+            setLoading(false);
+        }
     }, []);
+
+    useEffect(() => { fetchDashboard(); }, [fetchDashboard]);
+
+    const fetchUsers = useCallback(async () => {
+        if (users) return;
+        setUsersLoading(true);
+        try {
+            const res = await apiClient('/api/admin/users');
+            setUsers(res.users);
+        } catch (err) {
+            console.error('Users fetch error:', err);
+        } finally {
+            setUsersLoading(false);
+        }
+    }, [users]);
+
+    useEffect(() => { if (tab === 'users') fetchUsers(); }, [tab, fetchUsers]);
+
+    const handleAffiliateAction = async (id, action) => {
+        try {
+            await apiClient(`/api/admin/affiliates/${id}/${action}`, { method: 'POST' });
+            setActionMsg(`Application ${action}d successfully!`);
+            setTimeout(() => setActionMsg(null), 3000);
+            // Refresh data
+            const res = await apiClient('/api/admin/dashboard');
+            setData(res);
+        } catch (err) {
+            setActionMsg(`Error: ${err.message}`);
+            setTimeout(() => setActionMsg(null), 3000);
+        }
+    };
 
     if (loading) {
         return (
-            <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col">
+            <div style={styles.page}>
                 <UniversalHeader />
-                <div className="flex-1 flex items-center justify-center">
-                    <div className="text-gray-500 text-lg">Loading admin dashboard...</div>
+                <div style={styles.loadingWrap}>
+                    <div style={styles.spinner}></div>
+                    <p style={styles.loadingText}>Loading admin dashboard...</p>
                 </div>
             </div>
         );
@@ -37,75 +68,77 @@ export default function AdminDashboardPage() {
 
     if (error) {
         return (
-            <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col">
+            <div style={styles.page}>
                 <UniversalHeader />
-                <div className="flex-1 flex items-center justify-center">
-                    <div className="text-center">
-                        <div className="text-red-500 text-xl font-bold mb-2">Access Denied</div>
-                        <div className="text-gray-500">{error}</div>
-                        <Link to="/" className="mt-4 inline-block text-[#197fe6] hover:underline">← Back to Home</Link>
-                    </div>
+                <div style={styles.loadingWrap}>
+                    <div style={styles.errorIcon}>🔒</div>
+                    <h2 style={styles.errorTitle}>Access Denied</h2>
+                    <p style={styles.errorMsg}>{error}</p>
+                    <Link to="/" style={styles.backLink}>← Back to Home</Link>
                 </div>
             </div>
         );
     }
 
-    const { referralLogs, affiliateApplications, payoutSummary, totals } = data;
+    const { referralLogs, affiliateApplications, payoutSummary, totals, totalUsers } = data;
 
     const tabs = [
-        { id: 'referrals', label: 'Referral Activity', count: totals.totalReferrals },
-        { id: 'affiliates', label: 'Affiliate Applications', count: totals.totalAffiliateApps },
-        { id: 'payouts', label: 'Payout Summary', count: payoutSummary?.length || 0 }
+        { id: 'overview', label: '📊 Overview', icon: '📊' },
+        { id: 'users', label: '👥 Users', icon: '👥' },
+        { id: 'affiliates', label: '🤝 Affiliates', icon: '🤝' },
+        { id: 'referrals', label: '🔗 Referrals', icon: '🔗' },
+        { id: 'payouts', label: '💰 Payouts', icon: '💰' }
     ];
 
     return (
-        <div className="bg-background-light dark:bg-background-dark font-display text-[#111418] dark:text-white transition-colors duration-300 min-h-screen flex flex-col">
+        <div style={styles.page}>
             <UniversalHeader />
 
-            <main className="flex-1 max-w-[1200px] mx-auto w-full px-4 py-8">
+            <main style={styles.main}>
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
+                <div style={styles.header}>
                     <div>
-                        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-                        <p className="text-sm text-gray-500 mt-1">
-                            {totals.totalReferrals} referrals · {totals.totalConverted} converted · {totals.totalPending} pending
+                        <h1 style={styles.title}>Admin Dashboard</h1>
+                        <p style={styles.subtitle}>
+                            {totalUsers || 0} users · {totals.totalReferrals} referrals · {totals.totalAffiliateApps} affiliate apps
                         </p>
                     </div>
-                    <div className="flex items-center gap-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-3 py-1.5 rounded-full text-sm font-semibold">
-                        <span className="material-symbols-outlined text-base">admin_panel_settings</span>
-                        Admin
+                    <div style={styles.adminBadge}>
+                        🛡️ Admin
                     </div>
                 </div>
 
-                {/* Stats Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                    <StatCard label="Total Referrals" value={totals.totalReferrals} icon="group_add" color="blue" />
-                    <StatCard label="Converted" value={totals.totalConverted} icon="check_circle" color="green" />
-                    <StatCard label="Pending" value={totals.totalPending} icon="pending" color="amber" />
-                    <StatCard label="Affiliate Apps" value={totals.totalAffiliateApps} icon="description" color="purple" />
-                </div>
+                {/* Toast */}
+                {actionMsg && (
+                    <div style={{
+                        ...styles.toast,
+                        background: actionMsg.startsWith('Error') ? '#fef2f2' : '#f0fdf4',
+                        color: actionMsg.startsWith('Error') ? '#dc2626' : '#16a34a',
+                        borderColor: actionMsg.startsWith('Error') ? '#fecaca' : '#bbf7d0'
+                    }}>
+                        {actionMsg}
+                    </div>
+                )}
 
                 {/* Tabs */}
-                <div className="flex gap-1 mb-6 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+                <div style={styles.tabBar}>
                     {tabs.map(t => (
                         <button
                             key={t.id}
                             onClick={() => setTab(t.id)}
-                            className={`flex-1 py-2.5 px-4 rounded-md text-sm font-semibold transition-all ${tab === t.id
-                                    ? 'bg-white dark:bg-[#1A222C] text-[#111418] dark:text-white shadow-sm'
-                                    : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                                }`}
+                            style={tab === t.id ? { ...styles.tabBtn, ...styles.tabBtnActive } : styles.tabBtn}
                         >
                             {t.label}
-                            <span className="ml-1.5 text-xs opacity-60">({t.count})</span>
                         </button>
                     ))}
                 </div>
 
                 {/* Tab Content */}
-                <div className="bg-white dark:bg-[#111921] rounded-xl border border-[#dce0e5] dark:border-gray-800 overflow-hidden shadow-sm">
+                <div style={styles.card}>
+                    {tab === 'overview' && <OverviewTab totals={totals} totalUsers={totalUsers} referralLogs={referralLogs} affiliateApplications={affiliateApplications} />}
+                    {tab === 'users' && <UsersTab users={users} loading={usersLoading} />}
+                    {tab === 'affiliates' && <AffiliatesTab applications={affiliateApplications} onAction={handleAffiliateAction} />}
                     {tab === 'referrals' && <ReferralsTab logs={referralLogs} />}
-                    {tab === 'affiliates' && <AffiliatesTab applications={affiliateApplications} />}
                     {tab === 'payouts' && <PayoutsTab summary={payoutSummary} />}
                 </div>
             </main>
@@ -113,62 +146,212 @@ export default function AdminDashboardPage() {
     );
 }
 
-function StatCard({ label, value, icon, color }) {
-    const colors = {
-        blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
-        green: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400',
-        amber: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
-        purple: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-    };
+// ==================== OVERVIEW TAB ====================
+function OverviewTab({ totals, totalUsers, referralLogs, affiliateApplications }) {
+    const recentReferrals = (referralLogs || []).slice(0, 5);
+    const pendingApps = (affiliateApplications || []).filter(a => a.status === 'pending');
 
     return (
-        <div className="bg-white dark:bg-[#111921] border border-[#dce0e5] dark:border-gray-800 rounded-xl p-4">
-            <div className={`inline-flex items-center justify-center size-10 rounded-lg mb-3 ${colors[color]}`}>
-                <span className="material-symbols-outlined text-xl">{icon}</span>
+        <div>
+            {/* KPI Cards */}
+            <div style={styles.kpiGrid}>
+                <KPICard label="Total Users" value={totalUsers || 0} emoji="👥" color="#3b82f6" />
+                <KPICard label="Total Referrals" value={totals.totalReferrals} emoji="🔗" color="#8b5cf6" />
+                <KPICard label="Converted" value={totals.totalConverted} emoji="✅" color="#16a34a" />
+                <KPICard label="Pending" value={totals.totalPending} emoji="⏳" color="#f59e0b" />
+                <KPICard label="Affiliate Apps" value={totals.totalAffiliateApps} emoji="📋" color="#ec4899" />
+                <KPICard label="Pending Approval" value={totals.pendingAffiliates || 0} emoji="🔔" color="#ef4444" />
             </div>
-            <div className="text-2xl font-bold">{value}</div>
-            <div className="text-xs text-gray-500 mt-1">{label}</div>
+
+            {/* Quick Glance Sections */}
+            <div style={styles.twoCol}>
+                <div>
+                    <h3 style={styles.sectionTitle}>🔔 Pending Affiliate Applications ({pendingApps.length})</h3>
+                    {pendingApps.length === 0 ? (
+                        <p style={styles.emptyText}>No pending applications</p>
+                    ) : (
+                        pendingApps.slice(0, 3).map(app => (
+                            <div key={app.id} style={styles.quickCard}>
+                                <strong>{app.name}</strong>
+                                <span style={styles.quickMeta}>{app.email} · {app.primary_platform}</span>
+                            </div>
+                        ))
+                    )}
+                </div>
+                <div>
+                    <h3 style={styles.sectionTitle}>🕐 Recent Referrals</h3>
+                    {recentReferrals.length === 0 ? (
+                        <p style={styles.emptyText}>No referrals yet</p>
+                    ) : (
+                        recentReferrals.map((log, i) => (
+                            <div key={log.id || i} style={styles.quickCard}>
+                                <strong>{log.referrer_email || 'Unknown'}</strong>
+                                <span style={styles.quickMeta}>→ {log.referred_email || 'Unknown'} · {formatDate(log.created_at)}</span>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
         </div>
     );
 }
 
+// ==================== USERS TAB ====================
+function UsersTab({ users, loading }) {
+    const [search, setSearch] = useState('');
+
+    if (loading) return <div style={styles.emptyState}><div style={styles.spinner}></div> Loading users...</div>;
+    if (!users) return <div style={styles.emptyState}>No user data available.</div>;
+
+    const filtered = search
+        ? users.filter(u =>
+            (u.email || '').toLowerCase().includes(search.toLowerCase()) ||
+            (u.display_name || '').toLowerCase().includes(search.toLowerCase())
+        )
+        : users;
+
+    return (
+        <div>
+            <div style={styles.searchBar}>
+                <input
+                    type="text"
+                    placeholder="Search by email or name..."
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    style={styles.searchInput}
+                />
+                <span style={styles.searchCount}>{filtered.length} users</span>
+            </div>
+            <div style={styles.tableWrap}>
+                <table style={styles.table}>
+                    <thead>
+                        <tr>
+                            <th style={styles.th}>Email</th>
+                            <th style={styles.th}>Name</th>
+                            <th style={styles.th}>Tier</th>
+                            <th style={styles.th}>Credits</th>
+                            <th style={styles.th}>Referral Code</th>
+                            <th style={styles.th}>Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filtered.map((u, i) => (
+                            <tr key={u.id || i} style={styles.tr}>
+                                <td style={styles.td}><strong>{u.email || '—'}</strong></td>
+                                <td style={styles.td}>{u.display_name || '—'}</td>
+                                <td style={styles.td}>
+                                    <span style={{
+                                        ...styles.badge,
+                                        background: u.subscription_tier === 'pro' ? '#dbeafe' : '#f3f4f6',
+                                        color: u.subscription_tier === 'pro' ? '#1d4ed8' : '#6b7280'
+                                    }}>
+                                        {u.subscription_tier || 'free'}
+                                    </span>
+                                </td>
+                                <td style={styles.td}>{u.credits || 0}</td>
+                                <td style={styles.td}><code style={styles.code}>{u.referral_code || '—'}</code></td>
+                                <td style={styles.tdMuted}>{formatDate(u.created_at)}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
+
+// ==================== AFFILIATES TAB ====================
+function AffiliatesTab({ applications, onAction }) {
+    if (!applications || applications.length === 0) {
+        return <div style={styles.emptyState}>No affiliate applications yet.</div>;
+    }
+
+    return (
+        <div style={styles.tableWrap}>
+            <table style={styles.table}>
+                <thead>
+                    <tr>
+                        <th style={styles.th}>Name</th>
+                        <th style={styles.th}>Email</th>
+                        <th style={styles.th}>Platform</th>
+                        <th style={styles.th}>Audience</th>
+                        <th style={styles.th}>Payout</th>
+                        <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Date</th>
+                        <th style={styles.th}>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {applications.map((app, i) => (
+                        <tr key={app.id || i} style={styles.tr}>
+                            <td style={styles.td}><strong>{app.name}</strong></td>
+                            <td style={styles.td}>{app.email}</td>
+                            <td style={styles.td}>{app.primary_platform}</td>
+                            <td style={styles.td}>{app.audience_size}</td>
+                            <td style={styles.td}>{app.payout_preference}</td>
+                            <td style={styles.td}><StatusBadge status={app.status} /></td>
+                            <td style={styles.tdMuted}>{formatDate(app.created_at)}</td>
+                            <td style={styles.td}>
+                                {app.status === 'pending' && (
+                                    <div style={styles.actionBtns}>
+                                        <button
+                                            onClick={() => onAction(app.id, 'approve')}
+                                            style={styles.approveBtn}
+                                        >
+                                            ✓ Approve
+                                        </button>
+                                        <button
+                                            onClick={() => onAction(app.id, 'reject')}
+                                            style={styles.rejectBtn}
+                                        >
+                                            ✗ Reject
+                                        </button>
+                                    </div>
+                                )}
+                                {app.status !== 'pending' && (
+                                    <span style={styles.tdMuted}>—</span>
+                                )}
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+}
+
+// ==================== REFERRALS TAB ====================
 function ReferralsTab({ logs }) {
     if (!logs || logs.length === 0) {
-        return <div className="p-12 text-center text-gray-500">No referrals yet.</div>;
+        return <div style={styles.emptyState}>No referrals yet.</div>;
     }
 
     return (
-        <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-[#dce0e5] dark:border-gray-800">
+        <div style={styles.tableWrap}>
+            <table style={styles.table}>
+                <thead>
                     <tr>
-                        <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Referrer</th>
-                        <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Referred User</th>
-                        <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Code</th>
-                        <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Status</th>
-                        <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Date</th>
+                        <th style={styles.th}>Referrer</th>
+                        <th style={styles.th}>Referred User</th>
+                        <th style={styles.th}>Code</th>
+                        <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Date</th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-[#dce0e5] dark:divide-gray-800">
-                    {logs.map((log, idx) => (
-                        <tr key={log.id || idx} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                            <td className="px-4 py-3">
-                                <div className="font-medium">{log.referrer_email || 'Unknown'}</div>
-                                <div className="text-xs text-gray-400">{log.referrer_name || log.referrer_id?.substring(0, 8)}</div>
+                <tbody>
+                    {logs.map((log, i) => (
+                        <tr key={log.id || i} style={styles.tr}>
+                            <td style={styles.td}>
+                                <div><strong>{log.referrer_email || 'Unknown'}</strong></div>
+                                <div style={styles.subText}>{log.referrer_name || ''}</div>
                             </td>
-                            <td className="px-4 py-3">
-                                <div className="font-medium">{log.referred_email || 'Unknown'}</div>
-                                <div className="text-xs text-gray-400">{log.referred_name || log.referred_user_id?.substring(0, 8)}</div>
+                            <td style={styles.td}>
+                                <div><strong>{log.referred_email || 'Unknown'}</strong></div>
+                                <div style={styles.subText}>{log.referred_name || ''}</div>
                             </td>
-                            <td className="px-4 py-3">
-                                <code className="bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-xs">{log.referrer_code || '—'}</code>
-                            </td>
-                            <td className="px-4 py-3">
-                                <StatusBadge status={log.status} />
-                            </td>
-                            <td className="px-4 py-3 text-gray-500">
-                                {log.created_at ? new Date(log.created_at).toLocaleDateString() : '—'}
-                            </td>
+                            <td style={styles.td}><code style={styles.code}>{log.referrer_code || '—'}</code></td>
+                            <td style={styles.td}><StatusBadge status={log.status} /></td>
+                            <td style={styles.tdMuted}>{formatDate(log.created_at)}</td>
                         </tr>
                     ))}
                 </tbody>
@@ -177,104 +360,142 @@ function ReferralsTab({ logs }) {
     );
 }
 
-function AffiliatesTab({ applications }) {
-    if (!applications || applications.length === 0) {
-        return <div className="p-12 text-center text-gray-500">No affiliate applications yet.</div>;
-    }
-
-    return (
-        <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-[#dce0e5] dark:border-gray-800">
-                    <tr>
-                        <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Name</th>
-                        <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Email</th>
-                        <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Platform</th>
-                        <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Audience</th>
-                        <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Payout</th>
-                        <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Status</th>
-                        <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Date</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-[#dce0e5] dark:divide-gray-800">
-                    {applications.map((app, idx) => (
-                        <tr key={app.id || idx} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                            <td className="px-4 py-3 font-medium">{app.name}</td>
-                            <td className="px-4 py-3">{app.email}</td>
-                            <td className="px-4 py-3">{app.primary_platform}</td>
-                            <td className="px-4 py-3">{app.audience_size}</td>
-                            <td className="px-4 py-3">{app.payout_preference}</td>
-                            <td className="px-4 py-3">
-                                <StatusBadge status={app.status} />
-                            </td>
-                            <td className="px-4 py-3 text-gray-500">
-                                {app.created_at ? new Date(app.created_at).toLocaleDateString() : '—'}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    );
-}
-
+// ==================== PAYOUTS TAB ====================
 function PayoutsTab({ summary }) {
     if (!summary || summary.length === 0) {
-        return <div className="p-12 text-center text-gray-500">No payout data yet.</div>;
+        return <div style={styles.emptyState}>No payout data yet.</div>;
     }
 
     return (
-        <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-[#dce0e5] dark:border-gray-800">
-                    <tr>
-                        <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Referrer</th>
-                        <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Code</th>
-                        <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Total Referrals</th>
-                        <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Converted</th>
-                        <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Pending</th>
-                        <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Credits</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-[#dce0e5] dark:divide-gray-800">
-                    {summary.map((row, idx) => (
-                        <tr key={row.referrer_id || idx} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                            <td className="px-4 py-3">
-                                <div className="font-medium">{row.referrer_email || 'Unknown'}</div>
-                                <div className="text-xs text-gray-400">{row.referrer_name || row.referrer_id?.substring(0, 8)}</div>
-                            </td>
-                            <td className="px-4 py-3">
-                                <code className="bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-xs">{row.referral_code || '—'}</code>
-                            </td>
-                            <td className="px-4 py-3 font-bold">{row.total_referrals}</td>
-                            <td className="px-4 py-3">
-                                <span className="text-green-600 font-semibold">{row.converted}</span>
-                            </td>
-                            <td className="px-4 py-3">
-                                <span className="text-amber-600 font-semibold">{row.pending}</span>
-                            </td>
-                            <td className="px-4 py-3">
-                                <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-full text-xs font-bold">{row.credits}</span>
-                            </td>
+        <div>
+            <div style={styles.payoutInfo}>
+                💡 <strong>How payouts work:</strong> When an affiliate's referred user upgrades to Pro,
+                the referral converts. You pay the affiliate their commission (30% of subscription revenue)
+                via their preferred method (PayPal, Venmo, etc. from their application).
+            </div>
+            <div style={styles.tableWrap}>
+                <table style={styles.table}>
+                    <thead>
+                        <tr>
+                            <th style={styles.th}>Referrer</th>
+                            <th style={styles.th}>Code</th>
+                            <th style={styles.th}>Total Referrals</th>
+                            <th style={styles.th}>Converted</th>
+                            <th style={styles.th}>Pending</th>
+                            <th style={styles.th}>Credits</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {summary.map((row, i) => (
+                            <tr key={row.referrer_id || i} style={styles.tr}>
+                                <td style={styles.td}>
+                                    <div><strong>{row.referrer_email || 'Unknown'}</strong></div>
+                                    <div style={styles.subText}>{row.referrer_name || ''}</div>
+                                </td>
+                                <td style={styles.td}><code style={styles.code}>{row.referral_code || '—'}</code></td>
+                                <td style={{ ...styles.td, fontWeight: 700 }}>{row.total_referrals}</td>
+                                <td style={{ ...styles.td, color: '#16a34a', fontWeight: 600 }}>{row.converted}</td>
+                                <td style={{ ...styles.td, color: '#f59e0b', fontWeight: 600 }}>{row.pending}</td>
+                                <td style={styles.td}>
+                                    <span style={{ ...styles.badge, background: '#dbeafe', color: '#1d4ed8' }}>{row.credits}</span>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
+
+// ==================== SHARED COMPONENTS ====================
+function KPICard({ label, value, emoji, color }) {
+    return (
+        <div style={styles.kpiCard}>
+            <div style={{ ...styles.kpiIcon, background: `${color}15`, color }}>{emoji}</div>
+            <div style={styles.kpiValue}>{value}</div>
+            <div style={styles.kpiLabel}>{label}</div>
         </div>
     );
 }
 
 function StatusBadge({ status }) {
-    const styles = {
-        pending: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-        converted: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-        approved: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-        rejected: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    const colors = {
+        pending: { bg: '#fef3c7', color: '#b45309' },
+        converted: { bg: '#dcfce7', color: '#15803d' },
+        approved: { bg: '#dcfce7', color: '#15803d' },
+        rejected: { bg: '#fee2e2', color: '#dc2626' },
     };
-
+    const c = colors[status] || colors.pending;
     return (
-        <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold capitalize ${styles[status] || styles.pending}`}>
+        <span style={{ ...styles.badge, background: c.bg, color: c.color }}>
             {status || 'pending'}
         </span>
     );
 }
+
+function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// ==================== STYLES ====================
+const styles = {
+    page: { minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter', -apple-system, sans-serif" },
+    main: { maxWidth: 1200, margin: '0 auto', padding: '24px 16px' },
+    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
+    title: { fontSize: 28, fontWeight: 800, color: '#0f172a', margin: 0 },
+    subtitle: { fontSize: 14, color: '#64748b', marginTop: 4 },
+    adminBadge: { background: '#dcfce7', color: '#15803d', padding: '8px 16px', borderRadius: 999, fontSize: 14, fontWeight: 700 },
+    tabBar: { display: 'flex', gap: 4, background: '#e2e8f0', borderRadius: 12, padding: 4, marginBottom: 24, overflowX: 'auto' },
+    tabBtn: { flex: 1, padding: '12px 16px', border: 'none', borderRadius: 8, background: 'transparent', color: '#64748b', fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap' },
+    tabBtnActive: { background: '#fff', color: '#0f172a', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' },
+    card: { background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' },
+    toast: { padding: '12px 20px', borderRadius: 12, border: '1px solid', marginBottom: 16, fontWeight: 600, fontSize: 14 },
+    loadingWrap: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' },
+    spinner: { width: 40, height: 40, border: '4px solid #e2e8f0', borderTop: '4px solid #3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' },
+    loadingText: { marginTop: 16, color: '#64748b', fontSize: 16 },
+    errorIcon: { fontSize: 48, marginBottom: 16 },
+    errorTitle: { fontSize: 24, fontWeight: 700, color: '#0f172a', margin: '0 0 8px' },
+    errorMsg: { color: '#64748b', marginBottom: 16 },
+    backLink: { color: '#3b82f6', textDecoration: 'none', fontWeight: 600 },
+    emptyState: { padding: '60px 20px', textAlign: 'center', color: '#94a3b8', fontSize: 16 },
+    emptyText: { color: '#94a3b8', fontSize: 14, padding: '12px 0' },
+
+    // KPI
+    kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, marginBottom: 32 },
+    kpiCard: { background: '#f8fafc', borderRadius: 12, padding: 20, border: '1px solid #e2e8f0', textAlign: 'center' },
+    kpiIcon: { width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', fontSize: 20 },
+    kpiValue: { fontSize: 32, fontWeight: 800, color: '#0f172a' },
+    kpiLabel: { fontSize: 12, color: '#64748b', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' },
+
+    // Two column layout
+    twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 },
+    sectionTitle: { fontSize: 16, fontWeight: 700, color: '#0f172a', marginBottom: 12 },
+    quickCard: { padding: '12px 16px', background: '#f8fafc', borderRadius: 8, marginBottom: 8, border: '1px solid #e2e8f0' },
+    quickMeta: { display: 'block', fontSize: 12, color: '#64748b', marginTop: 4 },
+
+    // Search
+    searchBar: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 },
+    searchInput: { flex: 1, padding: '12px 16px', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 14, outline: 'none', transition: 'border 0.2s', background: '#f8fafc' },
+    searchCount: { color: '#64748b', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' },
+
+    // Table
+    tableWrap: { overflowX: 'auto' },
+    table: { width: '100%', borderCollapse: 'collapse', fontSize: 14 },
+    th: { padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#64748b', borderBottom: '2px solid #e2e8f0', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.5px' },
+    tr: { borderBottom: '1px solid #f1f5f9' },
+    td: { padding: '12px 16px', verticalAlign: 'top' },
+    tdMuted: { padding: '12px 16px', color: '#94a3b8', fontSize: 13 },
+    subText: { fontSize: 12, color: '#94a3b8', marginTop: 2 },
+    badge: { display: 'inline-block', padding: '3px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, textTransform: 'capitalize' },
+    code: { background: '#f1f5f9', padding: '2px 8px', borderRadius: 6, fontSize: 12, fontFamily: 'monospace' },
+
+    // Action buttons
+    actionBtns: { display: 'flex', gap: 8 },
+    approveBtn: { padding: '6px 14px', borderRadius: 8, border: 'none', background: '#dcfce7', color: '#15803d', fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: 'all 0.2s' },
+    rejectBtn: { padding: '6px 14px', borderRadius: 8, border: 'none', background: '#fee2e2', color: '#dc2626', fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: 'all 0.2s' },
+
+    // Payout info
+    payoutInfo: { background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 12, padding: '16px 20px', marginBottom: 20, color: '#1e40af', fontSize: 14, lineHeight: 1.6 },
+};
