@@ -135,8 +135,6 @@ export default function MockInterviewSession() {
     const [sessionId, setSessionId] = useState(null);
     const [submitting, setSubmitting] = useState(false);
 
-    // DEBUG UI STATE
-    const [debugInfo, setDebugInfo] = useState(null);
 
     // State for auto-dictate
     const [typedEdited, setTypedEdited] = useState(false);
@@ -625,14 +623,7 @@ export default function MockInterviewSession() {
                 feature: 'mock_interview'
             });
 
-            if (server.ok) {
-                // DEBUG: Set info for verification - TRUST THE SERVER RESPONSE
-                setDebugInfo({
-                    voice: server.resolvedVoice || 'unknown',
-                    url: server.audioUrl || 'base64',
-                    provider: server.provider || 'unknown'
-                });
-            }
+
 
             if (server.ok && (server.audioBase64 || server.audioUrl)) {
                 const url = server.audioUrl || `data:audio/mp3;base64,${server.audioBase64}`;
@@ -794,16 +785,7 @@ export default function MockInterviewSession() {
 
 
 
-                {/* DEBUG BANNER */}
-                {debugInfo && (
-                    <div className="w-full bg-black text-green-400 font-mono text-xs p-2 text-center border-b border-green-900 flex flex-col gap-1">
-                        <div>[DEBUG] Voice: {debugInfo.voice} | Provider: {debugInfo.provider} | URL: {debugInfo.url ? debugInfo.url.substring(0, 30) + '...' : 'N/A'}</div>
-                        <div className="text-gray-500">
-                            FE: {frontendBuild?.gitSha || 'unk'} @ {frontendBuild?.buildTime || '-'} |
-                            BE: {backendBuild?.gitSha || 'unk'} @ {backendBuild?.buildTime || '-'}
-                        </div>
-                    </div>
-                )}
+
 
                 {/* Main Content - Only show if questions loaded */}
                 {!questionsLoading && !questionsError && questions.length > 0 && (

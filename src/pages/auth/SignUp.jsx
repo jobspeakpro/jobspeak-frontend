@@ -12,7 +12,11 @@ export default function SignUp() {
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [inviteCode, setInviteCode] = useState("JSP2026!"); // Default to known code
+  const [inviteCode, setInviteCode] = useState(() => {
+    // Auto-fill from ?ref= URL parameter, or fallback to master key
+    const params = new URLSearchParams(window.location.search);
+    return params.get('ref') || localStorage.getItem('jsp_ref_code') || getCookie('jsp_ref_code') || 'JSP2026!';
+  });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
