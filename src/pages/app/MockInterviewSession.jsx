@@ -50,11 +50,16 @@ export default function MockInterviewSession() {
     useEffect(() => {
         const fetchEntitlements = async () => {
             try {
+                // Get JWT token for authentication
+                const { data: sessionData } = await supabase.auth.getSession();
+                const token = sessionData?.session?.access_token;
+
                 const response = await fetch('/api/entitlements', {
                     method: 'GET',
                     credentials: 'include',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                     }
                 });
 
@@ -86,35 +91,11 @@ export default function MockInterviewSession() {
         fetchEntitlements();
     }, [user]);
 
-    // Check mock interview limit status on mount
-    useEffect(() => {
-        let cancelled = false;
-        (async () => {
-            try {
-                const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
-                const { data } = await supabase.auth.getSession();
-                const token = data?.session?.access_token;
-
-                const res = await fetch(`${API_BASE}/api/mock-interview/limit-status`, {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-                });
-
-                const json = await res.json().catch(() => ({}));
-                if (!cancelled) {
-                    if (res.ok) {
-                        setElig({ loading: false, ...json });
-                    } else {
-                        setElig({ loading: false, canStartMock: false, reason: "ERROR" });
-                    }
-                }
-            } catch (e) {
-                if (!cancelled) setElig({ loading: false, canStartMock: false, reason: "ERROR" });
-            }
-        })();
-        return () => { cancelled = true; };
-    }, []);
+    // NOTE: Removed redundant /api/mock-interview/limit-status check.
+    // The entitlements check above (lines 49-87) is the single source of truth for eligibility.
+    // Having two competing useEffects caused a race condition where limit-status 
+    // could overwrite elig.canStartMock=true with false (when JWT wasn't ready yet),
+    // incorrectly showing the lockbox gate for authenticated users.
 
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [transcript, setTranscript] = useState("");
