@@ -32,6 +32,7 @@ import AffiliateSuccessPage from "./pages/marketing/AffiliateSuccessPage.jsx";
 import AffiliateTermsPage from "./pages/marketing/AffiliateTermsPage.jsx";
 import ReferralPage from "./pages/app/ReferralPage.jsx";
 import ReferralHistoryPage from "./pages/app/ReferralHistoryPage.jsx";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage.jsx";
 import { ProProvider } from "./contexts/ProContext.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
@@ -142,6 +143,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                   {/* Referral Routes */}
                   <Route path="/referral" element={<ProtectedRoute><ReferralPage /></ProtectedRoute>} />
                   <Route path="/referral/history" element={<ProtectedRoute><ReferralHistoryPage /></ProtectedRoute>} />
+
+                  {/* Admin Routes */}
+                  <Route path="/admin" element={<ProtectedRoute><AdminDashboardPage /></ProtectedRoute>} />
 
                   {/* Catch-all: redirect to landing */}
                   <Route path="*" element={<Navigate to="/" replace />} />
