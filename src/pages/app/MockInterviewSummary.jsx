@@ -6,6 +6,7 @@ import { apiClient } from "../../utils/apiClient.js";
 import { normalizeMockSummary } from "../../utils/apiNormalizers.js";
 
 import { requestServerTTS, playAudioFromServer, speakBrowserTTS, stopAllTTS } from "../../utils/ttsClient.js";
+import { unlockAudio } from "../../utils/audioUnlock.js";
 import UniversalHeader from "../../components/UniversalHeader.jsx";
 import TTSSampleButton from "../../components/TTSSampleButton.jsx";
 
@@ -576,6 +577,7 @@ export default function MockInterviewSummary() {
         }
 
         // Allowed - proceed
+        unlockAudio();
         navigate('/mock-interview/session?type=short');
     };
 

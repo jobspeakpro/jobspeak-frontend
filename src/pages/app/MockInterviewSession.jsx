@@ -8,7 +8,8 @@ import VoiceRecorder from "../../components/VoiceRecorder.jsx";
 import MockInterviewGate from "../../components/MockInterviewGate.jsx";
 import interviewerAvatar from "../../assets/avatars/SarahJ.png";
 import { trackActivityStart, isActivityTracked, markActivityTracked, getTabId } from "../../utils/activityClient.js";
-import { requestServerTTS } from "../../utils/ttsClient.js";
+import { requestServerTTS, speakBrowserTTS } from "../../utils/ttsClient.js";
+import { unlockAudio, isAudioUnlocked } from "../../utils/audioUnlock.js";
 
 // LOCAL HISTORY TEST #2 - 2025-12-31 09:30 - Second verification attempt
 // Adding debug Logging for Persistence
@@ -115,6 +116,7 @@ export default function MockInterviewSession() {
 
     // TTS audio ref
     const questionAudioRef = useRef(new Audio());
+    const pendingTTSTextRef = useRef(null); // Text waiting to play after unlock
     const [questionSpeed, setQuestionSpeed] = useState(() => {
         const stored = localStorage.getItem("mock_question_speed");
         return stored ? Number(stored) : 1.0;
@@ -584,9 +586,34 @@ export default function MockInterviewSession() {
 
     // Skip functionality removed - users must submit answers to proceed
 
-    // TTS: Play question audio using same system as practice page
+    // --- AUDIO UNLOCK: Ensure audio is unlocked on any user interaction ---
+    useEffect(() => {
+        const handleInteraction = () => {
+            if (!isAudioUnlocked()) {
+                unlockAudio();
+            }
+            // If there's a pending TTS that failed due to autoplay, retry it now
+            if (pendingTTSTextRef.current && currentQuestion?.text) {
+                pendingTTSTextRef.current = null;
+                playQuestionAudio();
+            }
+        };
+        document.addEventListener('click', handleInteraction);
+        document.addEventListener('touchstart', handleInteraction);
+        document.addEventListener('keydown', handleInteraction);
+        return () => {
+            document.removeEventListener('click', handleInteraction);
+            document.removeEventListener('touchstart', handleInteraction);
+            document.removeEventListener('keydown', handleInteraction);
+        };
+    }, [currentQuestion]);
+
+    // TTS: Play question audio — bulletproof with fallback chain
     const playQuestionAudio = async () => {
         if (!currentQuestion?.text) return;
+
+        // Try to unlock audio proactively (no-op if already unlocked)
+        unlockAudio();
 
         try {
             console.log('[MOCK] Playing question audio with voice:', questionVoiceId);
@@ -612,13 +639,46 @@ export default function MockInterviewSession() {
                 // Cache bust the audio URL
                 questionAudioRef.current.src = server.audioUrl ? `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}` : url;
                 questionAudioRef.current.playbackRate = questionSpeed;
-                await questionAudioRef.current.play();
-                console.log('[MOCK] Question audio playing successfully');
+
+                try {
+                    await questionAudioRef.current.play();
+                    pendingTTSTextRef.current = null;
+                    console.log('[MOCK] Question audio playing successfully via server TTS');
+                } catch (playErr) {
+                    if (playErr.name === 'NotAllowedError') {
+                        // Autoplay was blocked — store pending text, will auto-retry on next interaction
+                        console.warn('[MOCK] Autoplay blocked, will auto-retry on next user interaction');
+                        pendingTTSTextRef.current = currentQuestion.text;
+                        // Immediately try browser speechSynthesis as fallback (more permissive in some browsers)
+                        try {
+                            await speakBrowserTTS({ text: currentQuestion.text, rate: questionSpeed });
+                            pendingTTSTextRef.current = null;
+                            console.log('[MOCK] Fallback browser TTS played successfully');
+                        } catch (browserErr) {
+                            console.warn('[MOCK] Browser TTS also blocked, waiting for user gesture');
+                        }
+                    } else {
+                        throw playErr;
+                    }
+                }
             } else {
-                console.error('[MOCK] TTS failed:', server.error);
+                // Server TTS failed entirely — fall back to browser speechSynthesis
+                console.warn('[MOCK] Server TTS failed, using browser TTS fallback:', server.error);
+                try {
+                    await speakBrowserTTS({ text: currentQuestion.text, rate: questionSpeed });
+                    console.log('[MOCK] Browser TTS fallback played successfully');
+                } catch (browserErr) {
+                    console.error('[MOCK] All TTS methods failed:', browserErr);
+                }
             }
         } catch (err) {
-            console.error('[MOCK] TTS error:', err);
+            console.error('[MOCK] TTS error, trying browser fallback:', err);
+            // Last resort: browser TTS
+            try {
+                await speakBrowserTTS({ text: currentQuestion.text, rate: questionSpeed });
+            } catch (browserErr) {
+                console.error('[MOCK] All TTS methods failed');
+            }
         }
     };
 

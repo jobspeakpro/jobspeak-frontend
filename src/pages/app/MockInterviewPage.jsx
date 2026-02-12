@@ -4,6 +4,7 @@ import { usePro } from "../../contexts/ProContext.jsx";
 import UniversalHeader from "../../components/UniversalHeader.jsx";
 import PaywallModal from "../../components/PaywallModal.jsx";
 import MockInterviewGate from "../../components/MockInterviewGate.jsx";
+import { unlockAudio } from "../../utils/audioUnlock.js";
 
 export default function MockInterviewPage() {
     const navigate = useNavigate();
@@ -59,6 +60,9 @@ export default function MockInterviewPage() {
     };
 
     const handleStartMockInterview = () => {
+        // Pre-unlock audio so TTS auto-plays on the session page
+        unlockAudio();
+
         if (!entitlements?.mockInterview?.allowed) {
             alert('You do not have access to mock interviews. Please check your account status.');
             return;

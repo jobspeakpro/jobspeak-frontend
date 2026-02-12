@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient.js";
+import { unlockAudio } from "../utils/audioUnlock.js";
 
 export default function MockInterviewPaywallCard() {
     const navigate = useNavigate();
@@ -60,6 +61,7 @@ export default function MockInterviewPaywallCard() {
         }
 
         // Allowed - start mock interview
+        unlockAudio();
         navigate('/mock-interview/session?type=short');
     };
 

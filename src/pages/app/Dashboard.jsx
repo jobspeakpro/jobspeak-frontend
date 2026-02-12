@@ -6,6 +6,7 @@ import { supabase } from "../../lib/supabaseClient.js";
 import { apiClient } from "../../utils/apiClient.js";
 import UniversalHeader from "../../components/UniversalHeader.jsx";
 import MicAudioTest from "../../components/MicAudioTest.jsx";
+import { unlockAudio } from "../../utils/audioUnlock.js";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -138,6 +139,7 @@ export default function Dashboard() {
     }
 
     // Allowed - proceed
+    unlockAudio();
     navigate('/mock-interview/session?type=short');
   };
 
