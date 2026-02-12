@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../../utils/apiClient.js';
 import UniversalHeader from '../../components/UniversalHeader.jsx';
+import SortableTable from '../../components/SortableTable.jsx';
 
 export default function AdminDashboardPage() {
     const [tab, setTab] = useState('overview');
@@ -198,66 +199,29 @@ function OverviewTab({ totals, totalUsers, referralLogs, affiliateApplications }
 
 // ==================== USERS TAB ====================
 function UsersTab({ users, loading }) {
-    const [search, setSearch] = useState('');
-
     if (loading) return <div style={styles.emptyState}><div style={styles.spinner}></div> Loading users...</div>;
     if (!users) return <div style={styles.emptyState}>No user data available.</div>;
 
-    const filtered = search
-        ? users.filter(u =>
-            (u.email || '').toLowerCase().includes(search.toLowerCase()) ||
-            (u.display_name || '').toLowerCase().includes(search.toLowerCase())
-        )
-        : users;
+    const columns = [
+        { key: 'created_at', label: 'Joined', render: u => formatDate(u.created_at) },
+        { key: 'email', label: 'Email', render: u => <strong>{u.email || '—'}</strong> },
+        { key: 'display_name', label: 'Name' },
+        {
+            key: 'subscription_tier', label: 'Tier', render: u => (
+                <span style={{
+                    ...styles.badge,
+                    background: u.subscription_tier === 'pro' ? '#dbeafe' : '#f3f4f6',
+                    color: u.subscription_tier === 'pro' ? '#1d4ed8' : '#6b7280'
+                }}>
+                    {u.subscription_tier || 'free'}
+                </span>
+            )
+        },
+        { key: 'credits', label: 'Credits' },
+        { key: 'referral_code', label: 'Referral Code', render: u => <code style={styles.code}>{u.referral_code || '—'}</code> }
+    ];
 
-    return (
-        <div>
-            <div style={styles.searchBar}>
-                <input
-                    type="text"
-                    placeholder="Search by email or name..."
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    style={styles.searchInput}
-                />
-                <span style={styles.searchCount}>{filtered.length} users</span>
-            </div>
-            <div style={styles.tableWrap}>
-                <table style={styles.table}>
-                    <thead>
-                        <tr>
-                            <th style={styles.th}>Email</th>
-                            <th style={styles.th}>Name</th>
-                            <th style={styles.th}>Tier</th>
-                            <th style={styles.th}>Credits</th>
-                            <th style={styles.th}>Referral Code</th>
-                            <th style={styles.th}>Joined</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filtered.map((u, i) => (
-                            <tr key={u.id || i} style={styles.tr}>
-                                <td style={styles.td}><strong>{u.email || '—'}</strong></td>
-                                <td style={styles.td}>{u.display_name || '—'}</td>
-                                <td style={styles.td}>
-                                    <span style={{
-                                        ...styles.badge,
-                                        background: u.subscription_tier === 'pro' ? '#dbeafe' : '#f3f4f6',
-                                        color: u.subscription_tier === 'pro' ? '#1d4ed8' : '#6b7280'
-                                    }}>
-                                        {u.subscription_tier || 'free'}
-                                    </span>
-                                </td>
-                                <td style={styles.td}>{u.credits || 0}</td>
-                                <td style={styles.td}><code style={styles.code}>{u.referral_code || '—'}</code></td>
-                                <td style={styles.tdMuted}>{formatDate(u.created_at)}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
+    return <SortableTable columns={columns} data={users} defaultSortStr="created_at" />;
 }
 
 // ==================== AFFILIATES TAB ====================
@@ -266,58 +230,27 @@ function AffiliatesTab({ applications, onAction }) {
         return <div style={styles.emptyState}>No affiliate applications yet.</div>;
     }
 
-    return (
-        <div style={styles.tableWrap}>
-            <table style={styles.table}>
-                <thead>
-                    <tr>
-                        <th style={styles.th}>Name</th>
-                        <th style={styles.th}>Email</th>
-                        <th style={styles.th}>Platform</th>
-                        <th style={styles.th}>Audience</th>
-                        <th style={styles.th}>Payout</th>
-                        <th style={styles.th}>Status</th>
-                        <th style={styles.th}>Date</th>
-                        <th style={styles.th}>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {applications.map((app, i) => (
-                        <tr key={app.id || i} style={styles.tr}>
-                            <td style={styles.td}><strong>{app.name}</strong></td>
-                            <td style={styles.td}>{app.email}</td>
-                            <td style={styles.td}>{app.primary_platform}</td>
-                            <td style={styles.td}>{app.audience_size}</td>
-                            <td style={styles.td}>{app.payout_preference}</td>
-                            <td style={styles.td}><StatusBadge status={app.status} /></td>
-                            <td style={styles.tdMuted}>{formatDate(app.created_at)}</td>
-                            <td style={styles.td}>
-                                {app.status === 'pending' && (
-                                    <div style={styles.actionBtns}>
-                                        <button
-                                            onClick={() => onAction(app.id, 'approve')}
-                                            style={styles.approveBtn}
-                                        >
-                                            ✓ Approve
-                                        </button>
-                                        <button
-                                            onClick={() => onAction(app.id, 'reject')}
-                                            style={styles.rejectBtn}
-                                        >
-                                            ✗ Reject
-                                        </button>
-                                    </div>
-                                )}
-                                {app.status !== 'pending' && (
-                                    <span style={styles.tdMuted}>—</span>
-                                )}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    );
+    const columns = [
+        { key: 'created_at', label: 'Date', render: app => formatDate(app.created_at) },
+        { key: 'name', label: 'Name', render: app => <strong>{app.name}</strong> },
+        { key: 'email', label: 'Email' },
+        { key: 'primary_platform', label: 'Platform' },
+        { key: 'audience_size', label: 'Audience' },
+        { key: 'payout_preference', label: 'Payout' },
+        { key: 'status', label: 'Status', render: app => <StatusBadge status={app.status} /> },
+        {
+            key: 'actions', label: 'Actions', sortable: false, render: app => (
+                app.status === 'pending' ? (
+                    <div style={styles.actionBtns}>
+                        <button onClick={() => onAction(app.id, 'approve')} style={styles.approveBtn}>✓ Approve</button>
+                        <button onClick={() => onAction(app.id, 'reject')} style={styles.rejectBtn}>✗ Reject</button>
+                    </div>
+                ) : <span style={styles.tdMuted}>—</span>
+            )
+        }
+    ];
+
+    return <SortableTable columns={columns} data={applications} defaultSortStr="created_at" />;
 }
 
 // ==================== REFERRALS TAB ====================
@@ -326,38 +259,29 @@ function ReferralsTab({ logs }) {
         return <div style={styles.emptyState}>No referrals yet.</div>;
     }
 
-    return (
-        <div style={styles.tableWrap}>
-            <table style={styles.table}>
-                <thead>
-                    <tr>
-                        <th style={styles.th}>Referrer</th>
-                        <th style={styles.th}>Referred User</th>
-                        <th style={styles.th}>Code</th>
-                        <th style={styles.th}>Status</th>
-                        <th style={styles.th}>Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {logs.map((log, i) => (
-                        <tr key={log.id || i} style={styles.tr}>
-                            <td style={styles.td}>
-                                <div><strong>{log.referrer_email || 'Unknown'}</strong></div>
-                                <div style={styles.subText}>{log.referrer_name || ''}</div>
-                            </td>
-                            <td style={styles.td}>
-                                <div><strong>{log.referred_email || 'Unknown'}</strong></div>
-                                <div style={styles.subText}>{log.referred_name || ''}</div>
-                            </td>
-                            <td style={styles.td}><code style={styles.code}>{log.referrer_code || '—'}</code></td>
-                            <td style={styles.td}><StatusBadge status={log.status} /></td>
-                            <td style={styles.tdMuted}>{formatDate(log.created_at)}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    );
+    const columns = [
+        { key: 'created_at', label: 'Date', render: log => formatDate(log.created_at) },
+        {
+            key: 'referrer_email', label: 'Referrer', render: log => (
+                <div>
+                    <strong>{log.referrer_email || 'Unknown'}</strong>
+                    <div style={styles.subText}>{log.referrer_name || ''}</div>
+                </div>
+            )
+        },
+        {
+            key: 'referred_email', label: 'Referred User', render: log => (
+                <div>
+                    <strong>{log.referred_email || 'Unknown'}</strong>
+                    <div style={styles.subText}>{log.referred_name || ''}</div>
+                </div>
+            )
+        },
+        { key: 'referrer_code', label: 'Code', render: log => <code style={styles.code}>{log.referrer_code || '—'}</code> },
+        { key: 'status', label: 'Status', render: log => <StatusBadge status={log.status} /> }
+    ];
+
+    return <SortableTable columns={columns} data={logs} defaultSortStr="created_at" />;
 }
 
 // ==================== PAYOUTS TAB ====================
@@ -366,6 +290,23 @@ function PayoutsTab({ summary }) {
         return <div style={styles.emptyState}>No payout data yet.</div>;
     }
 
+    const columns = [
+        { key: 'last_active', label: 'Last Active', render: row => formatDate(row.last_active) },
+        {
+            key: 'referrer_email', label: 'Referrer', render: row => (
+                <div>
+                    <strong>{row.referrer_email || 'Unknown'}</strong>
+                    <div style={styles.subText}>{row.referrer_name || ''}</div>
+                </div>
+            )
+        },
+        { key: 'referral_code', label: 'Code', render: row => <code style={styles.code}>{row.referral_code || '—'}</code> },
+        { key: 'total_referrals', label: 'Total Referrals', headerStyle: { fontWeight: 700 } },
+        { key: 'converted', label: 'Converted', style: { color: '#16a34a', fontWeight: 600 } },
+        { key: 'pending', label: 'Pending', style: { color: '#f59e0b', fontWeight: 600 } },
+        { key: 'credits', label: 'Credits', render: row => <span style={{ ...styles.badge, background: '#dbeafe', color: '#1d4ed8' }}>{row.credits}</span> }
+    ];
+
     return (
         <div>
             <div style={styles.payoutInfo}>
@@ -373,39 +314,7 @@ function PayoutsTab({ summary }) {
                 the referral converts. You pay the affiliate their commission (30% of subscription revenue)
                 via their preferred method (PayPal, Venmo, etc. from their application).
             </div>
-            <div style={styles.tableWrap}>
-                <table style={styles.table}>
-                    <thead>
-                        <tr>
-                            <th style={styles.th}>Referrer</th>
-                            <th style={styles.th}>Code</th>
-                            <th style={styles.th}>Total Referrals</th>
-                            <th style={styles.th}>Converted</th>
-                            <th style={styles.th}>Pending</th>
-                            <th style={styles.th}>Last Active</th>
-                            <th style={styles.th}>Credits</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {summary.map((row, i) => (
-                            <tr key={row.referrer_id || i} style={styles.tr}>
-                                <td style={styles.td}>
-                                    <div><strong>{row.referrer_email || 'Unknown'}</strong></div>
-                                    <div style={styles.subText}>{row.referrer_name || ''}</div>
-                                </td>
-                                <td style={styles.td}><code style={styles.code}>{row.referral_code || '—'}</code></td>
-                                <td style={{ ...styles.td, fontWeight: 700 }}>{row.total_referrals}</td>
-                                <td style={{ ...styles.td, color: '#16a34a', fontWeight: 600 }}>{row.converted}</td>
-                                <td style={{ ...styles.td, color: '#f59e0b', fontWeight: 600 }}>{row.pending}</td>
-                                <td style={styles.tdMuted}>{formatDate(row.last_active)}</td>
-                                <td style={styles.td}>
-                                    <span style={{ ...styles.badge, background: '#dbeafe', color: '#1d4ed8' }}>{row.credits}</span>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+            <SortableTable columns={columns} data={summary} defaultSortStr="last_active" />
         </div>
     );
 }
