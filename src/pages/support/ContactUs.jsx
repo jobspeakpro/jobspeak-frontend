@@ -23,20 +23,14 @@ export default function ContactUs() {
 
     try {
       // Send to backend
-      await apiClient.post("/support/contact", {
-        name: formData.name,
-        email: formData.email,
-        subject: formData.topic, // map topic as subject
-        message: formData.message,
-        // Include extra fields in message or separate if needed, 
-        // prompt said payload: { name, email, subject, message } strictly.
-        // I will append other fields to message if helpful, or ignore them if strictly locked.
-        // Prompt: "Payload: { name, email, subject, message }"
-        // I will assume strict payload. But maybe I should append phone/app info to message string?
-        // "No guessing payloads". I will stick to the requested fields.
-        // But to avoid data loss from UI, I'll append to message.
-        // Actually, user said "Use the following endpoints exactly... Payload: { name, email, subject, message }". 
-        // I will stick to that.
+      await apiClient("/support/contact", {
+        method: "POST",
+        body: {
+          name: formData.name,
+          email: formData.email,
+          subject: formData.topic, // map topic as subject
+          message: formData.message,
+        }
       });
 
       // Show success toast
