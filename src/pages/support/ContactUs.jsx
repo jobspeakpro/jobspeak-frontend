@@ -23,7 +23,7 @@ export default function ContactUs() {
 
     try {
       // Send to backend
-      await apiClient("/support/contact", {
+      await apiClient("/api/support/contact", {
         method: "POST",
         body: {
           name: formData.name,
