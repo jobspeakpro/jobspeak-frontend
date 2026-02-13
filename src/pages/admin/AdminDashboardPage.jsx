@@ -9,6 +9,7 @@ export default function AdminDashboardPage() {
     const [tab, setTab] = useState('overview');
     const [data, setData] = useState(null);
     const [users, setUsers] = useState(null);
+    const [messages, setMessages] = useState(null);
     const [loading, setLoading] = useState(true);
     const [usersLoading, setUsersLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -42,6 +43,18 @@ export default function AdminDashboardPage() {
     }, [users]);
 
     useEffect(() => { if (tab === 'users') fetchUsers(); }, [tab, fetchUsers]);
+
+    const fetchMessages = useCallback(async () => {
+        if (messages) return;
+        try {
+            const res = await apiClient('/api/admin/support-messages');
+            setMessages(res.messages);
+        } catch (err) {
+            console.error('Messages fetch error:', err);
+        }
+    }, [messages]);
+
+    useEffect(() => { if (tab === 'messages') fetchMessages(); }, [tab, fetchMessages]);
 
     const handleAffiliateAction = async (id, action) => {
         try {
@@ -105,6 +118,7 @@ export default function AdminDashboardPage() {
     const filteredApps = filterByDate(affiliateApplications, 'created_at');
     const filteredPayouts = filterByDate(payoutSummary, 'last_active');
     const filteredUsers = filterByDate(users, 'created_at');
+    const filteredMessages = filterByDate(messages, 'created_at');
 
     const filteredTotals = {
         totalReferrals: (filteredLogs || []).length,
@@ -120,7 +134,8 @@ export default function AdminDashboardPage() {
         { id: 'users', label: '👥 Users', icon: '👥' },
         { id: 'affiliates', label: '🤝 Affiliates', icon: '🤝' },
         { id: 'referrals', label: '🔗 Referrals', icon: '🔗' },
-        { id: 'payouts', label: '💰 Payouts', icon: '💰' }
+        { id: 'payouts', label: '💰 Payouts', icon: '💰' },
+        { id: 'messages', label: '📩 Messages', icon: '📩' }
     ];
 
     return (
@@ -182,6 +197,7 @@ export default function AdminDashboardPage() {
                     {tab === 'affiliates' && <AffiliatesTab applications={filteredApps} onAction={handleAffiliateAction} />}
                     {tab === 'referrals' && <ReferralsTab logs={filteredLogs} />}
                     {tab === 'payouts' && <PayoutsTab summary={filteredPayouts} />}
+                    {tab === 'messages' && <MessagesTab messages={filteredMessages} />}
                 </div>
             </main>
         </div>
@@ -358,6 +374,36 @@ function PayoutsTab({ summary }) {
             <SortableTable columns={columns} data={summary} defaultSortStr="last_active" />
         </div>
     );
+}
+
+// ==================== MESSAGES TAB ====================
+function MessagesTab({ messages }) {
+    if (!messages || messages.length === 0) {
+        return <div style={styles.emptyState}>No messages yet.</div>;
+    }
+
+    const columns = [
+        { key: 'created_at', label: 'Date', render: m => formatDate(m.created_at) },
+        {
+            key: 'name', label: 'From', render: m => (
+                <div>
+                    <strong>{m.name || 'Unknown'}</strong>
+                    <div style={styles.subText}>{m.email}</div>
+                </div>
+            )
+        },
+        { key: 'subject', label: 'Subject', style: { fontWeight: 600 } },
+        {
+            key: 'message', label: 'Message', width: '40%', render: m => (
+                <div style={{ whiteSpace: 'pre-wrap', maxHeight: 100, overflowY: 'auto', fontSize: 13, color: '#334155' }}>
+                    {m.message}
+                </div>
+            )
+        },
+        { key: 'status', label: 'Status', render: m => <StatusBadge status={m.status || 'new'} /> }
+    ];
+
+    return <SortableTable columns={columns} data={messages} defaultSortStr="created_at" />;
 }
 
 // ==================== SHARED COMPONENTS ====================
