@@ -248,13 +248,13 @@ function UsersTab({ users, loading }) {
         { key: 'email', label: 'Email', render: u => <strong>{u.email || '—'}</strong> },
         { key: 'display_name', label: 'Name' },
         {
-            key: 'subscription_tier', label: 'Tier', render: u => (
+            key: 'subscription_status', label: 'Tier', render: u => (
                 <span style={{
                     ...styles.badge,
-                    background: u.subscription_tier === 'pro' ? '#dbeafe' : '#f3f4f6',
-                    color: u.subscription_tier === 'pro' ? '#1d4ed8' : '#6b7280'
+                    background: u.is_pro ? '#dbeafe' : '#f3f4f6',
+                    color: u.is_pro ? '#1d4ed8' : '#6b7280'
                 }}>
-                    {u.subscription_tier || 'free'}
+                    {u.subscription_status || (u.is_pro ? 'pro' : 'free')}
                 </span>
             )
         },
