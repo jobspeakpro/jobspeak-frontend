@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { fetchTtsBlobUrl, triggerBrowserFallback } from "../utils/ttsHelper";
+import { stopAllTTS } from "../utils/ttsClient";
 
 // Local error toast component
 const TTS_ERROR_TOAST = ({ onClose }) => (
@@ -70,6 +71,18 @@ export default function TTSSampleButton({ text, voiceId, playbackRate, label }) 
     }, [fallbackToast]);
 
     const handleClick = async () => {
+        // Stop any overlapping audio from main app
+        stopAllTTS();
+        window.speechSynthesis.cancel();
+
+        // Dynamic import to avoid circular dependencies if possible, or just assume it's global or passed down.
+        // Since we can't easily change imports without viewing top of file, we'll rely on the fact we can import it.
+        // Wait, I submitted a plan to Add stopAllTTS import. I should verify imports first? 
+        // I viewed the file, it imports `fetchTtsBlobUrl`. I need to add `stopAllTTS` to imports.
+        // But I can't do two edits in one tool call if they are non-contiguous.
+        // I will do the import in a separate call or use multi-replace.
+        // Actually, this tool call only modifies the function. I will add the import in the next step.
+
         const audio = audioRef.current;
         const sampleText = text || 'This is a test of the selected voice and speed.';
         const speed = playbackRate || 1.0;

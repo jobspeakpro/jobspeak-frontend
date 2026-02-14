@@ -217,7 +217,8 @@ export function AuthProvider({ children }) {
       const inviteCode = options.data?.inviteCode || '';
 
       // Call backend signup endpoint
-      const response = await fetch('https://jobspeak-backend-production.up.railway.app/api/auth/signup', {
+      // Use relative path to allow Vite/Vercel proxy to handle the target (dev or prod)
+      const response = await fetch('/api/auth/signup', {
         method: 'POST',
         credentials: 'include',
         headers: {

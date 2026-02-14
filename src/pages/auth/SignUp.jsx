@@ -92,8 +92,9 @@ export default function SignUp() {
       // Reduced console spam
       console.warn("Signup failed (handled):", err.code || "UNKNOWN");
 
-      // Friendly, neutral error message (NO RED BANNER)
-      setError("Signup is unavailable right now. Please try again.");
+      // Friendly, neutral error message
+      // Use the error message from the error object if available, otherwise default
+      setError(err.message || "Signup is unavailable right now. Please try again.");
       setLoading(false);
     }
   };
@@ -250,7 +251,7 @@ export default function SignUp() {
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-[#111418] dark:text-slate-200" htmlFor="inviteCode">
-                    Invite Code
+                    Invite Code <span className="text-slate-400 font-normal ml-1">(Optional)</span>
                   </label>
                   <input
                     className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 h-12 text-[#111418] dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
@@ -259,7 +260,7 @@ export default function SignUp() {
                     type="text"
                     value={inviteCode}
                     onChange={(e) => setInviteCode(e.target.value)}
-                    required
+                  // optional field
                   />
                 </div>
                 <button

@@ -1415,7 +1415,7 @@ export default function PracticeSpeakingPage() {
                 <div className="bg-purple-50 dark:bg-purple-900/10 rounded-xl p-6 border border-purple-100 dark:border-purple-900/30">
                   <h4 className="font-bold text-purple-800 dark:text-purple-400 mb-2 flex items-center gap-2">
                     <span className="material-symbols-outlined">psychology</span>
-                    How you came across
+                    What the manager thought
                   </h4>
                   <p className="text-purple-900 dark:text-purple-200 italic text-sm leading-relaxed">
                     "{hiringManagerHeard ? hiringManagerHeard.replace(/seems junior/gi, "signals early-career level") : "This feedback will appear once analysis completes."}"
