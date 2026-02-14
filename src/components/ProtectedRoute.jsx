@@ -11,6 +11,7 @@ export default function ProtectedRoute({ children }) {
   }
 
   if (!isAuthed) {
+    console.log("ProtectedRoute: Not authed, redirecting to /signin");
     return <Navigate to="/signin" replace />;
   }
 

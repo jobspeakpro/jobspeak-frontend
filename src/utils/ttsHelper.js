@@ -71,6 +71,7 @@ export async function fetchTtsBlobUrl({ text, voiceId = "DEFAULT", speed = 1.0 }
     // Construct payload for /api/tts
     const payload = {
       text: text.trim(),
+      voiceId, // Critical: Pass the exact voice ID to backend
       locale,
       voiceName, // "male" or "female"
       voiceVariant, // "emma", "ava", etc.

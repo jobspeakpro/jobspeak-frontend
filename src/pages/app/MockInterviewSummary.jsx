@@ -823,7 +823,7 @@ export default function MockInterviewSummary() {
                     <div className="bg-white dark:bg-[#1A222C] p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm mt-6">
                         <h4 className="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                             <span className="material-symbols-outlined text-blue-500">hearing</span>
-                            What the Hiring Manager Likely Heard
+                            What the manager thought
                         </h4>
                         <p className="text-sm text-slate-600 dark:text-slate-400 break-words [overflow-wrap:anywhere]">
                             {summary.hiringManagerHeard}

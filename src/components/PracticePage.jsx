@@ -419,8 +419,8 @@ export default function PracticePage() {
                   <div
                     key={idx}
                     className={`h-1.5 w-1.5 rounded-full transition-colors ${idx < freeImproveUsage.count
-                        ? "bg-emerald-500"
-                        : "bg-slate-200"
+                      ? "bg-emerald-500"
+                      : "bg-slate-200"
                       }`}
                   />
                 ))}
